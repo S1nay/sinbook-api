@@ -1,0 +1,61 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           Int       @id @default(autoincrement())
+  avatarPath   String
+  name         String
+  secondName   String    @map("second_name")
+  middleName   String    @map("middle_name")
+  email        String    @unique
+  passwordHash String
+  posts        Post[]
+  comments     Comment[]
+  city         String    @default("")
+  birthDate    DateTime?
+  gender       Gender
+  followers    User[]    @relation("followers")
+  followersOf  User[]    @relation("followers")
+  friends      User[]    @relation("friends")
+  friendsOf    User[]    @relation("friends")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+}
+
+model Post {
+  id        Int       @id @default(autoincrement())
+  title     String
+  views     Int       @default(0)
+  user      User      @relation(fields: [userId], references: [id])
+  userId    Int       @map("user_id")
+  comments  Comment[]
+  likes     Int       @default(0)
+  images    String[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+}
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
+  Post      Post?    @relation(fields: [postId], references: [id])
+  postId    Int?
+  title     String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+enum Gender {
+  FEMALE
+  MALE
+}
