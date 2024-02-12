@@ -8,7 +8,7 @@ import { Gender } from '@prisma/client';
 import { CreateUserDto } from 'src/user/dto/create-user.dto';
 
 @Injectable()
-export class TopLevelCategoryValidationTransform implements PipeTransform {
+export class TransformGenderPipe implements PipeTransform {
   transform(value: CreateUserDto, metadata: ArgumentMetadata) {
     if (metadata.type !== 'body') return value;
 
@@ -21,7 +21,7 @@ export class TopLevelCategoryValidationTransform implements PipeTransform {
 
     return {
       ...value,
-      firstCategory: transformedValue,
+      gender: transformedValue,
     };
   }
 }

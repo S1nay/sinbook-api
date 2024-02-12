@@ -5,8 +5,6 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  MaxLength,
-  MinLength,
 } from 'class-validator';
 
 export class CreateUserDto {
@@ -16,10 +14,6 @@ export class CreateUserDto {
   )
   email: string;
 
-  @IsString({ message: 'Поле password должно быть строкой' })
-  @IsNotEmpty({ message: 'Поле password не должно быть пустым' })
-  @MinLength(8, { message: 'Длина пароля должна быть минимум 8 символов' })
-  @MaxLength(50, { message: 'Длина пароля должна быть максимум 50 символов' })
   passwordHash: string;
 
   @IsString({ message: 'Поле name должно быть строкой' })
@@ -39,7 +33,7 @@ export class CreateUserDto {
   avatarPath: string;
 
   @IsString({ message: 'Поле city должно быть строкой' })
-  @IsNotEmpty({ message: 'Поле city не должно быть пустым' })
+  @IsOptional()
   city: string;
 
   @IsDateString({}, { message: 'Поле birthDate должно быть строкой даты' })

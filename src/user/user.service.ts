@@ -4,13 +4,16 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { SelectUserFields } from './types/user.type';
 import { UserResponse } from './responses/user.response';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { USER_NOT_FOUND } from './constants/user.constants';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  selectUserFields(): SelectUserFields {
-    return {
+  selectUserFields(
+    excludedFields?: (keyof SelectUserFields)[],
+  ): SelectUserFields {
+    const returnedFields = {
       id: true,
       email: true,
       name: true,
@@ -22,49 +25,69 @@ export class UserService {
       birthDate: true,
       isDeleted: true,
     };
+
+    if (excludedFields) {
+      for (const field of excludedFields) {
+        delete returnedFields[field];
+      }
+    }
+
+    return returnedFields;
   }
 
-  async createUser(createUserDto: CreateUserDto) {
-    this.prismaService.user.create({
+  async getMyProfile(userId: number) {
+    return this.prismaService.user.findUnique({
+      where: { id: userId },
+      select: this.selectUserFields(),
+    });
+  }
+
+  async createUser(createUserDto: CreateUserDto): Promise<UserResponse> {
+    return this.prismaService.user.create({
       data: createUserDto,
+      select: this.selectUserFields(),
     });
   }
 
   async findOneById(id: number): Promise<UserResponse> {
     const user = await this.prismaService.user.findUnique({
       where: { id },
-      select: this.selectUserFields(),
+      select: this.selectUserFields(['email']),
     });
 
-    if (!user) throw new BadRequestException('Пользователь не найден');
+    if (!user) throw new BadRequestException(USER_NOT_FOUND);
 
     return user;
   }
 
-  async findOneByEmail(email: string): Promise<UserResponse> {
+  async findOneByEmail(email: string) {
     const user = await this.prismaService.user.findUnique({
       where: { email },
-      select: this.selectUserFields(),
+      select: {
+        ...this.selectUserFields(),
+        passwordHash: true,
+      },
     });
-
-    if (!user)
-      throw new BadRequestException('Пользователь с таким email не найден');
 
     return user;
   }
 
-  async update(id: number, updateUserDto: UpdateUserDto) {
+  async update(
+    id: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserResponse> {
     await this.findOneById(id);
 
     return this.prismaService.user.update({
       where: { id },
       data: updateUserDto,
+      select: this.selectUserFields(),
     });
   }
 
   // guard на удаление не своего аккаунта
-  async softDelete(id: number, user: UserResponse) {
-    await this.findOneById(id);
+  async softDelete(id: number) {
+    const user = await this.findOneById(id);
 
     return this.prismaService.user.update({
       where: { id },
