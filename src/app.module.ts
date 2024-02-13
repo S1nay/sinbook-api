@@ -2,9 +2,9 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
-import { FileModule } from './file/file.module';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { path } from 'app-root-path';
+import { PostModule } from './post/post.module';
 
 @Module({
   imports: [
@@ -18,7 +18,7 @@ import { path } from 'app-root-path';
     }),
     UserModule,
     AuthModule,
-    FileModule,
+    PostModule,
   ],
 })
 export class AppModule {}
