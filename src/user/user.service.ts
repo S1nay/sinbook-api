@@ -85,7 +85,6 @@ export class UserService {
     });
   }
 
-  // guard на удаление не своего аккаунта
   async softDelete(id: number) {
     const user = await this.findOneById(id);
 

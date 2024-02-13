@@ -7,7 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { Observable } from 'rxjs';
 import { Request } from 'express';
-import { CANNOT_DELETE_USER } from 'src/user/constants/user.constants';
+import { CANNOT_MODIFY_USER } from 'src/user/constants/user.constants';
 
 @Injectable()
 export class UserActionGuard implements CanActivate {
@@ -22,10 +22,10 @@ export class UserActionGuard implements CanActivate {
 
     const token = authorization.split(' ')[1];
 
-    const userData: { userId: number } = this.jwtService.decode(token);
+    const userData: { user_id: number } = this.jwtService.decode(token);
 
-    if (deletedUserId !== userData.userId) {
-      throw new ForbiddenException(CANNOT_DELETE_USER);
+    if (deletedUserId !== userData.user_id) {
+      throw new ForbiddenException(CANNOT_MODIFY_USER);
     }
 
     return true;

@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
@@ -17,6 +18,7 @@ export class AuthService {
   constructor(
     private readonly userService: UserService,
     private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
   ) {}
 
   async login(loginDto: LoginDto): Promise<AuthResponse> {
@@ -89,7 +91,7 @@ export class AuthService {
           email: userData.email,
         },
         {
-          expiresIn: '60m',
+          expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRES'),
         },
       ),
     };
@@ -104,7 +106,7 @@ export class AuthService {
           email: userData.email,
         },
         {
-          expiresIn: '60m',
+          expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRES'),
         },
       ),
       refresh: await this.jwtService.signAsync(
@@ -113,7 +115,7 @@ export class AuthService {
           email: userData.email,
         },
         {
-          expiresIn: '7d',
+          expiresIn: this.configService.get('JWT_REFRESH_TOKEN_EXPIRES'),
         },
       ),
     };
