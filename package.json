@@ -2,7 +2,7 @@
   "name": "sinbook-api",
   "version": "0.0.1",
   "description": "",
-  "author": "",
+  "author": "Sharkov Nikita",
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
@@ -36,8 +36,7 @@
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.1",
-    "sharp": "^0.33.2"
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
@@ -52,7 +51,6 @@
     "@types/multer": "^1.4.11",
     "@types/node": "^20.3.1",
     "@types/passport-jwt": "^4.0.1",
-    "@types/sharp": "^0.32.0",
     "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
