@@ -10,7 +10,7 @@ import { USER_NOT_FOUND } from './constants/user.constants';
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  selectUserFields(
+  private selectUserFields(
     excludedFields?: (keyof SelectUserFields)[],
   ): SelectUserFields {
     const returnedFields = {
@@ -35,7 +35,7 @@ export class UserService {
     return returnedFields;
   }
 
-  async getMyProfile(userId: number) {
+  async findMyProfile(userId: number) {
     return this.prismaService.user.findUnique({
       where: { id: userId },
       select: this.selectUserFields(),
@@ -49,7 +49,7 @@ export class UserService {
     });
   }
 
-  async findOneById(id: number): Promise<UserResponse> {
+  async findUserById(id: number): Promise<UserResponse> {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       select: this.selectUserFields(['email']),
@@ -60,7 +60,7 @@ export class UserService {
     return user;
   }
 
-  async findOneByEmail(email: string) {
+  async findUserByEmail(email: string) {
     const user = await this.prismaService.user.findUnique({
       where: { email },
       select: {
@@ -72,11 +72,11 @@ export class UserService {
     return user;
   }
 
-  async update(
+  async updateUser(
     id: number,
     updateUserDto: UpdateUserDto,
   ): Promise<UserResponse> {
-    await this.findOneById(id);
+    await this.findUserById(id);
 
     return this.prismaService.user.update({
       where: { id },
@@ -85,8 +85,8 @@ export class UserService {
     });
   }
 
-  async softDelete(id: number) {
-    const user = await this.findOneById(id);
+  async softDeleteUser(id: number) {
+    const user = await this.findUserById(id);
 
     return this.prismaService.user.update({
       where: { id },

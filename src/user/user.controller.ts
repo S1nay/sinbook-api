@@ -10,38 +10,35 @@ import {
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserActionGuard } from 'src/guards/user-action.guard';
-import { JwtAuthGuard } from 'src/guards/jwt-guard';
+import { UserActionGuard } from './guards/user-action.guard';
 import { User } from 'src/decorators/user.decorator';
 
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @UseGuards(JwtAuthGuard)
   @Get('/me')
-  getMe(@User() id: number) {
-    return this.userService.getMyProfile(id);
+  findMyProfile(@User() id: number) {
+    return this.userService.findMyProfile(id);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':id')
-  findUserById(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.findOneById(id);
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.userService.findUserById(id);
   }
 
-  @UseGuards(JwtAuthGuard, UserActionGuard)
+  @UseGuards(UserActionGuard)
   @Patch(':id')
-  updateUser(
+  update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.userService.update(id, updateUserDto);
+    return this.userService.updateUser(id, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard, UserActionGuard)
+  @UseGuards(UserActionGuard)
   @Delete(':id')
-  softDeleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.softDelete(id);
+  delete(@Param('id', ParseIntPipe) id: number) {
+    return this.userService.softDeleteUser(id);
   }
 }
