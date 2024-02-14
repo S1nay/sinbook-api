@@ -1,19 +1,30 @@
 import { PrismaService } from './../prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreatePostDto } from './dto/create-post.dto';
 import { SelectPostFields } from './types/post.type';
+import { POST_NOT_FOUND } from './constants/post.constants';
+import { UpdatePostDto } from './dto/update-post.dto';
 
 @Injectable()
 export class PostService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  selectPostFields(
+  private selectPostFields(
     excludedFields?: (keyof SelectPostFields)[],
   ): SelectPostFields {
     const returnedFields: SelectPostFields = {
       id: true,
       title: true,
-      user: true,
+      user: {
+        select: {
+          id: true,
+          avatarPath: true,
+          isDeleted: true,
+          name: true,
+          secondName: true,
+          middleName: true,
+        },
+      },
       views: true,
       comments: true,
       images: true,
@@ -31,7 +42,7 @@ export class PostService {
     return returnedFields;
   }
 
-  async create(createPostDto: CreatePostDto, userId: number) {
+  async createPost(createPostDto: CreatePostDto, userId: number) {
     return this.prismaService.post.create({
       data: {
         ...createPostDto,
@@ -47,15 +58,39 @@ export class PostService {
   //   return `This action returns all post`;
   // }
 
-  // findOne(id: number) {
-  //   return `This action returns a #${id} post`;
-  // }
+  async findPostById(id: number) {
+    const post = await this.prismaService.post.findUnique({
+      where: { id },
+      select: this.selectPostFields(),
+    });
 
-  // update(id: number, updatePostDto: UpdatePostDto) {
-  //   return `This action updates a #${id} post`;
-  // }
+    if (!post) {
+      throw new NotFoundException(POST_NOT_FOUND);
+    }
 
-  // remove(id: number) {
-  //   return `This action removes a #${id} post`;
-  // }
+    return post;
+  }
+
+  async updatePost(id: number, updatePostDto: UpdatePostDto, userId: number) {
+    await this.findPostById(id);
+
+    return this.prismaService.post.update({
+      where: { id },
+      data: {
+        ...updatePostDto,
+        user: {
+          connect: {
+            id: userId,
+          },
+        },
+      },
+      select: this.selectPostFields(),
+    });
+  }
+
+  async deletePost(id: number) {
+    await this.findPostById(id);
+
+    return `This action removes a #${id} post`;
+  }
 }

@@ -6,6 +6,17 @@ export type SelectPostFields = {
   images: boolean;
   createdAt: boolean;
   updatedAt: boolean;
-  user: boolean;
+  user: {
+    select: SelectPostUserFields;
+  };
   comments: boolean;
+};
+
+type SelectPostUserFields = {
+  id: boolean;
+  avatarPath: boolean;
+  isDeleted: boolean;
+  name: boolean;
+  secondName: boolean;
+  middleName: boolean;
 };

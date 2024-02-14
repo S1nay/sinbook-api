@@ -58,7 +58,7 @@ export class AuthService {
   }): Promise<UserResponse> {
     const { email, password } = authDto;
 
-    const candidate = await this.userService.findOneByEmail(email);
+    const candidate = await this.userService.findUserByEmail(email);
 
     if (isRegister) {
       if (candidate) {
