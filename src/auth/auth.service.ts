@@ -1,17 +1,21 @@
 import { ConfigService } from '@nestjs/config';
 import { UserService } from 'src/user/user.service';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { compare, genSalt, hash } from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
-import { UserResponse } from 'src/user/responses/user.response';
+
 import { LoginDto } from './dto/login.dto';
 import { AuthResponse } from './reponses/auth.response';
 import {
-  INCORRECT_AUTH_DATA,
-  USER_WITH_EMAIL_EXIST,
-  USER_WITH_EMAIL_NOT_EXIST,
-} from './constants/auth.constants';
+  UserWithEmailNotExistException,
+  IncorrectAuthDataException,
+  UserWithEmailExistException,
+} from './exceptions/auth-exceptions';
+import {
+  CreateUserResponse,
+  FindEmalUserResponse,
+} from 'src/user/responses/user.responses';
 
 @Injectable()
 export class AuthService {
@@ -55,24 +59,24 @@ export class AuthService {
   }: {
     authDto: LoginDto | RegisterDto;
     isRegister: boolean;
-  }): Promise<UserResponse> {
+  }): Promise<FindEmalUserResponse> {
     const { email, password } = authDto;
 
     const candidate = await this.userService.findUserByEmail(email);
 
     if (isRegister) {
       if (candidate) {
-        throw new UnauthorizedException(USER_WITH_EMAIL_EXIST);
+        throw new UserWithEmailExistException();
       }
     } else {
       if (!candidate) {
-        throw new UnauthorizedException(USER_WITH_EMAIL_NOT_EXIST);
+        throw new UserWithEmailNotExistException();
       }
 
       const isCorrectPassword = await compare(password, candidate.passwordHash);
 
       if (!isCorrectPassword) {
-        throw new UnauthorizedException(INCORRECT_AUTH_DATA);
+        throw new IncorrectAuthDataException();
       }
 
       delete candidate.passwordHash;
@@ -87,7 +91,7 @@ export class AuthService {
     return {
       access: await this.jwtService.signAsync(
         {
-          user_id: userData.id,
+          user_id: userData.user_id,
           email: userData.email,
         },
         {
@@ -97,7 +101,9 @@ export class AuthService {
     };
   }
 
-  async generateTokens(userData: UserResponse): Promise<AuthResponse> {
+  async generateTokens(
+    userData: CreateUserResponse | FindEmalUserResponse,
+  ): Promise<AuthResponse> {
     return {
       user: userData,
       access: await this.jwtService.signAsync(

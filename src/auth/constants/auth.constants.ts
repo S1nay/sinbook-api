@@ -5,3 +5,7 @@ export const USER_WITH_EMAIL_NOT_EXIST =
   'Пользователя с таким email не существует';
 
 export const INCORRECT_AUTH_DATA = 'Неверные логин или пароль';
+
+export const INVALID_TOKEN = 'Невалидный токен';
+
+export const NO_AUTH = 'Нет авторизации';

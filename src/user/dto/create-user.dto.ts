@@ -6,14 +6,24 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { UserEntity } from '../entities/user.entity';
+import { OmitType } from '@nestjs/swagger';
 
-export class CreateUserDto {
-  @IsEmail(
-    {},
-    { message: 'Неверный формат email. Пример: example@example.com' },
-  )
+export class CreateUserDto extends OmitType(UserEntity, [
+  'createdAt',
+  'updatedAt',
+  'avatarPath',
+  'id',
+  'isDeleted',
+  'posts',
+  'followers',
+  'followersOf',
+]) {
+  @IsEmail({}, { message: 'Неверный формат email. Пример: test@test.com' })
   email: string;
 
+  @IsString({ message: 'Поле passwordHash должно быть строкой' })
+  @IsNotEmpty({ message: 'Поле passwordHash не должно быть пустым' })
   passwordHash: string;
 
   @IsString({ message: 'Поле name должно быть строкой' })
@@ -28,16 +38,12 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'Поле middleName не должно быть пустым' })
   middleName: string;
 
-  @IsString({ message: 'Поле avatarPath должно быть строкой' })
-  @IsOptional()
-  avatarPath: string;
-
   @IsString({ message: 'Поле city должно быть строкой' })
   @IsOptional()
   city: string;
 
   @IsDateString({}, { message: 'Поле birthDate должно быть строкой даты' })
-  @IsNotEmpty({ message: 'Поле birthDate не должно быть пустым' })
+  @IsOptional()
   birthDate: Date;
 
   @IsNotEmpty({ message: 'Поле gender не должно быть пустым' })
