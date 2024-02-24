@@ -21,12 +21,7 @@ import { User } from 'src/decorators/user.decorator';
 import { UserNotAuthorizedException } from 'src/auth/exceptions/auth-exceptions';
 
 import { UserNotFoundException } from './exceptions/user-exceptions';
-import {
-  DeleteUserResponse,
-  FindMeResponse,
-  FindUniqueUserResponse,
-  UpdateUserResponse,
-} from './responses/user.responses';
+import { UserOpenApi } from './openapi/user.openapi';
 
 @ApiBearerAuth()
 @ApiTags('Пользователи')
@@ -34,14 +29,14 @@ import {
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @ApiOkResponse({ type: FindMeResponse })
+  @ApiOkResponse({ type: UserOpenApi.FindMeResponse })
   @ApiException(() => UserNotAuthorizedException)
   @Get('/me')
   findMe(@User() id: number) {
     return this.userService.findMyProfile(id);
   }
 
-  @ApiOkResponse({ type: FindUniqueUserResponse })
+  @ApiOkResponse({ type: UserOpenApi.FindUniqueUserResponse })
   @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @ApiParam({ type: Number, example: 1, name: 'id' })
   @Get(':id')
@@ -49,15 +44,15 @@ export class UserController {
     return this.userService.findUserById(id);
   }
 
-  @ApiOkResponse({ type: UpdateUserResponse })
+  @ApiOkResponse({ type: UserOpenApi.UpdateUserResponse })
   @ApiException(() => [UserNotAuthorizedException])
-  @ApiBody({ type: UpdateUserDto })
+  @ApiBody({ type: UserOpenApi.UpdateUserDto })
   @Patch()
   update(@User() userId: number, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.updateUser(userId, updateUserDto);
   }
 
-  @ApiOkResponse({ type: DeleteUserResponse })
+  @ApiOkResponse({ type: UserOpenApi.DeleteUserResponse })
   @ApiException(() => [UserNotAuthorizedException])
   @Delete()
   delete(@User() userId: number) {

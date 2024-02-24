@@ -5,7 +5,6 @@ import {
   Param,
   Patch,
   ParseIntPipe,
-  Get,
   UseGuards,
 } from '@nestjs/common';
 import { PostService } from './post.service';
@@ -20,16 +19,14 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  CreatePostResponse,
-  UpdatePostResponse,
-} from './responses/post.responses';
+
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
 import { UserNotAuthorizedException } from 'src/auth/exceptions/auth-exceptions';
 import {
   CannotModifyPostException,
   PostNotFoundException,
 } from './exceptions/post-exceptions';
+import { PostOpenApi } from './openapi/post.openapi';
 
 @ApiTags('Посты')
 @ApiBearerAuth()
@@ -37,8 +34,8 @@ import {
 export class PostController {
   constructor(private readonly postService: PostService) {}
 
-  @ApiBody({ type: CreatePostDto })
-  @ApiOkResponse({ type: CreatePostResponse })
+  @ApiBody({ type: PostOpenApi.CreatePostDto })
+  @ApiOkResponse({ type: PostOpenApi.CreatePostResponse })
   @ApiException(() => [UserNotAuthorizedException])
   @Post()
   create(@Body() createPostDto: CreatePostDto, @User() userId: number) {
@@ -46,16 +43,8 @@ export class PostController {
   }
 
   @ApiParam({ name: 'id', type: Number })
-  @ApiOkResponse({ type: CreatePostResponse })
-  @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
-  @Get(':id')
-  findOne(@Param('id', ParseIntPipe) id: number) {
-    return this.postService.findPostById(id);
-  }
-
-  @ApiParam({ name: 'id', type: Number })
-  @ApiBody({ type: UpdatePostDto })
-  @ApiOkResponse({ type: UpdatePostResponse })
+  @ApiBody({ type: PostOpenApi.UpdatePostDto })
+  @ApiOkResponse({ type: PostOpenApi.UpdatePostResponse })
   @ApiException(() => [
     UserNotAuthorizedException,
     PostNotFoundException,

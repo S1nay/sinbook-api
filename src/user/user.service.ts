@@ -1,18 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import {
-  CreateUserResponse,
-  DeleteUserResponse,
-  FindEmalUserResponse,
-  FindMeResponse,
-  FindUniqueUserResponse,
-  UpdateUserResponse,
-} from './responses/user.responses';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserNotFoundException } from './exceptions/user-exceptions';
 import { exclude } from 'src/utils/excludeFields';
 import { CountFields, UserWithCountField } from './types/user.type';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
@@ -35,7 +28,9 @@ export class UserService {
     };
   }
 
-  async findMyProfile(userId: number): Promise<FindMeResponse> {
+  async findMyProfile(
+    userId: number,
+  ): Promise<Omit<User, 'passwordHash'> & CountFields> {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
       include: {
@@ -48,7 +43,9 @@ export class UserService {
     ]);
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<CreateUserResponse> {
+  async createUser(
+    createUserDto: CreateUserDto,
+  ): Promise<Omit<User, 'passwordHash'>> {
     const user = await this.prismaService.user.create({
       data: createUserDto,
     });
@@ -56,7 +53,9 @@ export class UserService {
     return exclude(user, ['passwordHash']);
   }
 
-  async findUserById(id: number): Promise<FindUniqueUserResponse> {
+  async findUserById(
+    id: number,
+  ): Promise<Omit<User, 'passwordHash' | 'email'> & CountFields> {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       include: {
@@ -72,7 +71,7 @@ export class UserService {
     ]);
   }
 
-  async findUserByEmail(email: string): Promise<FindEmalUserResponse> {
+  async findUserByEmail(email: string): Promise<User> {
     const user = await this.prismaService.user.findUnique({
       where: { email },
     });
@@ -83,7 +82,7 @@ export class UserService {
   async updateUser(
     id: number,
     updateUserDto: UpdateUserDto,
-  ): Promise<UpdateUserResponse> {
+  ): Promise<Omit<User, 'passwordHash'> & CountFields> {
     const user = await this.prismaService.user.update({
       where: { id },
       data: updateUserDto,
@@ -97,7 +96,7 @@ export class UserService {
     ]);
   }
 
-  async softDeleteUser(id: number): Promise<DeleteUserResponse> {
+  async softDeleteUser(id: number): Promise<Omit<User, 'passwordHash'>> {
     const user = await this.prismaService.user.update({
       where: { id },
       data: {

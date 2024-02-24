@@ -1,4 +1,4 @@
-import { Gender } from '@prisma/client';
+import { Gender, Prisma } from '@prisma/client';
 import {
   IsDateString,
   IsEmail,
@@ -6,19 +6,8 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
-import { UserEntity } from '../entities/user.entity';
-import { OmitType } from '@nestjs/swagger';
 
-export class CreateUserDto extends OmitType(UserEntity, [
-  'createdAt',
-  'updatedAt',
-  'avatarPath',
-  'id',
-  'isDeleted',
-  'posts',
-  'followers',
-  'followersOf',
-]) {
+export class CreateUserDto implements Prisma.UserCreateInput {
   @IsEmail({}, { message: 'Неверный формат email. Пример: test@test.com' })
   email: string;
 

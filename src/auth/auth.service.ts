@@ -4,18 +4,14 @@ import { Injectable } from '@nestjs/common';
 import { RegisterDto } from './dto/register.dto';
 import { compare, genSalt, hash } from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
-
 import { LoginDto } from './dto/login.dto';
-import { AuthResponse } from './reponses/auth.response';
 import {
   UserWithEmailNotExistException,
   IncorrectAuthDataException,
   UserWithEmailExistException,
 } from './exceptions/auth-exceptions';
-import {
-  CreateUserResponse,
-  FindEmalUserResponse,
-} from 'src/user/responses/user.responses';
+import { User } from '@prisma/client';
+import { JwtTokens } from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -25,7 +21,9 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async login(loginDto: LoginDto): Promise<AuthResponse> {
+  async login(
+    loginDto: LoginDto,
+  ): Promise<{ user: Omit<User, 'passwordHash'> } & JwtTokens> {
     const user = await this.validateUser({
       authDto: loginDto,
       isRegister: false,
@@ -34,7 +32,9 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
-  async register(registerDto: RegisterDto): Promise<AuthResponse> {
+  async register(
+    registerDto: RegisterDto,
+  ): Promise<{ user: Omit<User, 'passwordHash'> } & JwtTokens> {
     const { email, password } = registerDto;
 
     await this.validateUser({ authDto: registerDto, isRegister: true });
@@ -59,7 +59,7 @@ export class AuthService {
   }: {
     authDto: LoginDto | RegisterDto;
     isRegister: boolean;
-  }): Promise<FindEmalUserResponse> {
+  }): Promise<User> {
     const { email, password } = authDto;
 
     const candidate = await this.userService.findUserByEmail(email);
@@ -102,8 +102,8 @@ export class AuthService {
   }
 
   async generateTokens(
-    userData: CreateUserResponse | FindEmalUserResponse,
-  ): Promise<AuthResponse> {
+    userData: Omit<User, 'passwordHash'> | User,
+  ): Promise<{ user: Omit<User, 'passwordHash'> } & JwtTokens> {
     return {
       user: userData,
       access: await this.jwtService.signAsync(

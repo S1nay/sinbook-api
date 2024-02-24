@@ -11,11 +11,6 @@ import {
   ApiOkResponse,
   ApiTags,
 } from '@nestjs/swagger';
-import {
-  AccessToken,
-  AuthResponse,
-  RefreshToken,
-} from './reponses/auth.response';
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
 import {
   IncorrectAuthDataException,
@@ -24,18 +19,19 @@ import {
   UserWithEmailExistException,
   UserWithEmailNotExistException,
 } from './exceptions/auth-exceptions';
+import { AuthOpenApi } from './openapi/auth.openapi';
 
 @ApiTags('Авторизация')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @ApiOkResponse({ type: AuthResponse })
+  @ApiOkResponse({ type: AuthOpenApi.AuthResponse })
   @ApiException(() => [
     UserWithEmailNotExistException,
     IncorrectAuthDataException,
   ])
-  @ApiBody({ type: LoginDto })
+  @ApiBody({ type: AuthOpenApi.LoginDto })
   @SkipAuth()
   @Post('sign-in')
   @HttpCode(200)
@@ -43,9 +39,9 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 
-  @ApiOkResponse({ type: AuthResponse })
+  @ApiOkResponse({ type: AuthOpenApi.AuthResponse })
   @ApiException(() => [UserWithEmailExistException])
-  @ApiBody({ type: RegisterDto })
+  @ApiBody({ type: AuthOpenApi.RegisterDto })
   @SkipAuth()
   @Post('sign-up')
   @HttpCode(200)
@@ -54,13 +50,13 @@ export class AuthController {
   }
 
   @ApiBearerAuth()
-  @ApiOkResponse({ type: AccessToken })
+  @ApiOkResponse({ type: new AuthOpenApi.JwtTokens().access })
   @ApiException(() => [UserNotAuthorizedException, InvalidTokenException])
-  @ApiBody({ type: RefreshToken })
+  @ApiBody({ type: new AuthOpenApi.JwtTokens().access })
   @UseGuards(JwtRefreshGuard)
   @HttpCode(200)
   @Post('refresh')
-  refresh(@Body() refreshToken: RefreshToken) {
+  refresh(@Body() refreshToken: { refresh: string }) {
     return this.authService.refreshToken(refreshToken.refresh);
   }
 }
