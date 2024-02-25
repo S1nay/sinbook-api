@@ -13,7 +13,10 @@ import { PrismaModule } from '#prisma/prisma.module';
     PrismaModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath:
+        process.env.NODE_ENV === 'development'
+          ? '.env.development'
+          : '.env.production',
     }),
     ServeStaticModule.forRoot({
       rootPath: `${path}/uploads`,

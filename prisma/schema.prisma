@@ -12,6 +12,7 @@ datasource db {
 
 model User {
   id           Int       @id @default(autoincrement())
+  nickName     String    @map("nick_name")
   avatarPath   String?
   name         String
   secondName   String    @map("second_name")

@@ -2,7 +2,14 @@ import { Prisma } from '@prisma/client';
 
 export type PostWithCountField = Prisma.PostGetPayload<{
   include: {
-    user: true;
+    user: {
+      select: {
+        id: true;
+        name: true;
+        secondName: true;
+        middleName: true;
+      };
+    };
     _count: {
       select: Omit<Prisma.PostCountOutputTypeSelect, 'comments'>;
     };

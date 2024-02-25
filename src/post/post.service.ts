@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Post } from '@prisma/client';
 
 import { PrismaService } from '#prisma/prisma.service';
+import { UserService } from '#user/user.service';
 
 import { POST_NOT_FOUND } from './constants/post.constants';
 import { CreatePostDto } from './dto/create-post.dto';
@@ -9,7 +11,10 @@ import { PostCountFields, PostWithCountField } from './types/post.types';
 
 @Injectable()
 export class PostService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly userService: UserService,
+  ) {}
 
   private transformPostCount<T>(post: PostWithCountField) {
     const postCount = post._count;
@@ -37,7 +42,14 @@ export class PostService {
         },
       },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            secondName: true,
+            middleName: true,
+          },
+        },
       },
     });
 
@@ -48,7 +60,14 @@ export class PostService {
     const post = await this.prismaService.post.findUnique({
       where: { id },
       include: {
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            secondName: true,
+            middleName: true,
+          },
+        },
         _count: {
           select: { comments: true },
         },
@@ -81,16 +100,72 @@ export class PostService {
             comments: true,
           },
         },
-        user: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            secondName: true,
+            middleName: true,
+          },
+        },
       },
     });
 
     return this.transformPostCount<PostCountFields>(post);
   }
 
-  // async deletePost(id: number) {
-  //   await this.findPostById(id);
+  async deletePost(id: number): Promise<void> {
+    await this.findPostById(id);
 
-  //   return `This action removes a #${id} post`;
-  // }
+    this.prismaService.post.delete({
+      where: { id },
+    });
+  }
+
+  async findAllPosts(): Promise<Post[]> {
+    const posts = await this.prismaService.post.findMany({
+      include: {
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            secondName: true,
+            middleName: true,
+          },
+        },
+      },
+    });
+
+    return posts.map((post) => this.transformPostCount<PostCountFields>(post));
+  }
+
+  async findUserPosts(userId: number): Promise<Post[]> {
+    await this.userService.findUserById(userId);
+
+    const posts = await this.prismaService.post.findMany({
+      where: { userId },
+      include: {
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
+        user: {
+          select: {
+            id: true,
+            name: true,
+            secondName: true,
+            middleName: true,
+          },
+        },
+      },
+    });
+
+    return posts.map((post) => this.transformPostCount<PostCountFields>(post));
+  }
 }

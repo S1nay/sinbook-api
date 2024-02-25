@@ -2,6 +2,8 @@ import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator
 import {
   Body,
   Controller,
+  Delete,
+  Get,
   Param,
   ParseIntPipe,
   Patch,
@@ -22,6 +24,7 @@ import { User } from '#decorators/user.decorator';
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import {
+  CannotDeletePostException,
   CannotModifyPostException,
   PostNotFoundException,
 } from './exceptions/post-exceptions';
@@ -61,9 +64,37 @@ export class PostController {
     return this.postService.updatePost(id, updatePostDto, userId);
   }
 
-  // @UseGuards(PostActionGuard)
-  // @Delete(':id')
-  // delete(@Param('id', ParseIntPipe) id: number) {
-  //   return this.postService.deletePost(id);
-  // }
+  @ApiParam({ name: 'id', type: Number })
+  @ApiException(() => [
+    UserNotAuthorizedException,
+    PostNotFoundException,
+    CannotDeletePostException,
+  ])
+  @UseGuards(PostActionGuard)
+  @Delete(':id')
+  delete(@Param('id', ParseIntPipe) id: number) {
+    return this.postService.deletePost(id);
+  }
+
+  @ApiOkResponse({ type: PostOpenApi.FindPosts })
+  @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
+  @Get('user/me')
+  findMyPosts(@User() userId: number) {
+    return this.postService.findUserPosts(userId);
+  }
+
+  @ApiOkResponse({ type: PostOpenApi.FindPosts })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiException(() => [UserNotAuthorizedException])
+  @Get('user/:id')
+  findPostsByUserId(@Param('id', ParseIntPipe) userId: number) {
+    return this.postService.findUserPosts(userId);
+  }
+
+  @ApiOkResponse({ type: PostOpenApi.FindPosts })
+  @ApiException(() => [UserNotAuthorizedException])
+  @Get()
+  findPosts() {
+    return this.postService.findAllPosts();
+  }
 }

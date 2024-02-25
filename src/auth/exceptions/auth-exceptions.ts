@@ -6,6 +6,7 @@ import {
   NO_AUTH,
   USER_WITH_EMAIL_EXIST,
   USER_WITH_EMAIL_NOT_EXIST,
+  USER_WITH_NICKNAME_EXIST,
 } from '../constants/auth.constants';
 
 export class IncorrectAuthDataException extends BadRequestException {
@@ -17,6 +18,12 @@ export class IncorrectAuthDataException extends BadRequestException {
 export class UserWithEmailNotExistException extends BadRequestException {
   constructor() {
     super(USER_WITH_EMAIL_NOT_EXIST);
+  }
+}
+
+export class UserWithNicknameExistException extends BadRequestException {
+  constructor() {
+    super(USER_WITH_NICKNAME_EXIST);
   }
 }
 
