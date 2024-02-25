@@ -6,7 +6,7 @@ import {
 } from '@nestjs/swagger';
 import { Post } from '@prisma/client';
 
-import { CommentOneApi } from '#comment/openapi/comment.openapi';
+import { CommentOpenApi } from '#comment/openapi/comment.openapi';
 import { UserOpenApi } from '#user/openapi/user.openapi';
 
 export namespace PostOpenApi {
@@ -74,9 +74,9 @@ export namespace PostOpenApi {
 
     @ApiProperty({
       description: 'Комментарии поста',
-      type: [CommentOneApi.CommentModel],
+      type: [CommentOpenApi.CommentModel],
     })
-    comments: () => CommentOneApi.CommentModel[];
+    comments: () => CommentOpenApi.CommentModel[];
 
     @ApiProperty({
       description: 'Дата обновления поста',

@@ -5,9 +5,9 @@ import {
   Delete,
   Get,
   Param,
-  ParseIntPipe,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import {
@@ -15,6 +15,7 @@ import {
   ApiBody,
   ApiOkResponse,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 
@@ -30,6 +31,9 @@ import {
 } from './exceptions/post-exceptions';
 import { PostActionGuard } from './guards/post-action.guard';
 import { PostOpenApi } from './openapi/post.openapi';
+import { DeletePostParams } from './params/delete-post.params';
+import { FindPostByUserIdParams } from './params/find-post-by-userId.params';
+import { UpdatePostParams } from './params/update-post.params';
 import { PostService } from './post.service';
 
 @ApiTags('Посты')
@@ -57,11 +61,11 @@ export class PostController {
   @UseGuards(PostActionGuard)
   @Patch(':id')
   update(
-    @Param('id', ParseIntPipe) id: number,
+    @Param() params: UpdatePostParams,
     @Body() updatePostDto: UpdatePostDto,
     @User() userId: number,
   ) {
-    return this.postService.updatePost(id, updatePostDto, userId);
+    return this.postService.updatePost(+params.id, updatePostDto, userId);
   }
 
   @ApiParam({ name: 'id', type: Number })
@@ -72,29 +76,22 @@ export class PostController {
   ])
   @UseGuards(PostActionGuard)
   @Delete(':id')
-  delete(@Param('id', ParseIntPipe) id: number) {
-    return this.postService.deletePost(id);
+  delete(@Param() params: DeletePostParams) {
+    return this.postService.deletePost(+params.id);
   }
 
   @ApiOkResponse({ type: PostOpenApi.FindPosts })
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
-  @Get('user/me')
+  @Get('me')
   findMyPosts(@User() userId: number) {
     return this.postService.findUserPosts(userId);
   }
 
   @ApiOkResponse({ type: PostOpenApi.FindPosts })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiException(() => [UserNotAuthorizedException])
-  @Get('user/:id')
-  findPostsByUserId(@Param('id', ParseIntPipe) userId: number) {
-    return this.postService.findUserPosts(userId);
-  }
-
-  @ApiOkResponse({ type: PostOpenApi.FindPosts })
+  @ApiQuery({ name: 'userId', type: Number })
   @ApiException(() => [UserNotAuthorizedException])
   @Get()
-  findPosts() {
-    return this.postService.findAllPosts();
+  findPostsByUserId(@Query() params: FindPostByUserIdParams) {
+    return this.postService.findUserPosts(+params.userId);
   }
 }

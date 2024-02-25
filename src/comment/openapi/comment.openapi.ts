@@ -4,7 +4,7 @@ import { Comment } from '@prisma/client';
 import { PostOpenApi } from '#post/openapi/post.openapi';
 import { UserOpenApi } from '#user/openapi/user.openapi';
 
-export namespace CommentOneApi {
+export namespace CommentOpenApi {
   //Comment Model
   export class CommentModel implements Comment {
     @ApiProperty({
@@ -55,4 +55,12 @@ export namespace CommentOneApi {
     })
     updatedAt: Date;
   }
+  //Get All Post Comments Response
+  export class FindPostCommentsResponse extends CommentModel {}
+
+  //Create Comment Response
+  export class CreateCommentResponse extends CommentModel {}
+
+  //Create Comment Dto
+  export class CreateCommentDto extends PickType(CommentModel, ['content']) {}
 }
