@@ -109,4 +109,7 @@ export namespace PostOpenApi {
 
   //Update Post Response
   export class UpdatePostResponse extends OmitType(PostModel, ['comments']) {}
+
+  //Get Posts (All, User, My)
+  export class FindPosts extends OmitType(PostModel, ['comments']) {}
 }

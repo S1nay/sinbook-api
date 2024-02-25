@@ -32,6 +32,13 @@ export namespace UserOpenApi {
     id: number;
 
     @ApiProperty({
+      description: 'Никнейм пользователя',
+      example: '@Nickname',
+      type: String,
+    })
+    nickName: string;
+
+    @ApiProperty({
       description: 'Имя пользователя',
       example: 'Тест',
       type: String,

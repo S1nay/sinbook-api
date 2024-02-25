@@ -12,6 +12,7 @@ import {
   IncorrectAuthDataException,
   UserWithEmailExistException,
   UserWithEmailNotExistException,
+  UserWithNicknameExistException,
 } from './exceptions/auth-exceptions';
 import { JwtTokens } from './types/auth.types';
 
@@ -69,6 +70,9 @@ export class AuthService {
     if (isRegister) {
       if (candidate) {
         throw new UserWithEmailExistException();
+      }
+      if ('nickName' in authDto && candidate.nickName === authDto.nickName) {
+        throw new UserWithNicknameExistException();
       }
     } else {
       if (!candidate) {

@@ -7,13 +7,17 @@ import { path } from 'app-root-path';
 import { getJWTConfig } from '#config/jwt.config';
 import { PrismaModule } from '#prisma/prisma.module';
 
+console.log(process.env.NODE_ENV);
 @Global()
 @Module({
   imports: [
     PrismaModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath: '.env',
+      envFilePath:
+        process.env.NODE_ENV === 'development'
+          ? '.env.development'
+          : '.env.production',
     }),
     ServeStaticModule.forRoot({
       rootPath: `${path}/uploads`,

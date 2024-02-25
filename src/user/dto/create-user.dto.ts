@@ -11,8 +11,10 @@ export class CreateUserDto implements Prisma.UserCreateInput {
   @IsEmail({}, { message: 'Неверный формат email. Пример: test@test.com' })
   email: string;
 
-  @IsString({ message: 'Поле passwordHash должно быть строкой' })
-  @IsNotEmpty({ message: 'Поле passwordHash не должно быть пустым' })
+  @IsString({ message: 'Поле nickName должно быть строкой' })
+  @IsNotEmpty({ message: 'Поле nickName не должно быть пустым' })
+  nickName: string;
+
   passwordHash: string;
 
   @IsString({ message: 'Поле name должно быть строкой' })
