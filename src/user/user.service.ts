@@ -1,72 +1,79 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { SelectUserFields } from './types/user.type';
-import { UserResponse } from './responses/user.response';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { USER_NOT_FOUND } from './constants/user.constants';
+import { UserNotFoundException } from './exceptions/user-exceptions';
+import { exclude } from 'src/utils/excludeFields';
+import { CountFields, UserWithCountField } from './types/user.type';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  private selectUserFields(
-    excludedFields?: (keyof SelectUserFields)[],
-  ): SelectUserFields {
-    const returnedFields = {
-      id: true,
-      email: true,
-      name: true,
-      secondName: true,
-      middleName: true,
-      avatarPath: true,
-      gender: true,
-      city: true,
-      birthDate: true,
-      isDeleted: true,
+  private transformUserCount<T>(user: UserWithCountField) {
+    const userCount = user._count;
+
+    const modifiedValues = Object.keys(userCount).reduce((acc, key) => {
+      const modifiedKey = `${key}Count`;
+      acc[modifiedKey] = userCount[key];
+      return acc;
+    }, {}) as T;
+
+    delete user._count;
+
+    return {
+      ...user,
+      ...modifiedValues,
     };
-
-    if (excludedFields) {
-      for (const field of excludedFields) {
-        delete returnedFields[field];
-      }
-    }
-
-    return returnedFields;
   }
 
-  async findMyProfile(userId: number) {
-    return this.prismaService.user.findUnique({
+  async findMyProfile(
+    userId: number,
+  ): Promise<Omit<User, 'passwordHash'> & CountFields> {
+    const user = await this.prismaService.user.findUnique({
       where: { id: userId },
-      select: this.selectUserFields(),
+      include: {
+        _count: { select: { followers: true, followersOf: true } },
+      },
     });
+
+    return exclude(this.transformUserCount<CountFields>(user), [
+      'passwordHash',
+    ]);
   }
 
-  async createUser(createUserDto: CreateUserDto): Promise<UserResponse> {
-    return this.prismaService.user.create({
+  async createUser(
+    createUserDto: CreateUserDto,
+  ): Promise<Omit<User, 'passwordHash'>> {
+    const user = await this.prismaService.user.create({
       data: createUserDto,
-      select: this.selectUserFields(),
     });
+
+    return exclude(user, ['passwordHash']);
   }
 
-  async findUserById(id: number): Promise<UserResponse> {
+  async findUserById(
+    id: number,
+  ): Promise<Omit<User, 'passwordHash' | 'email'> & CountFields> {
     const user = await this.prismaService.user.findUnique({
       where: { id },
-      select: this.selectUserFields(['email']),
+      include: {
+        _count: { select: { followers: true, followersOf: true } },
+      },
     });
 
-    if (!user) throw new BadRequestException(USER_NOT_FOUND);
+    if (!user) throw new UserNotFoundException();
 
-    return user;
+    return exclude(this.transformUserCount<CountFields>(user), [
+      'passwordHash',
+      'email',
+    ]);
   }
 
-  async findUserByEmail(email: string) {
+  async findUserByEmail(email: string): Promise<User> {
     const user = await this.prismaService.user.findUnique({
       where: { email },
-      select: {
-        ...this.selectUserFields(),
-        passwordHash: true,
-      },
     });
 
     return user;
@@ -75,25 +82,28 @@ export class UserService {
   async updateUser(
     id: number,
     updateUserDto: UpdateUserDto,
-  ): Promise<UserResponse> {
-    await this.findUserById(id);
-
-    return this.prismaService.user.update({
+  ): Promise<Omit<User, 'passwordHash'> & CountFields> {
+    const user = await this.prismaService.user.update({
       where: { id },
       data: updateUserDto,
-      select: this.selectUserFields(),
+      include: {
+        _count: { select: { followers: true, followersOf: true } },
+      },
     });
+
+    return exclude(this.transformUserCount<CountFields>(user), [
+      'passwordHash',
+    ]);
   }
 
-  async softDeleteUser(id: number) {
-    const user = await this.findUserById(id);
-
-    return this.prismaService.user.update({
+  async softDeleteUser(id: number): Promise<Omit<User, 'passwordHash'>> {
+    const user = await this.prismaService.user.update({
       where: { id },
       data: {
-        ...user,
         isDeleted: true,
       },
     });
+
+    return exclude(user, ['passwordHash']);
   }
 }
