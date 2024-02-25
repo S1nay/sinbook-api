@@ -1,5 +1,6 @@
 import { ApiProperty, PartialType, PickType } from '@nestjs/swagger';
-import { UserOpenApi } from 'src/user/openapi/user.openapi';
+
+import { UserOpenApi } from '#user/openapi/user.openapi';
 
 export namespace AuthOpenApi {
   export class JwtTokens {

@@ -1,17 +1,13 @@
+import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
 import {
-  Controller,
-  Post,
   Body,
+  Controller,
   Param,
-  Patch,
   ParseIntPipe,
+  Patch,
+  Post,
   UseGuards,
 } from '@nestjs/common';
-import { PostService } from './post.service';
-import { CreatePostDto } from './dto/create-post.dto';
-import { User } from 'src/decorators/user.decorator';
-import { UpdatePostDto } from './dto/update-post.dto';
-import { PostActionGuard } from './guards/post-action.guard';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -20,13 +16,18 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import { UserNotAuthorizedException } from 'src/auth/exceptions/auth-exceptions';
+import { UserNotAuthorizedException } from '#auth/exceptions/auth-exceptions';
+import { User } from '#decorators/user.decorator';
+
+import { CreatePostDto } from './dto/create-post.dto';
+import { UpdatePostDto } from './dto/update-post.dto';
 import {
   CannotModifyPostException,
   PostNotFoundException,
 } from './exceptions/post-exceptions';
+import { PostActionGuard } from './guards/post-action.guard';
 import { PostOpenApi } from './openapi/post.openapi';
+import { PostService } from './post.service';
 
 @ApiTags('Посты')
 @ApiBearerAuth()

@@ -1,7 +1,9 @@
-import { PrismaService } from './../prisma/prisma.service';
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreatePostDto } from './dto/create-post.dto';
+
+import { PrismaService } from '#prisma/prisma.service';
+
 import { POST_NOT_FOUND } from './constants/post.constants';
+import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
 import { PostCountFields, PostWithCountField } from './types/post.types';
 

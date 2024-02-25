@@ -1,13 +1,13 @@
 import {
-  Injectable,
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  Injectable,
 } from '@nestjs/common';
 import { Request } from 'express';
 
-import { PostService } from '../post.service';
 import { CANNOT_MODIFY_POST } from '../constants/post.constants';
+import { PostService } from '../post.service';
 
 @Injectable()
 export class PostActionGuard implements CanActivate {

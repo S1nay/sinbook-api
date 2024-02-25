@@ -5,7 +5,8 @@ import {
   PipeTransform,
 } from '@nestjs/common';
 import { Gender } from '@prisma/client';
-import { CreateUserDto } from 'src/user/dto/create-user.dto';
+
+import { CreateUserDto } from '#user/dto/create-user.dto';
 
 @Injectable()
 export class TransformGenderPipe implements PipeTransform {

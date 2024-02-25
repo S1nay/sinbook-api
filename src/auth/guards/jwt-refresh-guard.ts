@@ -1,6 +1,7 @@
 import { ExecutionContext, HttpStatus, Injectable } from '@nestjs/common';
 import { JsonWebTokenError } from '@nestjs/jwt';
 import { AuthGuard } from '@nestjs/passport';
+
 import { InvalidTokenException } from '../exceptions/auth-exceptions';
 
 @Injectable()

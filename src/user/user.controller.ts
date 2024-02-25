@@ -1,14 +1,13 @@
+import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
 import {
-  Controller,
-  Get,
   Body,
-  Patch,
-  Param,
+  Controller,
   Delete,
+  Get,
+  Param,
   ParseIntPipe,
+  Patch,
 } from '@nestjs/common';
-import { UserService } from './user.service';
-import { UpdateUserDto } from './dto/update-user.dto';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -16,12 +15,14 @@ import {
   ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
-import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import { User } from 'src/decorators/user.decorator';
-import { UserNotAuthorizedException } from 'src/auth/exceptions/auth-exceptions';
 
+import { UserNotAuthorizedException } from '#auth/exceptions/auth-exceptions';
+import { User } from '#decorators/user.decorator';
+
+import { UpdateUserDto } from './dto/update-user.dto';
 import { UserNotFoundException } from './exceptions/user-exceptions';
 import { UserOpenApi } from './openapi/user.openapi';
+import { UserService } from './user.service';
 
 @ApiBearerAuth()
 @ApiTags('Пользователи')

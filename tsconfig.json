@@ -9,7 +9,8 @@
     "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
-    "baseUrl": "./",
+    "moduleResolution": "Node",
+    "baseUrl": "src",
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,
@@ -17,6 +18,19 @@
     "noErrorTruncation": true,
     "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false
+    "noFallthroughCasesInSwitch": false,
+    "paths": {
+      "#auth/*": ["auth/*"],
+      "#comment/*": ["comment/*"],
+      "#config/*": ["config/*"],
+      "#core/*": ["core/*"],
+      "#decorators/*": ["decorators/*"],
+      "#filters/*": ["filters/*"],
+      "#pipes/*": ["pipes/*"],
+      "#post/*": ["post/*"],
+      "#prisma/*": ["prisma/*"],
+      "#user/*": ["user/*"],
+      "#utils/*": ["utils/*"],
+    }
   }
 }
