@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Comment } from '@prisma/client';
 
+import { PostService } from '#post/post.service';
 import { PrismaService } from '#prisma/prisma.service';
 import { exclude } from '#utils/excludeFields';
 
@@ -8,11 +9,16 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 
 @Injectable()
 export class CommentService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly postService: PostService,
+  ) {}
 
   async findPostComments(
     postId: number,
   ): Promise<Omit<Comment, 'postId' | 'userId'>[]> {
+    await this.postService.findPostById(postId);
+
     const comments = await this.prismaService.comment.findMany({
       where: {
         postId,
@@ -41,6 +47,8 @@ export class CommentService {
     postId: number;
     createCommentDto: CreateCommentDto;
   }): Promise<Omit<Comment, 'postId' | 'userId'>> {
+    await this.postService.findPostById(postId);
+
     const comment = await this.prismaService.comment.create({
       data: {
         ...createCommentDto,
