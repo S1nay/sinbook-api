@@ -5,8 +5,9 @@ import {
   PickType,
 } from '@nestjs/swagger';
 import { Post } from '@prisma/client';
-import { CommentOneApi } from 'src/comment/openapi/comment.openapi';
-import { UserOpenApi } from 'src/user/openapi/user.openapi';
+
+import { CommentOneApi } from '#comment/openapi/comment.openapi';
+import { UserOpenApi } from '#user/openapi/user.openapi';
 
 export namespace PostOpenApi {
   // Count Fields of Post

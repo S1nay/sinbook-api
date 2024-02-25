@@ -1,7 +1,8 @@
 import { ApiHideProperty, ApiProperty, PickType } from '@nestjs/swagger';
 import { Comment } from '@prisma/client';
-import { PostOpenApi } from 'src/post/openapi/post.openapi';
-import { UserOpenApi } from 'src/user/openapi/user.openapi';
+
+import { PostOpenApi } from '#post/openapi/post.openapi';
+import { UserOpenApi } from '#user/openapi/user.openapi';
 
 export namespace CommentOneApi {
   //Comment Model

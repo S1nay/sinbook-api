@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { User } from '@prisma/client';
+
+import { PrismaService } from '#prisma/prisma.service';
+import { exclude } from '#utils/excludeFields';
+
 import { CreateUserDto } from './dto/create-user.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserNotFoundException } from './exceptions/user-exceptions';
-import { exclude } from 'src/utils/excludeFields';
 import { CountFields, UserWithCountField } from './types/user.type';
-import { User } from '@prisma/client';
 
 @Injectable()
 export class UserService {

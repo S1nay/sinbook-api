@@ -1,7 +1,8 @@
 import { ApiHideProperty, ApiProperty, OmitType } from '@nestjs/swagger';
 import { $Enums, Gender, User } from '@prisma/client';
-import { CommentOneApi } from 'src/comment/openapi/comment.openapi';
-import { PostOpenApi } from 'src/post/openapi/post.openapi';
+
+import { CommentOneApi } from '#comment/openapi/comment.openapi';
+import { PostOpenApi } from '#post/openapi/post.openapi';
 
 export namespace UserOpenApi {
   // Count Fields of User

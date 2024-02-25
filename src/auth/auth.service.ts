@@ -1,16 +1,18 @@
-import { ConfigService } from '@nestjs/config';
-import { UserService } from 'src/user/user.service';
 import { Injectable } from '@nestjs/common';
-import { RegisterDto } from './dto/register.dto';
-import { compare, genSalt, hash } from 'bcryptjs';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { User } from '@prisma/client';
+import { compare, genSalt, hash } from 'bcryptjs';
+
+import { UserService } from '#user/user.service';
+
 import { LoginDto } from './dto/login.dto';
+import { RegisterDto } from './dto/register.dto';
 import {
-  UserWithEmailNotExistException,
   IncorrectAuthDataException,
   UserWithEmailExistException,
+  UserWithEmailNotExistException,
 } from './exceptions/auth-exceptions';
-import { User } from '@prisma/client';
 import { JwtTokens } from './types/auth.types';
 
 @Injectable()

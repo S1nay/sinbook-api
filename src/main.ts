@@ -1,9 +1,11 @@
-import { NestFactory, Reflector } from '@nestjs/core';
-import { AppModule } from './app.module';
-import { HttpExceptionFilter } from './exception-filters/http-exception.filter';
 import { ValidationPipe } from '@nestjs/common';
-import { JwtAuthGuard } from './auth/guards/jwt-guard';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+
+import { JwtAuthGuard } from '#auth/guards/jwt-guard';
+import { HttpExceptionFilter } from '#filters/http-exception.filter';
+
+import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);

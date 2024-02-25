@@ -1,23 +1,8 @@
-import {
-  ArrayMaxSize,
-  IsArray,
-  IsInt,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsInt } from 'class-validator';
 
-export class UpdatePostDto {
-  @IsString({ message: 'Поле title должно быть строкой' })
-  @IsNotEmpty({ message: 'Поле title не должно быть пустым' })
-  title: string;
+import { CreatePostDto } from './create-post.dto';
 
-  @IsOptional()
-  @IsArray()
-  @IsString({ each: true })
-  @ArrayMaxSize(10)
-  images: string[];
-
+export class UpdatePostDto extends CreatePostDto {
   @IsInt({ message: 'Поле likes должно быть числом' })
   likes: number;
 
