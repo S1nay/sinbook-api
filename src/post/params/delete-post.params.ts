@@ -1,6 +1,5 @@
-import { IsNumberString } from 'class-validator';
+import { PartialType } from '@nestjs/swagger';
 
-export class DeletePostParams {
-  @IsNumberString({}, { message: 'Параметр :id должно быть числом' })
-  id: number;
-}
+import { UpdateCommentParams } from '#comment/params/update-comment.params';
+
+export class DeletePostParams extends PartialType(UpdateCommentParams) {}

@@ -6,6 +6,8 @@ import { PrismaService } from '#prisma/prisma.service';
 import { exclude } from '#utils/excludeFields';
 
 import { CreateCommentDto } from './dto/create-comment.dto';
+import { UpdateCommentDto } from './dto/update-comment.dto';
+import { CommentNotFoundException } from './exceptions/comment-exceptions';
 
 @Injectable()
 export class CommentService {
@@ -76,5 +78,52 @@ export class CommentService {
     });
 
     return exclude(comment, ['postId', 'userId']);
+  }
+
+  async findCommentById(id: number): Promise<Comment> {
+    const comment = await this.prismaService.comment.findFirst({
+      where: { id },
+    });
+
+    if (!comment) {
+      throw new CommentNotFoundException();
+    }
+
+    return comment;
+  }
+
+  async updateComment({
+    updateCommentDto,
+    id,
+  }: {
+    id: number;
+    updateCommentDto: UpdateCommentDto;
+  }): Promise<Omit<Comment, 'postId' | 'userId'>> {
+    await this.findCommentById(id);
+
+    const updatedComment = await this.prismaService.comment.update({
+      where: { id },
+      data: updateCommentDto,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            secondName: true,
+            nickName: true,
+          },
+        },
+      },
+    });
+
+    return exclude(updatedComment, ['postId', 'userId']);
+  }
+
+  async deleteComment(id: number): Promise<void> {
+    await this.findCommentById(id);
+
+    await this.prismaService.comment.delete({
+      where: { id },
+    });
   }
 }
