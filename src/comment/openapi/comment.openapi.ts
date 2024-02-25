@@ -1,10 +1,15 @@
-import { ApiHideProperty, ApiProperty, PickType } from '@nestjs/swagger';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  OmitType,
+  PickType,
+} from '@nestjs/swagger';
 import { Comment } from '@prisma/client';
 
 import { PostOpenApi } from '#post/openapi/post.openapi';
 import { UserOpenApi } from '#user/openapi/user.openapi';
 
-export namespace CommentOneApi {
+export namespace CommentOpenApi {
   //Comment Model
   export class CommentModel implements Comment {
     @ApiProperty({
@@ -55,4 +60,27 @@ export namespace CommentOneApi {
     })
     updatedAt: Date;
   }
+  //Get All Post Comments Response
+  export class FindPostCommentsResponse extends OmitType(CommentModel, [
+    'postId',
+    'userId',
+  ]) {}
+
+  //Create Comment Response
+  export class CreateCommentResponse extends OmitType(CommentModel, [
+    'postId',
+    'userId',
+  ]) {}
+
+  //Update Comment Response
+  export class UpdateCommentResponse extends OmitType(CommentModel, [
+    'postId',
+    'userId',
+  ]) {}
+
+  //Create Comment Dto
+  export class CreateCommentDto extends PickType(CommentModel, ['content']) {}
+
+  //Update Comment Dto
+  export class UpdateCommentDto extends PickType(CommentModel, ['content']) {}
 }

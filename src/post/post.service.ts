@@ -47,7 +47,7 @@ export class PostService {
             id: true,
             name: true,
             secondName: true,
-            middleName: true,
+            nickName: true,
           },
         },
       },
@@ -65,7 +65,7 @@ export class PostService {
             id: true,
             name: true,
             secondName: true,
-            middleName: true,
+            nickName: true,
           },
         },
         _count: {
@@ -105,7 +105,7 @@ export class PostService {
             id: true,
             name: true,
             secondName: true,
-            middleName: true,
+            nickName: true,
           },
         },
       },
@@ -120,28 +120,6 @@ export class PostService {
     this.prismaService.post.delete({
       where: { id },
     });
-  }
-
-  async findAllPosts(): Promise<Post[]> {
-    const posts = await this.prismaService.post.findMany({
-      include: {
-        _count: {
-          select: {
-            comments: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            secondName: true,
-            middleName: true,
-          },
-        },
-      },
-    });
-
-    return posts.map((post) => this.transformPostCount<PostCountFields>(post));
   }
 
   async findUserPosts(userId: number): Promise<Post[]> {
@@ -160,7 +138,7 @@ export class PostService {
             id: true,
             name: true,
             secondName: true,
-            middleName: true,
+            nickName: true,
           },
         },
       },

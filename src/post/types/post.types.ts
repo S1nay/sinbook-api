@@ -7,7 +7,7 @@ export type PostWithCountField = Prisma.PostGetPayload<{
         id: true;
         name: true;
         secondName: true;
-        middleName: true;
+        nickName: true;
       };
     };
     _count: {

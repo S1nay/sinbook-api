@@ -1,7 +1,7 @@
 import { ApiHideProperty, ApiProperty, OmitType } from '@nestjs/swagger';
 import { $Enums, Gender, User } from '@prisma/client';
 
-import { CommentOneApi } from '#comment/openapi/comment.openapi';
+import { CommentOpenApi } from '#comment/openapi/comment.openapi';
 import { PostOpenApi } from '#post/openapi/post.openapi';
 
 export namespace UserOpenApi {
@@ -136,7 +136,7 @@ export namespace UserOpenApi {
     posts?: () => PostOpenApi.PostModel[];
 
     @ApiHideProperty()
-    comments?: () => CommentOneApi.CommentModel[];
+    comments?: () => CommentOpenApi.CommentModel[];
   }
 
   //Create User Fields

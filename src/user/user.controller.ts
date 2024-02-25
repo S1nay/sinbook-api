@@ -1,13 +1,5 @@
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  ParseIntPipe,
-  Patch,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -18,10 +10,12 @@ import {
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth-exceptions';
 import { User } from '#decorators/user.decorator';
+import { TransformGenderPipe } from '#pipes/gender-transform.pipe';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserNotFoundException } from './exceptions/user-exceptions';
 import { UserOpenApi } from './openapi/user.openapi';
+import { FindUniqueUserParams } from './params/find-unique-user.params';
 import { UserService } from './user.service';
 
 @ApiBearerAuth()
@@ -41,15 +35,18 @@ export class UserController {
   @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @ApiParam({ type: Number, example: 1, name: 'id' })
   @Get(':id')
-  findUnique(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.findUserById(id);
+  findUnique(@Param() params: FindUniqueUserParams) {
+    return this.userService.findUserById(+params.id);
   }
 
   @ApiOkResponse({ type: UserOpenApi.UpdateUserResponse })
   @ApiException(() => [UserNotAuthorizedException])
   @ApiBody({ type: UserOpenApi.UpdateUserDto })
   @Patch()
-  update(@User() userId: number, @Body() updateUserDto: UpdateUserDto) {
+  update(
+    @User() userId: number,
+    @Body(TransformGenderPipe) updateUserDto: UpdateUserDto,
+  ) {
     return this.userService.updateUser(userId, updateUserDto);
   }
 

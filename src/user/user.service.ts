@@ -87,7 +87,10 @@ export class UserService {
   ): Promise<Omit<User, 'passwordHash'> & CountFields> {
     const user = await this.prismaService.user.update({
       where: { id },
-      data: updateUserDto,
+      data: {
+        ...updateUserDto,
+        birthDate: new Date(updateUserDto.birthDate),
+      },
       include: {
         _count: { select: { followers: true, followersOf: true } },
       },
