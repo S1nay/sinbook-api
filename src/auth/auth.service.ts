@@ -51,6 +51,7 @@ export class AuthService {
       email,
       passwordHash: await hash(password, salt),
       birthDate: new Date(registerDto.birthDate),
+      nickName: `@${registerDto.nickName}`,
     });
 
     return this.generateTokens(newUser);
@@ -64,6 +65,7 @@ export class AuthService {
     isRegister: boolean;
   }): Promise<User> {
     const { email, password } = authDto;
+    console.log(authDto);
 
     const candidate = await this.userService.findUserByEmail(email);
 
@@ -71,7 +73,7 @@ export class AuthService {
       if (candidate) {
         throw new UserWithEmailExistException();
       }
-      if ('nickName' in authDto && candidate.nickName === authDto.nickName) {
+      if ('nickName' in authDto && candidate?.nickName === authDto.nickName) {
         throw new UserWithNicknameExistException();
       }
     } else {

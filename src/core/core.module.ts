@@ -7,7 +7,6 @@ import { path } from 'app-root-path';
 import { getJWTConfig } from '#config/jwt.config';
 import { PrismaModule } from '#prisma/prisma.module';
 
-console.log(process.env.NODE_ENV);
 @Global()
 @Module({
   imports: [

@@ -1,11 +1,6 @@
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
-import {
-  ApiBearerAuth,
-  ApiBody,
-  ApiOkResponse,
-  ApiTags,
-} from '@nestjs/swagger';
+import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { JwtRefreshGuard } from '#auth/guards/jwt-refresh-guard';
 import { SkipAuth } from '#decorators/skip-auth.decorator';
@@ -16,7 +11,6 @@ import { RegisterDto } from './dto/register.dto';
 import {
   IncorrectAuthDataException,
   InvalidTokenException,
-  UserNotAuthorizedException,
   UserWithEmailExistException,
   UserWithEmailNotExistException,
 } from './exceptions/auth-exceptions';
@@ -51,10 +45,10 @@ export class AuthController {
     return this.authService.register(registerDto);
   }
 
-  @ApiBearerAuth()
+  @SkipAuth()
   @ApiOkResponse({ type: new AuthOpenApi.JwtTokens().access })
-  @ApiException(() => [UserNotAuthorizedException, InvalidTokenException])
-  @ApiBody({ type: new AuthOpenApi.JwtTokens().access })
+  @ApiException(() => [InvalidTokenException])
+  @ApiBody({ type: new AuthOpenApi.JwtTokens().refresh })
   @UseGuards(JwtRefreshGuard)
   @HttpCode(200)
   @Post('refresh')
