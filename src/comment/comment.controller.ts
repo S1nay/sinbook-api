@@ -44,11 +44,11 @@ import { CommentService } from './comment.service';
 export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
-  @ApiParam({ name: 'postId', type: Number })
+  @ApiQuery({ name: 'postId', type: Number })
   @ApiOkResponse({ type: [CommentOpenApi.FindPostCommentsResponse] })
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
-  @Get(':postId')
-  findAllByPost(@Param() params: FindPostCommentsParams) {
+  @Get()
+  findAllByPost(@Query() params: FindPostCommentsParams) {
     return this.commentService.findPostComments(+params.postId);
   }
 
