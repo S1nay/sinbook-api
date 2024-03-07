@@ -4,11 +4,30 @@ module.exports = {
     project: 'tsconfig.json',
     tsconfigRootDir: __dirname,
     sourceType: 'module',
+    ecmaVersion: 'latest',
   },
-  plugins: ['@typescript-eslint/eslint-plugin'],
+  plugins: ['@typescript-eslint/eslint-plugin', 'simple-import-sort'],
   extends: [
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
+  ],
+  overrides: [
+    {
+      files: ['*.ts'],
+      rules: {
+        'simple-import-sort/imports': [
+          'error',
+          {
+            groups: [
+              ['^@?\\w'],
+              ['^#\\w+(/.*|$)'],
+              ['^\\.\\.(?!/?$)', '^\\.\\./?$'],
+              ['^\\./(?=.*/)(?!/?$)', '^\\.(?!/?$)', '^\\./?$'],
+            ],
+          },
+        ],
+      },
+    },
   ],
   root: true,
   env: {
@@ -19,5 +38,8 @@ module.exports = {
   rules: {
     '@typescript-eslint/interface-name-prefix': 'off',
     '@typescript-eslint/explicit-module-boundary-types': 'off',
+    '@typescript-eslint/no-namespace': 'off',
+    'simple-import-sort/imports': 'error',
+    'simple-import-sort/exports': 'error',
   },
 };

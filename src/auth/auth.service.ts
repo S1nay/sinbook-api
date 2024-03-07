@@ -1,17 +1,20 @@
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { UserService } from 'src/user/user.service';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { RegisterDto } from './dto/register.dto';
-import { compare, genSalt, hash } from 'bcryptjs';
 import { JwtService } from '@nestjs/jwt';
-import { UserResponse } from 'src/user/responses/user.response';
+import { User } from '@prisma/client';
+import { compare, genSalt, hash } from 'bcryptjs';
+
+import { UserService } from '#user/user.service';
+
 import { LoginDto } from './dto/login.dto';
-import { AuthResponse } from './reponses/auth.response';
+import { RegisterDto } from './dto/register.dto';
 import {
-  INCORRECT_AUTH_DATA,
-  USER_WITH_EMAIL_EXIST,
-  USER_WITH_EMAIL_NOT_EXIST,
-} from './constants/auth.constants';
+  IncorrectAuthDataException,
+  UserWithEmailExistException,
+  UserWithEmailNotExistException,
+  UserWithNicknameExistException,
+} from './exceptions/auth-exceptions';
+import { JwtTokens } from './types/auth.types';
 
 @Injectable()
 export class AuthService {
@@ -21,7 +24,9 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async login(loginDto: LoginDto): Promise<AuthResponse> {
+  async login(
+    loginDto: LoginDto,
+  ): Promise<{ user: Omit<User, 'passwordHash'> } & JwtTokens> {
     const user = await this.validateUser({
       authDto: loginDto,
       isRegister: false,
@@ -30,7 +35,9 @@ export class AuthService {
     return this.generateTokens(user);
   }
 
-  async register(registerDto: RegisterDto): Promise<AuthResponse> {
+  async register(
+    registerDto: RegisterDto,
+  ): Promise<{ user: Omit<User, 'passwordHash'> } & JwtTokens> {
     const { email, password } = registerDto;
 
     await this.validateUser({ authDto: registerDto, isRegister: true });
@@ -44,6 +51,7 @@ export class AuthService {
       email,
       passwordHash: await hash(password, salt),
       birthDate: new Date(registerDto.birthDate),
+      nickName: `@${registerDto.nickName}`,
     });
 
     return this.generateTokens(newUser);
@@ -55,24 +63,28 @@ export class AuthService {
   }: {
     authDto: LoginDto | RegisterDto;
     isRegister: boolean;
-  }): Promise<UserResponse> {
+  }): Promise<User> {
     const { email, password } = authDto;
+    console.log(authDto);
 
-    const candidate = await this.userService.findOneByEmail(email);
+    const candidate = await this.userService.findUserByEmail(email);
 
     if (isRegister) {
       if (candidate) {
-        throw new UnauthorizedException(USER_WITH_EMAIL_EXIST);
+        throw new UserWithEmailExistException();
+      }
+      if ('nickName' in authDto && candidate?.nickName === authDto.nickName) {
+        throw new UserWithNicknameExistException();
       }
     } else {
       if (!candidate) {
-        throw new UnauthorizedException(USER_WITH_EMAIL_NOT_EXIST);
+        throw new UserWithEmailNotExistException();
       }
 
       const isCorrectPassword = await compare(password, candidate.passwordHash);
 
       if (!isCorrectPassword) {
-        throw new UnauthorizedException(INCORRECT_AUTH_DATA);
+        throw new IncorrectAuthDataException();
       }
 
       delete candidate.passwordHash;
@@ -87,7 +99,7 @@ export class AuthService {
     return {
       access: await this.jwtService.signAsync(
         {
-          user_id: userData.id,
+          user_id: userData.user_id,
           email: userData.email,
         },
         {
@@ -97,7 +109,9 @@ export class AuthService {
     };
   }
 
-  async generateTokens(userData: UserResponse): Promise<AuthResponse> {
+  async generateTokens(
+    userData: Omit<User, 'passwordHash'> | User,
+  ): Promise<{ user: Omit<User, 'passwordHash'> } & JwtTokens> {
     return {
       user: userData,
       access: await this.jwtService.signAsync(

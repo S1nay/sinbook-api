@@ -1,12 +1,14 @@
-export type SelectUserFields = {
-  id: boolean;
-  email: boolean;
-  name: boolean;
-  secondName: boolean;
-  middleName: boolean;
-  avatarPath: boolean;
-  gender: boolean;
-  city: boolean;
-  birthDate: boolean;
-  isDeleted: boolean;
+import { Prisma } from '@prisma/client';
+
+export type UserWithCountField = Prisma.UserGetPayload<{
+  include: {
+    _count: {
+      select: Omit<Prisma.UserCountOutputTypeSelect, 'posts' | 'comments'>;
+    };
+  };
+}>;
+
+export type CountFields = {
+  followersCount: number;
+  followersOfCount: number;
 };

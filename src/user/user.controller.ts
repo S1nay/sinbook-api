@@ -1,47 +1,59 @@
+import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
+import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
 import {
-  Controller,
-  Get,
-  Body,
-  Patch,
-  Param,
-  Delete,
-  ParseIntPipe,
-  UseGuards,
-} from '@nestjs/common';
-import { UserService } from './user.service';
-import { UpdateUserDto } from './dto/update-user.dto';
-import { UserActionGuard } from 'src/guards/user-action.guard';
-import { JwtAuthGuard } from 'src/guards/jwt-guard';
-import { User } from 'src/decorators/user.decorator';
+  ApiBearerAuth,
+  ApiBody,
+  ApiOkResponse,
+  ApiParam,
+  ApiTags,
+} from '@nestjs/swagger';
 
+import { UserNotAuthorizedException } from '#auth/exceptions/auth-exceptions';
+import { User } from '#decorators/user.decorator';
+import { TransformGenderPipe } from '#pipes/gender-transform.pipe';
+
+import { UpdateUserDto } from './dto/update-user.dto';
+import { UserNotFoundException } from './exceptions/user-exceptions';
+import { UserOpenApi } from './openapi/user.openapi';
+import { FindUniqueUserParams } from './params/find-unique-user.params';
+import { UserService } from './user.service';
+
+@ApiBearerAuth()
+@ApiTags('Пользователи')
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({ type: UserOpenApi.FindMeResponse })
+  @ApiException(() => UserNotAuthorizedException)
   @Get('/me')
-  getMe(@User() id: number) {
-    return this.userService.getMyProfile(id);
+  findMe(@User() id: number) {
+    return this.userService.findMyProfile(id);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @ApiOkResponse({ type: UserOpenApi.FindUniqueUserResponse })
+  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
+  @ApiParam({ type: Number, example: 1, name: 'id' })
   @Get(':id')
-  findUserById(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.findOneById(id);
+  findUnique(@Param() params: FindUniqueUserParams) {
+    return this.userService.findUserById(+params.id);
   }
 
-  @UseGuards(JwtAuthGuard, UserActionGuard)
-  @Patch(':id')
-  updateUser(
-    @Param('id', ParseIntPipe) id: number,
-    @Body() updateUserDto: UpdateUserDto,
+  @ApiOkResponse({ type: UserOpenApi.UpdateUserResponse })
+  @ApiException(() => [UserNotAuthorizedException])
+  @ApiBody({ type: UserOpenApi.UpdateUserDto })
+  @Patch()
+  update(
+    @User() userId: number,
+    @Body(TransformGenderPipe) updateUserDto: UpdateUserDto,
   ) {
-    return this.userService.update(id, updateUserDto);
+    return this.userService.updateUser(userId, updateUserDto);
   }
 
-  @UseGuards(JwtAuthGuard, UserActionGuard)
-  @Delete(':id')
-  softDeleteUser(@Param('id', ParseIntPipe) id: number) {
-    return this.userService.softDelete(id);
+  @ApiOkResponse({ type: UserOpenApi.DeleteUserResponse })
+  @ApiException(() => [UserNotAuthorizedException])
+  @Delete()
+  delete(@User() userId: number) {
+    return this.userService.softDeleteUser(userId);
   }
 }

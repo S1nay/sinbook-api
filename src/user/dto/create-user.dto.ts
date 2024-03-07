@@ -1,4 +1,4 @@
-import { Gender } from '@prisma/client';
+import { Gender, Prisma } from '@prisma/client';
 import {
   IsDateString,
   IsEmail,
@@ -7,12 +7,13 @@ import {
   IsString,
 } from 'class-validator';
 
-export class CreateUserDto {
-  @IsEmail(
-    {},
-    { message: 'Неверный формат email. Пример: example@example.com' },
-  )
+export class CreateUserDto implements Prisma.UserCreateInput {
+  @IsEmail({}, { message: 'Неверный формат email. Пример: test@test.com' })
   email: string;
+
+  @IsString({ message: 'Поле nickName должно быть строкой' })
+  @IsNotEmpty({ message: 'Поле nickName не должно быть пустым' })
+  nickName: string;
 
   passwordHash: string;
 
@@ -28,16 +29,12 @@ export class CreateUserDto {
   @IsNotEmpty({ message: 'Поле middleName не должно быть пустым' })
   middleName: string;
 
-  @IsString({ message: 'Поле avatarPath должно быть строкой' })
-  @IsOptional()
-  avatarPath: string;
-
   @IsString({ message: 'Поле city должно быть строкой' })
   @IsOptional()
   city: string;
 
   @IsDateString({}, { message: 'Поле birthDate должно быть строкой даты' })
-  @IsNotEmpty({ message: 'Поле birthDate не должно быть пустым' })
+  @IsOptional()
   birthDate: Date;
 
   @IsNotEmpty({ message: 'Поле gender не должно быть пустым' })
