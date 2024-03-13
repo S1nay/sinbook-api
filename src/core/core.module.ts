@@ -20,7 +20,7 @@ import { PrismaModule } from '#prisma/prisma.module';
     }),
     ServeStaticModule.forRoot({
       rootPath: `${path}/uploads`,
-      serveRoot: '/static/',
+      serveRoot: '/api',
     }),
     JwtModule.registerAsync({
       inject: [ConfigService],

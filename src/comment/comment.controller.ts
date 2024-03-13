@@ -45,7 +45,10 @@ export class CommentController {
   constructor(private readonly commentService: CommentService) {}
 
   @ApiQuery({ name: 'postId', type: Number })
-  @ApiOkResponse({ type: [CommentOpenApi.FindPostCommentsResponse] })
+  @ApiOkResponse({
+    type: CommentOpenApi.FindPostCommentsResponse,
+    isArray: true,
+  })
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
   @Get()
   findAllByPost(@Query() params: FindPostCommentsParams) {

@@ -26,11 +26,11 @@
       "#core/*": ["core/*"],
       "#decorators/*": ["decorators/*"],
       "#filters/*": ["filters/*"],
-      "#pipes/*": ["pipes/*"],
       "#post/*": ["post/*"],
       "#prisma/*": ["prisma/*"],
       "#user/*": ["user/*"],
       "#utils/*": ["utils/*"],
+      "#file/*": ["file/*"],
     }
   }
 }
