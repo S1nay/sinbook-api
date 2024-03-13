@@ -1,5 +1,5 @@
 import { ValidationPipe } from '@nestjs/common';
-import { NestFactory, Reflector } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '#auth/guards/jwt-guard';
@@ -11,6 +11,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   const reflector = app.get(Reflector);
+
+  const httpAdapter = app.get(HttpAdapterHost);
 
   app.setGlobalPrefix('api');
   app.enableCors();
@@ -27,7 +29,7 @@ async function bootstrap() {
   SwaggerModule.setup('api', app, document);
 
   app.useGlobalPipes(new ValidationPipe());
-  app.useGlobalFilters(new HttpExceptionFilter());
+  app.useGlobalFilters(new HttpExceptionFilter(httpAdapter));
   app.useGlobalGuards(new JwtAuthGuard(reflector));
 
   await app.listen(5555);

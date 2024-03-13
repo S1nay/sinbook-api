@@ -80,14 +80,14 @@ export class PostController {
     return this.postService.deletePost(+params.id);
   }
 
-  @ApiOkResponse({ type: PostOpenApi.FindPosts })
+  @ApiOkResponse({ type: PostOpenApi.FindPosts, isArray: true })
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
   @Get('me')
   findMyPosts(@User() userId: number) {
     return this.postService.findUserPosts(userId);
   }
 
-  @ApiOkResponse({ type: PostOpenApi.FindPosts })
+  @ApiOkResponse({ type: PostOpenApi.FindPosts, isArray: true })
   @ApiQuery({ name: 'userId', type: Number })
   @ApiException(() => [UserNotAuthorizedException])
   @Get()

@@ -4,7 +4,7 @@ import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { JwtRefreshGuard } from '#auth/guards/jwt-refresh-guard';
 import { SkipAuth } from '#decorators/skip-auth.decorator';
-import { TransformGenderPipe } from '#pipes/gender-transform.pipe';
+import { TransformGenderPipe } from '#user/pipes/gender-transform.pipe';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';

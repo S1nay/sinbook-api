@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { FileResponse } from './responses/file.response';
-import { ensureDir, writeFile } from 'fs-extra';
 import { path } from 'app-root-path';
+import { ensureDir, writeFile } from 'fs-extra';
+
 import { UploadFileDto } from './dto/upload-file.dto';
+import { UploadFilesDto } from './dto/upload-files.dto';
+import { CreatedFile } from './types/file.types';
 
 @Injectable()
 export class FileService {
@@ -12,27 +14,46 @@ export class FileService {
     this.pathUploads = `${path}/uploads`;
   }
 
-  async uploadAvatar({ file, userId }: UploadFileDto): Promise<FileResponse> {
-    const userFolder = `avatars/${userId}`;
-    const uploadFolder = `${this.pathUploads}/${userFolder}`;
+  async uploadFile({ file, dir, host }: UploadFileDto): Promise<CreatedFile> {
+    if (!Array.isArray(file)) {
+      const uploadFolder = `${this.pathUploads}/${dir}`;
 
-    await ensureDir(uploadFolder);
+      await ensureDir(uploadFolder);
 
-    await writeFile(`${uploadFolder}/${file.originalname}`, file.buffer);
+      await writeFile(`${uploadFolder}/${file.originalname}`, file.buffer);
 
-    const result = {
-      url: `${userFolder}/${file.originalname}`,
-      fileName: file.originalname,
-    };
+      const result = {
+        url: `${host}/api/${dir}/${file.originalname}`,
+        fileName: file.originalname,
+      };
 
-    return result;
+      return result;
+    }
   }
 
-  async uploadFiles(files) {
-    return files;
+  async uploadFiles({
+    files,
+    host,
+    dir,
+  }: UploadFilesDto): Promise<CreatedFile[]> {
+    if (Array.isArray(files)) {
+      const uploadFolder = `${this.pathUploads}/${dir}`;
+
+      await ensureDir(uploadFolder);
+
+      const uploadedFiles = [];
+
+      for (const file of files) {
+        await writeFile(`${uploadFolder}/${file.originalname}`, file.buffer);
+
+        const result = {
+          url: `${host}/api/${dir}/${file.originalname}`,
+          fileName: file.originalname,
+        };
+
+        uploadedFiles.push(result);
+      }
+      return uploadedFiles;
+    }
   }
 }
-
-// posts/postId/files
-// avatars/userId/files
-// diaglos/dialogId/files

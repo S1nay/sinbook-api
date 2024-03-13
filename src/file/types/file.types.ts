@@ -1,4 +1,4 @@
-export type FileResponse = {
+export type CreatedFile = {
   fileName: string;
   url: string;
 };

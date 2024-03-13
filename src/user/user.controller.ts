@@ -10,7 +10,7 @@ import {
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth-exceptions';
 import { User } from '#decorators/user.decorator';
-import { TransformGenderPipe } from '#pipes/gender-transform.pipe';
+import { TransformGenderPipe } from '#user/pipes/gender-transform.pipe';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserNotFoundException } from './exceptions/user-exceptions';
