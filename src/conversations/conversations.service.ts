@@ -3,6 +3,6 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '#prisma/prisma.service';
 
 @Injectable()
-export class ChatsService {
+export class ConversationsService {
   constructor(private readonly prismaService: PrismaService) {}
 }

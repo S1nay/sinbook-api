@@ -9,13 +9,13 @@ import { Socket } from 'socket.io';
 
 import { SocketAuthMiddleware } from '#auth/middlewares/websocket-auth.middleware';
 
-import { ChatsService } from './chats.service';
+import { ConversationsService } from './conversations.service';
 
 @WebSocketGateway({ namespace: 'chats' })
-export class ChatsGateway
+export class ConversationsGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
-  constructor(private readonly chatsService: ChatsService) {}
+  constructor(private readonly conversationsService: ConversationsService) {}
 
   afterInit(socket: Socket) {
     socket.use(SocketAuthMiddleware() as never);
