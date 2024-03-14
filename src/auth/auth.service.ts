@@ -13,7 +13,7 @@ import {
   UserWithEmailExistException,
   UserWithEmailNotExistException,
   UserWithNicknameExistException,
-} from './exceptions/auth-exceptions';
+} from './exceptions/auth.exceptions';
 import { JwtTokens } from './types/auth.types';
 
 @Injectable()

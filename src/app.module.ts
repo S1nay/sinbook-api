@@ -7,6 +7,8 @@ import { FileModule } from '#file/file.module';
 import { PostModule } from '#post/post.module';
 import { UserModule } from '#user/user.module';
 
+import { ChatsModule } from './chats/chats.module';
+
 @Module({
   imports: [
     CoreModule,
@@ -15,6 +17,7 @@ import { UserModule } from '#user/user.module';
     PostModule,
     CommentModule,
     FileModule,
+    ChatsModule,
   ],
 })
 export class AppModule {}

@@ -19,9 +19,9 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { UserNotAuthorizedException } from '#auth/exceptions/auth-exceptions';
+import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { User } from '#decorators/user.decorator';
-import { PostNotFoundException } from '#post/exceptions/post-exceptions';
+import { PostNotFoundException } from '#post/exceptions/post.exceptions';
 
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -29,7 +29,7 @@ import {
   CannotDeleteCommentException,
   CannotModifyCommentException,
   CommentNotFoundException,
-} from './exceptions/comment-exceptions';
+} from './exceptions/comment.exceptions';
 import { CommentActionGuard } from './guards/comment-action.guard';
 import { CommentOpenApi } from './openapi/comment.openapi';
 import { CreateCommentParams } from './params/create-comment.params';

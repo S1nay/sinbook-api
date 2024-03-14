@@ -17,7 +17,7 @@ import {
   FileIsRequiredException,
   InvalidImageTypeException,
   MaxBufferSizeException,
-} from './exceptions/file-exceptions';
+} from './exceptions/file.exceptions';
 import { ApiFile } from './openapi/api-file.decorator';
 import { FileOpenApi } from './openapi/file.openapi';
 import { FileValidatorPipe } from './pipes/file-validator.pipe';

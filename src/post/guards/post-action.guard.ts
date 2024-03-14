@@ -4,7 +4,7 @@ import { Request } from 'express';
 import {
   CannotDeletePostException,
   CannotModifyPostException,
-} from '#post/exceptions/post-exceptions';
+} from '#post/exceptions/post.exceptions';
 
 import { PostService } from '../post.service';
 

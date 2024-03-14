@@ -6,7 +6,7 @@ import { exclude } from '#utils/excludeFields';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserNotFoundException } from './exceptions/user-exceptions';
+import { UserNotFoundException } from './exceptions/user.exceptions';
 import { CountFields, UserWithCountField } from './types/user.type';
 
 @Injectable()

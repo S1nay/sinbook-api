@@ -7,7 +7,7 @@ import { exclude } from '#utils/excludeFields';
 
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
-import { CommentNotFoundException } from './exceptions/comment-exceptions';
+import { CommentNotFoundException } from './exceptions/comment.exceptions';
 
 @Injectable()
 export class CommentService {

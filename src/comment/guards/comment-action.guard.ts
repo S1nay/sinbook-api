@@ -4,7 +4,7 @@ import { Request } from 'express';
 import {
   CannotDeleteCommentException,
   CannotModifyCommentException,
-} from '#comment/exceptions/comment-exceptions';
+} from '#comment/exceptions/comment.exceptions';
 
 import { CommentService } from '../comment.service';
 

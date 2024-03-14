@@ -19,7 +19,7 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { UserNotAuthorizedException } from '#auth/exceptions/auth-exceptions';
+import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { User } from '#decorators/user.decorator';
 
 import { CreatePostDto } from './dto/create-post.dto';
@@ -28,7 +28,7 @@ import {
   CannotDeletePostException,
   CannotModifyPostException,
   PostNotFoundException,
-} from './exceptions/post-exceptions';
+} from './exceptions/post.exceptions';
 import { PostActionGuard } from './guards/post-action.guard';
 import { PostOpenApi } from './openapi/post.openapi';
 import { DeletePostParams } from './params/delete-post.params';

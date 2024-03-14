@@ -8,12 +8,12 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { UserNotAuthorizedException } from '#auth/exceptions/auth-exceptions';
+import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { User } from '#decorators/user.decorator';
 import { TransformGenderPipe } from '#user/pipes/gender-transform.pipe';
 
 import { UpdateUserDto } from './dto/update-user.dto';
-import { UserNotFoundException } from './exceptions/user-exceptions';
+import { UserNotFoundException } from './exceptions/user.exceptions';
 import { UserOpenApi } from './openapi/user.openapi';
 import { FindUniqueUserParams } from './params/find-unique-user.params';
 import { UserService } from './user.service';
