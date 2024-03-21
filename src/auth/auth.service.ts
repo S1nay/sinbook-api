@@ -65,7 +65,6 @@ export class AuthService {
     isRegister: boolean;
   }): Promise<User> {
     const { email, password } = authDto;
-    console.log(authDto);
 
     const candidate = await this.userService.findUserByEmail(email);
 

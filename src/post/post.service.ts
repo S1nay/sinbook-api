@@ -117,7 +117,7 @@ export class PostService {
   async deletePost(id: number): Promise<void> {
     await this.findPostById(id);
 
-    this.prismaService.post.delete({
+    await this.prismaService.post.delete({
       where: { id },
     });
   }

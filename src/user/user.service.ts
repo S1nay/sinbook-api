@@ -36,7 +36,7 @@ export class UserService {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
       include: {
-        _count: { select: { followers: true, followersOf: true } },
+        _count: { select: { followers: true, following: true } },
       },
     });
 
@@ -61,7 +61,7 @@ export class UserService {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       include: {
-        _count: { select: { followers: true, followersOf: true } },
+        _count: { select: { followers: true, following: true } },
       },
     });
 
@@ -92,7 +92,7 @@ export class UserService {
         birthDate: new Date(updateUserDto.birthDate),
       },
       include: {
-        _count: { select: { followers: true, followersOf: true } },
+        _count: { select: { followers: true, following: true } },
       },
     });
 

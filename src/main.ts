@@ -15,7 +15,12 @@ async function bootstrap() {
   const httpAdapter = app.get(HttpAdapterHost);
 
   app.setGlobalPrefix('api');
-  app.enableCors();
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+    allowedHeaders: ['Authorization', 'Content-type', 'Accept'],
+    methods: ['PUT', 'POST', 'DELETE', 'GET', 'OPTIONS'],
+  });
   app.enableShutdownHooks();
 
   const config = new DocumentBuilder()
