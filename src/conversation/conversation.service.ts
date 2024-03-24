@@ -8,13 +8,18 @@ import { PrismaService } from '#prisma/prisma.service';
 import { exclude } from '#utils/excludeFields';
 
 import { CreateConversationDto } from './dto/createConversation.dto';
+import { DeleteConversationDto } from './dto/deleteConversation.dto';
+import {
+  CheckConversationIsExistParams,
+  SetConversationLastMessageParams,
+} from './types/conversation.types';
 
 @Injectable()
 export class ConversationService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async createConversation({ senderId, recipientId }: CreateConversationDto) {
-    await this.checkConvesationInExist(recipientId, senderId);
+    await this.checkConvesationIsExist({ recipientId, senderId });
 
     const conversation = await this.prismaService.conversation.create({
       data: {
@@ -108,7 +113,10 @@ export class ConversationService {
     return conversation;
   }
 
-  async checkConvesationInExist(recipientId: number, senderId: number) {
+  async checkConvesationIsExist({
+    recipientId,
+    senderId,
+  }: CheckConversationIsExistParams) {
     const conversation = await this.prismaService.conversation.findFirst({
       where: {
         members: {
@@ -128,15 +136,23 @@ export class ConversationService {
     }
   }
 
-  async deleteConversation(conversationId: number) {
+  async deleteConversation({ conversationId, userId }: DeleteConversationDto) {
     await this.getConversationById(conversationId);
 
-    await this.prismaService.conversation.delete({
-      where: { id: conversationId },
+    await this.prismaService.conversationMembers.delete({
+      where: {
+        conversationId_memberId: {
+          conversationId: conversationId,
+          memberId: userId,
+        },
+      },
     });
   }
 
-  async setConversationLastMessage(conversationId: number, messageId: number) {
+  async setConversationLastMessage({
+    conversationId,
+    messageId,
+  }: SetConversationLastMessageParams) {
     const conversation = await this.getConversationById(conversationId);
 
     return this.prismaService.conversation.update({
@@ -152,15 +168,7 @@ export class ConversationService {
         },
       },
       include: {
-        lastMessage: {
-          include: {
-            sender: {
-              select: {
-                id: true,
-              },
-            },
-          },
-        },
+        lastMessage: true,
       },
     });
   }

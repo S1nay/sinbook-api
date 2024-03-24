@@ -49,7 +49,7 @@ export class MessageService {
   async deleteMessage(messageId: number) {
     await this.getMessagById(messageId);
 
-    await this.prismaService.message.delete({
+    return this.prismaService.message.delete({
       where: { id: messageId },
     });
   }

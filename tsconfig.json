@@ -25,6 +25,7 @@
       "#config/*": ["config/*"],
       "#core/*": ["core/*"],
       "#decorators/*": ["decorators/*"],
+      "#pipes/*": ["pipes/*"],
       "#filters/*": ["filters/*"],
       "#post/*": ["post/*"],
       "#prisma/*": ["prisma/*"],

@@ -5,8 +5,6 @@ export class CreateMessageDto {
   @IsNotEmpty({ message: 'Поле title не должно быть пустым' })
   message: string;
 
-  @IsInt({ message: 'Поле senderId должно быть числом' })
-  @IsNotEmpty({ message: 'Поле senderId является обязательным' })
   senderId: number;
 
   @IsInt({ message: 'Поле recipientId должно быть числом' })

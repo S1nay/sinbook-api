@@ -1,4 +1,5 @@
 import { ConfigService } from '@nestjs/config';
+import { WsException } from '@nestjs/websockets';
 import { JwtPayload, verify } from 'jsonwebtoken';
 import { Socket } from 'socket.io';
 
@@ -8,23 +9,21 @@ export const WsAuthMiddleware = (
   socket: Socket,
   next: (err?: Error) => void,
 ) => {
-  const authToken: string =
-    socket.handshake.auth?.token ?? socket.handshake.headers?.authorization;
+  try {
+    const authToken: string =
+      socket.handshake.auth?.token ?? socket.handshake.headers?.authorization;
 
-  const [type, token] = authToken?.split(' ') ?? [];
-  const bearerToken = type === 'Bearer' ? token : undefined;
+    const [type, token] = authToken?.split(' ') ?? [];
+    const bearerToken = type === 'Bearer' ? token : undefined;
 
-  const userData = verify(
-    bearerToken,
-    new ConfigService().get('JWT_SECRET'),
-  ) as JwtPayload;
+    const userData = verify(
+      bearerToken,
+      new ConfigService().get('JWT_SECRET'),
+    ) as JwtPayload;
 
-  socket.data = { ...socket.data, userId: userData.user_id };
-  socket.join(String(userData.user_id));
-
-  if (userData) {
+    socket.data = { ...socket.data, userId: String(userData.user_id) };
     next();
-  } else {
-    next(new Error(NO_AUTH));
+  } catch {
+    next(new WsException(NO_AUTH));
   }
 };
