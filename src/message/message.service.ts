@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 
 import { PrismaService } from '#prisma/prisma.service';
 import { exclude } from '#utils/excludeFields';
@@ -31,7 +32,7 @@ export class MessageService {
       },
     });
 
-    return exclude(createdMessage, ['conversationId', 'senderId']);
+    return exclude(createdMessage, ['senderId']);
   }
 
   async getMessagById(messageId: number) {
@@ -40,7 +41,7 @@ export class MessageService {
     });
 
     if (!message) {
-      throw new NotFoundException('Сообщение не найдено');
+      throw new WsException('Сообщение не найдено');
     }
 
     return message;
@@ -51,6 +52,18 @@ export class MessageService {
 
     return this.prismaService.message.delete({
       where: { id: messageId },
+    });
+  }
+
+  async getLastConversationMessage(conversationId: number) {
+    return this.prismaService.message.findMany({
+      where: {
+        conversationId: conversationId,
+      },
+      orderBy: {
+        id: 'desc',
+      },
+      take: 1,
     });
   }
 

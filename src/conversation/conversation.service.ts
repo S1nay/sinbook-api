@@ -1,24 +1,25 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 
 import { PrismaService } from '#prisma/prisma.service';
 import { exclude } from '#utils/excludeFields';
 
-import { CreateConversationDto } from './dto/createConversation.dto';
 import {
   CheckConversationIsExistParams,
+  CreateConversationParams,
   SetConversationLastMessageParams,
+  UpdateMessageCountParams,
 } from './types/conversation.types';
 
 @Injectable()
 export class ConversationService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async createConversation({ senderId, recipientId }: CreateConversationDto) {
-    await this.checkConvesationIsExist({ recipientId, senderId });
+  async createConversation({
+    senderId,
+    recipientId,
+  }: CreateConversationParams) {
+    await this.checkConvesationIsExistByMembers({ recipientId, senderId });
 
     const conversation = await this.prismaService.conversation.create({
       data: {
@@ -106,13 +107,13 @@ export class ConversationService {
     });
 
     if (!conversation) {
-      throw new NotFoundException('Чат не найден');
+      throw new WsException('Чат не найден');
     }
 
     return conversation;
   }
 
-  async checkConvesationIsExist({
+  async checkConvesationIsExistByMembers({
     recipientId,
     senderId,
   }: CheckConversationIsExistParams) {
@@ -131,30 +132,55 @@ export class ConversationService {
     });
 
     if (conversation) {
-      throw new BadRequestException('Чат уже существует');
+      throw new WsException('Чат уже существует');
     }
   }
 
-  async setConversationLastMessage({
-    conversationId,
-    messageId,
-  }: SetConversationLastMessageParams) {
-    const conversation = await this.getConversationById(conversationId);
+  async setConversationLastMessage(params: SetConversationLastMessageParams) {
+    const { conversationId, messageId } = params;
 
-    return this.prismaService.conversation.update({
+    await this.getConversationById(conversationId);
+
+    const updatedConversation = await this.prismaService.conversation.update({
       where: {
         id: conversationId,
       },
       data: {
-        unreadMessagesCount: conversation.unreadMessagesCount + 1,
-        lastMessage: {
-          connect: {
-            id: messageId,
-          },
-        },
+        lastMessage: messageId
+          ? {
+              connect: {
+                id: messageId,
+              },
+            }
+          : {
+              disconnect: true,
+            },
       },
       include: {
         lastMessage: true,
+      },
+    });
+
+    return exclude(updatedConversation, ['lastMessagId']);
+  }
+
+  async updateMessageCount({
+    conversationId,
+    isClear,
+    isDelete,
+  }: UpdateMessageCountParams) {
+    const conversation = await this.getConversationById(conversationId);
+
+    const messageCount = isDelete
+      ? conversation.unreadMessagesCount - 1
+      : conversation.unreadMessagesCount + 1;
+
+    await this.prismaService.conversation.update({
+      where: {
+        id: conversationId,
+      },
+      data: {
+        unreadMessagesCount: isClear ? 0 : messageCount,
       },
     });
   }

@@ -12,10 +12,12 @@ import {
 import { Namespace, Server, Socket } from 'socket.io';
 
 import { WsAuthMiddleware } from '#auth/middlewares/ws-auth.middleware';
+import { SendUpdatedConversationParams } from '#chat/chats/types/chat.types';
 import { ConversationService } from '#conversation/conversation.service';
 import { WsUser } from '#decorators/ws-user.decorator';
 import { WebsocketExceptionsFilter } from '#filters/ws-exception.filter';
 import { CreateMessageDto } from '#message/dto/createMessage.dto';
+import { DeleteMessageDto } from '#message/dto/deleteMessage.dto';
 import { MessageService } from '#message/message.service';
 import { WSValidationPipe } from '#pipes/ws-validation.pipe';
 
@@ -68,7 +70,9 @@ export class DialogGateway
   }
 
   handleDisconnect(socket: Socket) {
-    socket.leave(this.conversationId);
+    const conversationId = socket.handshake.query?.conversationId as string;
+
+    socket.leave(conversationId);
   }
 
   @SubscribeMessage('send_message')
@@ -83,17 +87,57 @@ export class DialogGateway
       senderId: userId,
     });
 
+    this.server.in(this.conversationId).emit('send_message', createdMessage);
+
+    await this.conversationService.updateMessageCount({ conversationId });
+
+    await this.sendUpdatedConversation({
+      conversationId,
+      recipientId,
+      messageId: createdMessage.id,
+      event: 'send_message',
+    });
+  }
+
+  @SubscribeMessage('delete_message')
+  async deleteMessage(@MessageBody() deleteMessageDto: DeleteMessageDto) {
+    const { messageId, recipientId, conversationId } = deleteMessageDto;
+
+    const deletedMessage = await this.messageService.deleteMessage(messageId);
+
+    this.server.in(this.conversationId).emit('delete_message', deletedMessage);
+
+    const lastMessage =
+      await this.messageService.getLastConversationMessage(conversationId);
+
+    await this.conversationService.updateMessageCount({
+      conversationId,
+      isDelete: true,
+    });
+
+    await this.sendUpdatedConversation({
+      messageId: lastMessage[0]?.id,
+      conversationId,
+      recipientId,
+      event: 'delete_message',
+    });
+  }
+
+  async sendUpdatedConversation({
+    conversationId,
+    messageId,
+    recipientId,
+    event,
+  }: SendUpdatedConversationParams) {
     const updatedConversation =
       await this.conversationService.setConversationLastMessage({
         conversationId: conversationId,
-        messageId: createdMessage.id,
+        messageId: messageId,
       });
-
-    this.server.in(this.conversationId).emit('send_message', createdMessage);
 
     this.chatsServer.server
       .of('chats')
       .in(String(recipientId))
-      .emit('send_message', updatedConversation);
+      .emit(event, updatedConversation);
   }
 }

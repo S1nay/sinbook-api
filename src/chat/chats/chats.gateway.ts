@@ -12,8 +12,8 @@ import {
 import { Server, Socket } from 'socket.io';
 
 import { WsAuthMiddleware } from '#auth/middlewares/ws-auth.middleware';
+import { CreateConversationDto } from '#chat/chats/dto/createConversation.dto';
 import { ConversationService } from '#conversation/conversation.service';
-import { CreateConversationDto } from '#conversation/dto/createConversation.dto';
 import { WsUser } from '#decorators/ws-user.decorator';
 import { WebsocketExceptionsFilter } from '#filters/ws-exception.filter';
 import { WSValidationPipe } from '#pipes/ws-validation.pipe';
