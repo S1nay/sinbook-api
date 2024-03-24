@@ -78,6 +78,7 @@ export class MessageService {
         message,
         sender: { connect: { id: senderId } },
         conversation: { connect: { id: conversationId } },
+        updatedAt: new Date(),
       },
     });
   }

@@ -12,12 +12,13 @@ import {
 import { Namespace, Server, Socket } from 'socket.io';
 
 import { WsAuthMiddleware } from '#auth/middlewares/ws-auth.middleware';
-import { SendUpdatedConversationParams } from '#chat/chats/types/chat.types';
+import { SendUpdatedConversationParams } from '#chat/types/chat.types';
 import { ConversationService } from '#conversation/conversation.service';
 import { WsUser } from '#decorators/ws-user.decorator';
 import { WebsocketExceptionsFilter } from '#filters/ws-exception.filter';
 import { CreateMessageDto } from '#message/dto/createMessage.dto';
 import { DeleteMessageDto } from '#message/dto/deleteMessage.dto';
+import { UpdateMessageDto } from '#message/dto/updateMessage.dto';
 import { MessageService } from '#message/message.service';
 import { WSValidationPipe } from '#pipes/ws-validation.pipe';
 
@@ -121,6 +122,33 @@ export class DialogGateway
       recipientId,
       event: 'delete_message',
     });
+  }
+
+  @SubscribeMessage('update_message')
+  async updateMessage(
+    @MessageBody() updateMessageDto: UpdateMessageDto,
+    @WsUser() userId: number,
+  ) {
+    const { messageId, recipientId, conversationId, message } =
+      updateMessageDto;
+
+    const updatedMessage = await this.messageService.updateMessage(messageId, {
+      conversationId,
+      message,
+      senderId: userId,
+    });
+
+    this.server
+      .in(`chat-${conversationId}`)
+      .emit('update_message', updatedMessage);
+
+    const conversation =
+      await this.conversationService.getConversationById(conversationId);
+
+    this.chatsServer.server
+      .of('chats')
+      .in(String(recipientId))
+      .emit('update_message', conversation);
   }
 
   async sendUpdatedConversation({

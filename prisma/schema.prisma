@@ -67,7 +67,7 @@ model Message {
   id             Int           @id @default(autoincrement())
   message        String
   createdAt      DateTime      @default(now()) @map("created_at")
-  updatedAt      DateTime      @updatedAt @map("updated_at")
+  updatedAt      DateTime?     @map("updated_at")
   sender         User          @relation(fields: [senderId], references: [id])
   senderId       Int
   conversation   Conversation  @relation("conversation_messages", fields: [conversationId], references: [id])

@@ -104,13 +104,16 @@ export class ConversationService {
   async getConversationById(conversationId: number) {
     const conversation = await this.prismaService.conversation.findUnique({
       where: { id: conversationId },
+      include: {
+        lastMessage: true,
+      },
     });
 
     if (!conversation) {
       throw new WsException('Чат не найден');
     }
 
-    return conversation;
+    return exclude(conversation, ['lastMessagId']);
   }
 
   async checkConvesationIsExistByMembers({
