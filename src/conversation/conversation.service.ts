@@ -8,7 +8,6 @@ import { PrismaService } from '#prisma/prisma.service';
 import { exclude } from '#utils/excludeFields';
 
 import { CreateConversationDto } from './dto/createConversation.dto';
-import { DeleteConversationDto } from './dto/deleteConversation.dto';
 import {
   CheckConversationIsExistParams,
   SetConversationLastMessageParams,
@@ -134,19 +133,6 @@ export class ConversationService {
     if (conversation) {
       throw new BadRequestException('Чат уже существует');
     }
-  }
-
-  async deleteConversation({ conversationId, userId }: DeleteConversationDto) {
-    await this.getConversationById(conversationId);
-
-    await this.prismaService.conversationMembers.delete({
-      where: {
-        conversationId_memberId: {
-          conversationId: conversationId,
-          memberId: userId,
-        },
-      },
-    });
   }
 
   async setConversationLastMessage({
