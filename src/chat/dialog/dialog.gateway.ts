@@ -47,8 +47,6 @@ export class DialogGateway
   @WebSocketServer()
   server: Namespace;
 
-  conversationId: string;
-
   afterInit(server: Server) {
     server.use(WsAuthMiddleware);
   }
@@ -59,12 +57,10 @@ export class DialogGateway
     if (isNaN(conversationId) || !conversationId)
       throw new WsException('conversationId должно быть числом');
 
-    this.conversationId = 'chat-' + conversationId;
-
     const conversation =
       await this.conversationService.getConversationInfo(conversationId);
 
-    socket.join(this.conversationId);
+    socket.join(`chat-${conversationId}`);
 
     socket.emit('get_conversation_info', conversation);
   }
@@ -87,7 +83,9 @@ export class DialogGateway
       senderId: userId,
     });
 
-    this.server.in(this.conversationId).emit('send_message', createdMessage);
+    this.server
+      .in(`chat-${conversationId}`)
+      .emit('send_message', createdMessage);
 
     await this.conversationService.updateMessageCount({ conversationId });
 
@@ -105,7 +103,9 @@ export class DialogGateway
 
     const deletedMessage = await this.messageService.deleteMessage(messageId);
 
-    this.server.in(this.conversationId).emit('delete_message', deletedMessage);
+    this.server
+      .in(`chat-${conversationId}`)
+      .emit('delete_message', deletedMessage);
 
     const lastMessage =
       await this.messageService.getLastConversationMessage(conversationId);
