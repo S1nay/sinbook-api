@@ -4,11 +4,9 @@ import {
   Controller,
   Delete,
   Get,
-  Param,
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -20,8 +18,11 @@ import {
 } from '@nestjs/swagger';
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
-import { User } from '#decorators/user.decorator';
 import { PostNotFoundException } from '#post/exceptions/post.exceptions';
+import { User } from '#utils/decorators';
+import { ParamIdValidationPipe } from '#utils/pipes';
+
+import { CommentOpenApi } from '../openapi/comment.openapi';
 
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { UpdateCommentDto } from './dto/update-comment.dto';
@@ -30,12 +31,6 @@ import {
   CannotModifyCommentException,
   CommentNotFoundException,
 } from './exceptions/comment.exceptions';
-import { CommentActionGuard } from './guards/comment-action.guard';
-import { CommentOpenApi } from './openapi/comment.openapi';
-import { CreateCommentParams } from './params/create-comment.params';
-import { DeleteCommentParams } from './params/delete-comment.params';
-import { FindPostCommentsParams } from './params/find-post-comments.params';
-import { UpdateCommentParams } from './params/update-comment.params';
 import { CommentService } from './comment.service';
 
 @ApiTags('Комментарии')
@@ -51,8 +46,8 @@ export class CommentController {
   })
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
   @Get()
-  findAllByPost(@Query() params: FindPostCommentsParams) {
-    return this.commentService.findPostComments(+params.postId);
+  findAllByPost(@Query('postId', ParamIdValidationPipe) postId: number) {
+    return this.commentService.findPostComments(postId);
   }
 
   @ApiBody({ type: CommentOpenApi.CreateCommentDto })
@@ -61,14 +56,14 @@ export class CommentController {
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
   @Post()
   create(
-    @Query() params: CreateCommentParams,
+    @Query('postId', ParamIdValidationPipe) postId: number,
     @User() userId: number,
-    @Body() createCommentDto: CreateCommentDto,
+    @Body() { content }: CreateCommentDto,
   ) {
     return this.commentService.createComment({
-      postId: +params.postId,
+      postId,
       userId,
-      createCommentDto,
+      content,
     });
   }
 
@@ -80,15 +75,16 @@ export class CommentController {
     CommentNotFoundException,
     CannotModifyCommentException,
   ])
-  @UseGuards(CommentActionGuard)
   @Patch(':id')
-  update(
-    @Param() params: UpdateCommentParams,
-    @Body() updateCommentDto: UpdateCommentDto,
+  edit(
+    @Query('id', ParamIdValidationPipe) id: number,
+    @Body() { content }: UpdateCommentDto,
+    @User() userId: number,
   ) {
-    return this.commentService.updateComment({
-      id: +params.id,
-      updateCommentDto,
+    return this.commentService.editComment({
+      id,
+      content,
+      userId,
     });
   }
 
@@ -98,9 +94,11 @@ export class CommentController {
     CommentNotFoundException,
     CannotDeleteCommentException,
   ])
-  @UseGuards(CommentActionGuard)
   @Delete(':id')
-  delete(@Param() params: DeleteCommentParams) {
-    return this.commentService.deleteComment(+params.id);
+  delete(
+    @Query('id', ParamIdValidationPipe) id: number,
+    @User() userId: number,
+  ) {
+    return this.commentService.deleteComment({ id, userId });
   }
 }

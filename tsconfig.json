@@ -22,11 +22,7 @@
     "paths": {
       "#auth/*": ["auth/*"],
       "#comment/*": ["comment/*"],
-      "#config/*": ["config/*"],
       "#core/*": ["core/*"],
-      "#decorators/*": ["decorators/*"],
-      "#pipes/*": ["pipes/*"],
-      "#filters/*": ["filters/*"],
       "#post/*": ["post/*"],
       "#prisma/*": ["prisma/*"],
       "#user/*": ["user/*"],
@@ -34,7 +30,8 @@
       "#file/*": ["file/*"],
       "#conversation/*": ["conversation/*"],
       "#message/*": ["message/*"],
-      "#chat/*": ["chat/*"]
+      "#gateway/*": ["gateway/*"],
+      "#openapi/*": ["openapi/*"],
     }
   }
 }

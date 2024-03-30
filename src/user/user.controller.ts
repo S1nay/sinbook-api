@@ -9,13 +9,12 @@ import {
 } from '@nestjs/swagger';
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
-import { User } from '#decorators/user.decorator';
-import { TransformGenderPipe } from '#user/pipes/gender-transform.pipe';
+import { UserOpenApi } from '#openapi/user.openapi';
+import { User } from '#utils/decorators';
+import { ParamIdValidationPipe, TransformGenderPipe } from '#utils/pipes';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserNotFoundException } from './exceptions/user.exceptions';
-import { UserOpenApi } from './openapi/user.openapi';
-import { FindUniqueUserParams } from './params/find-unique-user.params';
 import { UserService } from './user.service';
 
 @ApiBearerAuth()
@@ -35,8 +34,8 @@ export class UserController {
   @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @ApiParam({ type: Number, example: 1, name: 'id' })
   @Get(':id')
-  findUnique(@Param() params: FindUniqueUserParams) {
-    return this.userService.findUserById(+params.id);
+  findUnique(@Param('id', ParamIdValidationPipe) id: number) {
+    return this.userService.findUserById(id);
   }
 
   @ApiOkResponse({ type: UserOpenApi.UpdateUserResponse })
@@ -47,7 +46,7 @@ export class UserController {
     @User() userId: number,
     @Body(TransformGenderPipe) updateUserDto: UpdateUserDto,
   ) {
-    return this.userService.updateUser(userId, updateUserDto);
+    return this.userService.editUser({ userData: updateUserDto, userId });
   }
 
   @ApiOkResponse({ type: UserOpenApi.DeleteUserResponse })

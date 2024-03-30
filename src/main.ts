@@ -3,7 +3,8 @@ import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '#auth/guards/jwt.guard';
-import { HttpExceptionFilter } from '#filters/http-exception.filter';
+import { WebsocketAdapter } from '#gateway/gateway.adapter';
+import { HttpExceptionFilter } from '#utils/filters';
 
 import { AppModule } from './app.module';
 
@@ -33,6 +34,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  app.useWebSocketAdapter(new WebsocketAdapter(app));
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new HttpExceptionFilter(httpAdapter));
   app.useGlobalGuards(new JwtAuthGuard(reflector));

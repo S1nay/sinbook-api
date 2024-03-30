@@ -9,7 +9,7 @@ import {
 export class CreatePostDto {
   @IsString({ message: 'Поле title должно быть строкой' })
   @IsNotEmpty({ message: 'Поле title не должно быть пустым' })
-  title: string;
+  content: string;
 
   @IsOptional()
   @IsArray()

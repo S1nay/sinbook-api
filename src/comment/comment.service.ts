@@ -1,13 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { Comment } from '@prisma/client';
+import { Comment as CommentModel } from '@prisma/client';
 
+import { PostNotFoundException } from '#post/exceptions/post.exceptions';
 import { PostService } from '#post/post.service';
 import { PrismaService } from '#prisma/prisma.service';
-import { exclude } from '#utils/excludeFields';
+import { createObjectByKeys, exclude } from '#utils/helpers';
+import { Comment, ShortUserInfo } from '#utils/types';
 
-import { CreateCommentDto } from './dto/create-comment.dto';
-import { UpdateCommentDto } from './dto/update-comment.dto';
-import { CommentNotFoundException } from './exceptions/comment.exceptions';
+import {
+  CannotDeleteCommentException,
+  CommentNotFoundException,
+} from './exceptions/comment.exceptions';
+import {
+  CreateCommentParams,
+  DeleteCommentParams,
+  EditCommentParams,
+} from './types/comment.types';
 
 @Injectable()
 export class CommentService {
@@ -15,6 +23,16 @@ export class CommentService {
     private readonly prismaService: PrismaService,
     private readonly postService: PostService,
   ) {}
+
+  private getCommentAuthor() {
+    return createObjectByKeys<ShortUserInfo>([
+      'id',
+      'avatarPath',
+      'name',
+      'nickName',
+      'secondName',
+    ]);
+  }
 
   async findPostComments(
     postId: number,
@@ -26,101 +44,80 @@ export class CommentService {
         postId,
       },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            secondName: true,
-            nickName: true,
-          },
-        },
+        user: { select: this.getCommentAuthor() },
       },
     });
 
     return comments.map((comment) => exclude(comment, ['postId', 'userId']));
   }
 
-  async createComment({
-    userId,
-    postId,
-    createCommentDto,
-  }: {
-    userId: number;
-    postId: number;
-    createCommentDto: CreateCommentDto;
-  }): Promise<Omit<Comment, 'postId' | 'userId'>> {
-    await this.postService.findPostById(postId);
+  async createComment(params: CreateCommentParams): Promise<Comment> {
+    const { content, postId, userId } = params;
+
+    const post = await this.postService.findPostById(postId);
+
+    if (!post) {
+      throw new PostNotFoundException();
+    }
 
     const comment = await this.prismaService.comment.create({
       data: {
-        ...createCommentDto,
-        user: {
-          connect: {
-            id: userId,
-          },
-        },
-        post: {
-          connect: {
-            id: postId,
-          },
-        },
+        content,
+        user: { connect: { id: userId } },
+        post: { connect: { id: postId } },
       },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            secondName: true,
-            nickName: true,
-          },
-        },
+        user: { select: this.getCommentAuthor() },
       },
     });
 
     return exclude(comment, ['postId', 'userId']);
   }
 
-  async findCommentById(id: number): Promise<Comment> {
+  async findCommentById(id: number): Promise<CommentModel> {
     const comment = await this.prismaService.comment.findFirst({
       where: { id },
     });
+
+    return comment;
+  }
+
+  async editComment(params: EditCommentParams): Promise<Comment> {
+    const { content, id, userId } = params;
+
+    const comment = await this.findCommentById(id);
 
     if (!comment) {
       throw new CommentNotFoundException();
     }
 
-    return comment;
-  }
-
-  async updateComment({
-    updateCommentDto,
-    id,
-  }: {
-    id: number;
-    updateCommentDto: UpdateCommentDto;
-  }): Promise<Omit<Comment, 'postId' | 'userId'>> {
-    await this.findCommentById(id);
+    if (comment.userId !== userId) {
+      throw new CannotDeleteCommentException();
+    }
 
     const updatedComment = await this.prismaService.comment.update({
       where: { id },
-      data: updateCommentDto,
+      data: { content },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            secondName: true,
-            nickName: true,
-          },
-        },
+        user: { select: this.getCommentAuthor() },
       },
     });
 
     return exclude(updatedComment, ['postId', 'userId']);
   }
 
-  async deleteComment(id: number): Promise<void> {
-    await this.findCommentById(id);
+  async deleteComment(params: DeleteCommentParams): Promise<void> {
+    const { id, userId } = params;
+
+    const comment = await this.findCommentById(id);
+
+    if (!comment) {
+      throw new CommentNotFoundException();
+    }
+
+    if (comment.userId !== userId) {
+      throw new CannotDeleteCommentException();
+    }
 
     await this.prismaService.comment.delete({
       where: { id },

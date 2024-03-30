@@ -1,93 +1,90 @@
 import { Injectable } from '@nestjs/common';
-import { WsException } from '@nestjs/websockets';
 
 import { PrismaService } from '#prisma/prisma.service';
-import { exclude } from '#utils/excludeFields';
+import { UserNotFoundException } from '#user/exceptions/user.exceptions';
+import { UserService } from '#user/user.service';
+import { createObjectByKeys, exclude } from '#utils/helpers';
 
 import {
-  CheckConversationIsExistParams,
+  CannotCreateConversationWithYourselfException,
+  ConversationIsAlreadyExistException,
+  ConversationNotFoundException,
+} from './exceptions/conversation.exceptions';
+import {
+  AccessParams,
+  CheckConversationIsCreatedParams,
+  ConversationUser,
   CreateConversationParams,
-  SetConversationLastMessageParams,
-  UpdateMessageCountParams,
+  SetLastConversationMessageParams,
 } from './types/conversation.types';
 
 @Injectable()
 export class ConversationService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly userService: UserService,
+  ) {}
 
-  async createConversation({
-    senderId,
-    recipientId,
-  }: CreateConversationParams) {
-    await this.checkConvesationIsExistByMembers({ recipientId, senderId });
+  async createConversation(params: CreateConversationParams) {
+    const { creatorId, message: content, recipientId } = params;
 
-    const conversation = await this.prismaService.conversation.create({
+    const recipient = await this.userService.findUserById(recipientId);
+
+    if (!recipient) throw new UserNotFoundException();
+
+    if (creatorId === recipient.id)
+      throw new CannotCreateConversationWithYourselfException();
+
+    const conversationIsAlreadyExist = await this.checkConversationIsCreated({
+      userId: creatorId,
+      recipientId: recipient.id,
+    });
+
+    if (conversationIsAlreadyExist)
+      throw new ConversationIsAlreadyExistException();
+
+    const newConversation = await this.prismaService.conversation.create({
       data: {
-        name: '',
-        members: {
-          create: [
-            { member: { connect: { id: senderId } } },
-            { member: { connect: { id: recipientId } } },
-          ],
-        },
+        lastMessage: null,
+        creator: { connect: { id: creatorId } },
+        recipient: { connect: { id: recipientId } },
       },
     });
 
-    return exclude(conversation, ['lastMessagId']);
-  }
-
-  async getConversations(userId: number) {
-    const conversations = await this.prismaService.conversation.findMany({
-      where: {
-        members: {
-          some: {
-            memberId: userId,
-          },
-        },
-      },
-      include: {
-        lastMessage: true,
-        members: {
-          include: {
-            member: {
-              select: {
-                id: true,
-                avatarPath: true,
-                name: true,
-                secondName: true,
-              },
-            },
-          },
-        },
+    const firstMessage = await this.prismaService.message.create({
+      data: {
+        content,
+        conversation: { connect: { id: newConversation.id } },
+        author: { connect: { id: creatorId } },
       },
     });
 
-    return conversations.map((conversation) => ({
-      ...exclude(conversation, ['lastMessagId', 'members']),
-      lastMessage: exclude(conversation.lastMessage, ['conversationId']),
-      chatMember: {
-        ...conversation.members.find((member) => member.memberId !== userId)
-          .member,
-      },
-    }));
+    await this.setLastConversationMessage({
+      conversationId: newConversation.id,
+      messageId: firstMessage.id,
+    });
+
+    return newConversation;
   }
 
-  async getConversationInfo(conversationId: number) {
+  async getConversationById(conversationId: number) {
+    const selectUserFields = createObjectByKeys<ConversationUser>([
+      'id',
+      'name',
+      'secondName',
+      'avatarPath',
+    ]);
+
     const conversation = await this.prismaService.conversation.findUnique({
       where: {
         id: conversationId,
       },
       include: {
+        recipient: { select: selectUserFields },
+        creator: { select: selectUserFields },
         messages: {
           include: {
-            sender: {
-              select: {
-                id: true,
-                name: true,
-                secondName: true,
-                avatarPath: true,
-              },
-            },
+            author: { select: selectUserFields },
           },
         },
       },
@@ -96,95 +93,94 @@ export class ConversationService {
     return {
       ...conversation,
       messages: conversation.messages.map((message) =>
-        exclude(message, ['senderId', 'conversationId']),
+        exclude(message, ['authorId']),
       ),
     };
   }
 
-  async getConversationById(conversationId: number) {
-    const conversation = await this.prismaService.conversation.findUnique({
-      where: { id: conversationId },
+  async checkConversationIsCreated({
+    userId,
+    recipientId,
+  }: CheckConversationIsCreatedParams) {
+    return this.prismaService.conversation.findFirst({
+      where: {
+        OR: [
+          {
+            creator: { id: userId },
+            recipient: { id: recipientId },
+          },
+          {
+            creator: { id: recipientId },
+            recipient: { id: userId },
+          },
+        ],
+      },
+    });
+  }
+
+  async getConversations(userId: number) {
+    const selectUserFields = createObjectByKeys<ConversationUser>([
+      'id',
+      'name',
+      'secondName',
+      'avatarPath',
+    ]);
+
+    const conversations = await this.prismaService.conversation.findMany({
+      where: {
+        OR: [{ creatorId: userId }, { recipientId: userId }],
+      },
       include: {
+        creator: { select: selectUserFields },
+        recipient: { select: selectUserFields },
         lastMessage: true,
       },
     });
 
-    if (!conversation) {
-      throw new WsException('Чат не найден');
-    }
-
-    return exclude(conversation, ['lastMessagId']);
+    return conversations.map((conversation) => ({
+      ...exclude(conversation, ['creatorId', 'recipientId', 'lastMessagId']),
+    }));
   }
 
-  async checkConvesationIsExistByMembers({
-    recipientId,
-    senderId,
-  }: CheckConversationIsExistParams) {
-    const conversation = await this.prismaService.conversation.findFirst({
-      where: {
-        members: {
-          some: {
-            member: {
-              id: {
-                in: [recipientId, senderId],
-              },
-            },
-          },
-        },
-      },
-    });
-
-    if (conversation) {
-      throw new WsException('Чат уже существует');
-    }
+  async hasAccess({ conversationId, userId }: AccessParams) {
+    const conversation = await this.getConversationById(conversationId);
+    if (!conversation) throw new ConversationNotFoundException();
+    return (
+      conversation.creator.id === userId || conversation.recipient.id === userId
+    );
   }
 
-  async setConversationLastMessage(params: SetConversationLastMessageParams) {
-    const { conversationId, messageId } = params;
+  async setLastConversationMessage({
+    conversationId,
+    messageId,
+  }: SetLastConversationMessageParams) {
+    const selectUserFields = createObjectByKeys<ConversationUser>([
+      'id',
+      'name',
+      'secondName',
+      'avatarPath',
+    ]);
 
-    await this.getConversationById(conversationId);
-
-    const updatedConversation = await this.prismaService.conversation.update({
-      where: {
-        id: conversationId,
-      },
+    const updateConversation = await this.prismaService.conversation.update({
+      where: { id: conversationId },
       data: {
         lastMessage: messageId
           ? {
-              connect: {
-                id: messageId,
-              },
+              connect: { id: messageId },
             }
-          : {
-              disconnect: true,
-            },
+          : null,
       },
       include: {
+        recipient: { select: selectUserFields },
+        creator: { select: selectUserFields },
         lastMessage: true,
       },
     });
 
-    return exclude(updatedConversation, ['lastMessagId']);
-  }
-
-  async updateMessageCount({
-    conversationId,
-    isClear,
-    isDelete,
-  }: UpdateMessageCountParams) {
-    const conversation = await this.getConversationById(conversationId);
-
-    const messageCount = isDelete
-      ? conversation.unreadMessagesCount - 1
-      : conversation.unreadMessagesCount + 1;
-
-    await this.prismaService.conversation.update({
-      where: {
-        id: conversationId,
-      },
-      data: {
-        unreadMessagesCount: isClear ? 0 : messageCount,
-      },
-    });
+    return exclude(updateConversation, [
+      'lastMessagId',
+      'creatorId',
+      'recipientId',
+    ]);
   }
 }

@@ -11,26 +11,27 @@ datasource db {
 }
 
 model User {
-  id            Int                   @id @default(autoincrement())
-  nickName      String                @map("nick_name")
-  avatarPath    String?
-  name          String
-  secondName    String                @map("second_name")
-  middleName    String                @map("middle_name")
-  email         String                @unique
-  passwordHash  String
-  posts         Post[]
-  comments      Comment[]
-  city          String                @default("")
-  birthDate     DateTime?
-  gender        Gender
-  createdAt     DateTime              @default(now()) @map("created_at")
-  updatedAt     DateTime              @updatedAt @map("updated_at")
-  isDeleted     Boolean               @default(false) @map("is_deleted")
-  followers     Follows[]             @relation("following")
-  following     Follows[]             @relation("follower")
-  messages      Message[]
-  conversations ConversationMembers[]
+  id                    Int           @id @default(autoincrement())
+  nickName              String        @map("nick_name")
+  avatarPath            String?       @map("avatar_path")
+  name                  String
+  secondName            String        @map("second_name")
+  middleName            String        @map("middle_name")
+  email                 String        @unique
+  passwordHash          String        @map("password_hash")
+  posts                 Post[]        @relation("user_posts")
+  comments              Comment[]     @relation("user_comments")
+  city                  String?       @default("")
+  birthDate             DateTime?
+  gender                Gender
+  isDeleted             Boolean       @default(false) @map("is_deleted")
+  followers             Follows[]     @relation("following")
+  following             Follows[]     @relation("follower")
+  createdAt             DateTime      @default(now()) @map("created_at")
+  updatedAt             DateTime      @updatedAt @map("updated_at")
+  messages              Message[]     @relation("author")
+  conversationCreator   Conversation? @relation("conversation_creator")
+  conversationRecipient Conversation? @relation("conversation_recipient")
 }
 
 model Follows {
@@ -43,45 +44,38 @@ model Follows {
 }
 
 model Conversation {
-  id                  Int                   @id @default(autoincrement())
-  name                String
-  createdAt           DateTime              @default(now()) @map("created_at")
-  updatedAt           DateTime              @updatedAt @map("updated_at")
-  messages            Message[]             @relation("conversation_messages")
-  members             ConversationMembers[]
-  unreadMessagesCount Int                   @default(0) @map("unread_messages_count")
-  lastMessage         Message?              @relation("last_message", fields: [lastMessagId], references: [id])
-  lastMessagId        Int?                  @unique()
-}
-
-model ConversationMembers {
-  member         User         @relation(fields: [memberId], references: [id])
-  memberId       Int
-  conversation   Conversation @relation(fields: [conversationId], references: [id])
-  conversationId Int
-
-  @@id([conversationId, memberId])
+  id           Int       @id @default(autoincrement())
+  messages     Message[] @relation("conversation_messages")
+  creator      User      @relation("conversation_creator", fields: [creatorId], references: [id])
+  creatorId    Int       @unique() @map("creator_id")
+  recipient    User      @relation("conversation_recipient", fields: [recipientId], references: [id])
+  recipientId  Int       @unique() @map("recipient_id")
+  lastMessage  Message   @relation("last_message", fields: [lastMessagId], references: [id])
+  lastMessagId Int       @unique() @map("last_message_id")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
 }
 
 model Message {
   id             Int           @id @default(autoincrement())
-  message        String
+  content        String
+  author         User          @relation("author", fields: [authorId], references: [id])
+  authorId       Int           @map("author_id")
+  conversation   Conversation  @relation("conversation_messages", fields: [conversationId], references: [id])
+  conversationId Int           @map("conversation_id")
+  lastMessage    Conversation? @relation("last_message")
+  isReaded       Boolean       @default(false) @map("is_readed")
   createdAt      DateTime      @default(now()) @map("created_at")
   updatedAt      DateTime?     @map("updated_at")
-  sender         User          @relation(fields: [senderId], references: [id])
-  senderId       Int
-  conversation   Conversation  @relation("conversation_messages", fields: [conversationId], references: [id])
-  conversationId Int
-  lastMessage    Conversation? @relation("last_message")
 }
 
 model Post {
   id        Int       @id @default(autoincrement())
-  title     String
+  content   String
   views     Int       @default(0)
-  user      User      @relation(fields: [userId], references: [id])
+  user      User      @relation("user_posts", fields: [userId], references: [id])
   userId    Int       @map("user_id")
-  comments  Comment[]
+  comments  Comment[] @relation("post_comments")
   likes     Int       @default(0)
   images    String[]
   createdAt DateTime  @default(now()) @map("created_at")
@@ -90,10 +84,10 @@ model Post {
 
 model Comment {
   id        Int      @id @default(autoincrement())
-  user      User?    @relation(fields: [userId], references: [id])
-  userId    Int?
-  post      Post?    @relation(fields: [postId], references: [id])
-  postId    Int?
+  user      User     @relation("user_comments", fields: [userId], references: [id])
+  userId    Int      @map("user_id")
+  post      Post     @relation("post_comments", fields: [postId], references: [id])
+  postId    Int      @map("post_id")
   content   String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")

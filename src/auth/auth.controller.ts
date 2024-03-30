@@ -3,8 +3,10 @@ import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { JwtRefreshGuard } from '#auth/guards/jwt-refresh.guard';
-import { SkipAuth } from '#decorators/skip-auth.decorator';
-import { TransformGenderPipe } from '#user/pipes/gender-transform.pipe';
+import { SkipAuth } from '#utils/decorators';
+import { TransformGenderPipe } from '#utils/pipes';
+
+import { AuthOpenApi } from '../openapi/auth.openapi';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
@@ -14,7 +16,6 @@ import {
   UserWithEmailExistException,
   UserWithEmailNotExistException,
 } from './exceptions/auth.exceptions';
-import { AuthOpenApi } from './openapi/auth.openapi';
 import { AuthService } from './auth.service';
 
 @ApiTags('Авторизация')

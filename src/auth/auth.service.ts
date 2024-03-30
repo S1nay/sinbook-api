@@ -6,15 +6,20 @@ import { compare, genSalt, hash } from 'bcryptjs';
 
 import { UserService } from '#user/user.service';
 
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
 import {
   IncorrectAuthDataException,
+  UserNotAuthorizedException,
   UserWithEmailExistException,
   UserWithEmailNotExistException,
   UserWithNicknameExistException,
 } from './exceptions/auth.exceptions';
-import { JwtTokens } from './types/auth.types';
+import {
+  GenerateTokensParam,
+  LoginParams,
+  RegisterParams,
+  ValidateUserParams,
+} from './types/auth.types';
+import { AuthUser, JwtTokens, TokenInfo } from '#utils/types';
 
 @Injectable()
 export class AuthService {
@@ -24,47 +29,50 @@ export class AuthService {
     private readonly configService: ConfigService,
   ) {}
 
-  async login(
-    loginDto: LoginDto,
-  ): Promise<{ user: Omit<User, 'passwordHash'> } & JwtTokens> {
+  async login(loginParams: LoginParams): Promise<AuthUser> {
     const user = await this.validateUser({
-      authDto: loginDto,
+      authParams: loginParams,
       isRegister: false,
     });
 
-    return this.generateTokens(user);
+    const tokens = await this.generateTokens(user);
+
+    return {
+      user,
+      ...tokens,
+    };
   }
 
-  async register(
-    registerDto: RegisterDto,
-  ): Promise<{ user: Omit<User, 'passwordHash'> } & JwtTokens> {
-    const { email, password } = registerDto;
+  async register(registerParams: RegisterParams): Promise<AuthUser> {
+    const { email, password } = registerParams;
 
-    await this.validateUser({ authDto: registerDto, isRegister: true });
+    await this.validateUser({ authParams: registerParams, isRegister: true });
 
     const salt = await genSalt(15);
 
-    delete registerDto.password;
+    delete registerParams.password;
 
     const newUser = await this.userService.createUser({
-      ...registerDto,
-      email,
-      passwordHash: await hash(password, salt),
-      birthDate: new Date(registerDto.birthDate),
-      nickName: `@${registerDto.nickName}`,
+      userData: {
+        ...registerParams,
+        email,
+        passwordHash: await hash(password, salt),
+        birthDate: new Date(registerParams.birthDate),
+        nickName: `@${registerParams.nickName}`,
+      },
     });
 
-    return this.generateTokens(newUser);
+    const tokens = await this.generateTokens(newUser);
+
+    return {
+      user: newUser,
+      ...tokens,
+    };
   }
 
-  async validateUser({
-    authDto,
-    isRegister,
-  }: {
-    authDto: LoginDto | RegisterDto;
-    isRegister: boolean;
-  }): Promise<User> {
-    const { email, password } = authDto;
+  async validateUser(params: ValidateUserParams): Promise<User> {
+    const { authParams, isRegister } = params;
+    const { email, password } = authParams;
 
     const candidate = await this.userService.findUserByEmail(email);
 
@@ -72,7 +80,10 @@ export class AuthService {
       if (candidate) {
         throw new UserWithEmailExistException();
       }
-      if ('nickName' in authDto && candidate?.nickName === authDto.nickName) {
+      if (
+        'nickName' in authParams &&
+        candidate?.nickName === authParams.nickName
+      ) {
         throw new UserWithNicknameExistException();
       }
     } else {
@@ -92,30 +103,35 @@ export class AuthService {
     return candidate;
   }
 
+  async validateUserToken(token: string): Promise<TokenInfo> {
+    const userData: TokenInfo = this.jwtService.decode(token);
+
+    const user = await this.userService.findUserById(userData.id);
+
+    if (!user) {
+      throw new UserNotAuthorizedException();
+    }
+
+    return userData;
+  }
+
   async refreshToken(refresh: string): Promise<{ access: string }> {
-    const userData = this.jwtService.decode(refresh);
+    const userData = await this.validateUserToken(refresh);
 
     return {
-      access: await this.jwtService.signAsync(
-        {
-          user_id: userData.user_id,
-          email: userData.email,
-        },
-        {
-          expiresIn: this.configService.get('JWT_ACCESS_TOKEN_EXPIRES'),
-        },
-      ),
+      access: (await this.generateTokens(userData)).access,
     };
   }
 
-  async generateTokens(
-    userData: Omit<User, 'passwordHash'> | User,
-  ): Promise<{ user: Omit<User, 'passwordHash'> } & JwtTokens> {
+  async generateTokens(userData: GenerateTokensParam): Promise<JwtTokens> {
     return {
-      user: userData,
       access: await this.jwtService.signAsync(
         {
-          user_id: userData.id,
+          id: userData.id,
+          nickName: userData.nickName,
+          name: userData.name,
+          secondName: userData.secondName,
+          gender: userData.gender,
           email: userData.email,
         },
         {
@@ -124,7 +140,11 @@ export class AuthService {
       ),
       refresh: await this.jwtService.signAsync(
         {
-          user_id: userData.id,
+          id: userData.id,
+          nickName: userData.nickName,
+          name: userData.name,
+          secondName: userData.secondName,
+          gender: userData.gender,
           email: userData.email,
         },
         {

@@ -1,20 +1,27 @@
-export type CheckConversationIsExistParams = {
-  recipientId: number;
-  senderId: number;
+export type AccessParams = {
+  conversationId: number;
+  userId: number;
 };
 
-export type SetConversationLastMessageParams = {
+export type CheckConversationIsCreatedParams = {
+  userId: number;
+  recipientId: number;
+};
+
+export type SetLastConversationMessageParams = {
   conversationId: number;
   messageId?: number;
 };
 
 export type CreateConversationParams = {
-  senderId: number;
+  message: string;
+  creatorId: number;
   recipientId: number;
 };
 
-export type UpdateMessageCountParams = {
-  conversationId: number;
-  isDelete?: boolean;
-  isClear?: boolean;
+export type ConversationUser = {
+  id: string;
+  name: string;
+  secondName: string;
+  avatarPath: string;
 };
