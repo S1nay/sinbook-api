@@ -1,6 +1,8 @@
 import {
   Comment as CommentModel,
+  Conversation as ConversationModel,
   Gender,
+  Message as MessageModel,
   Post as PostModel,
   Prisma,
   User as UserModel,
@@ -82,7 +84,7 @@ export type SelectPostCommentsCount = Prisma.PostGetPayload<{
 }>;
 
 export type CommentsCountFields = {
-  comments: number;
+  commentsCount: number;
 };
 
 export type Post = Omit<PostModel, 'userId'> &
@@ -90,7 +92,28 @@ export type Post = Omit<PostModel, 'userId'> &
 
 // -------------MESSAGE-------------
 
+export type Message = Omit<MessageModel, 'authorId'> & {
+  author: ShortUserInfo;
+};
+
+export type LastMessage = MessageModel;
+
 // -------------CONVERSATION-------------
+
+export type Conversation = Omit<
+  ConversationModel,
+  'recipientId' | 'creatorId' | 'lastMessagId'
+> & {
+  creator: ShortUserInfo;
+  recipient: ShortUserInfo;
+  lastMessage: LastMessage;
+};
+
+export type ConversationInfo = ConversationModel & {
+  creator: ShortUserInfo;
+  recipient: ShortUserInfo;
+  messages: Message[];
+};
 
 // -------------COMMENT-------------
 

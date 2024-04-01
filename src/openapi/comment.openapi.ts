@@ -31,14 +31,9 @@ export namespace CommentOpenApi {
 
     @ApiProperty({
       description: 'Автор комментария',
-      type: PickType(UserOpenApi.UserModel, [
-        'id',
-        'name',
-        'secondName',
-        'middleName',
-      ]),
+      type: UserOpenApi.ShortUser,
     })
-    user: () => UserOpenApi.UserModel;
+    user: () => UserOpenApi.ShortUser;
 
     @ApiHideProperty()
     postId: number;

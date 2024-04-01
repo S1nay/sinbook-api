@@ -1,8 +1,14 @@
-import { ApiHideProperty, ApiProperty, OmitType } from '@nestjs/swagger';
-import { $Enums, Gender, User } from '@prisma/client';
+import {
+  ApiHideProperty,
+  ApiProperty,
+  OmitType,
+  PickType,
+} from '@nestjs/swagger';
 
 import { CommentOpenApi } from './comment.openapi';
 import { PostOpenApi } from './post.openapi';
+import { User } from '#utils/types';
+import { $Enums, Gender } from '@prisma/client';
 
 export namespace UserOpenApi {
   // Count Fields of User
@@ -138,6 +144,14 @@ export namespace UserOpenApi {
     @ApiHideProperty()
     comments?: () => CommentOpenApi.CommentModel[];
   }
+
+  export class ShortUser extends PickType(UserModel, [
+    'id',
+    'name',
+    'secondName',
+    'nickName',
+    'avatarPath',
+  ]) {}
 
   //Create User Fields
   export class CreateUserDto extends OmitType(UserModel, [

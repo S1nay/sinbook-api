@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Param, Patch, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { User } from '#utils/decorators';
@@ -36,13 +28,13 @@ export class MessageController {
     return { message, conversation };
   }
 
-  @Get()
-  async getAll(
-    @User() userId: number,
-    @Param('id', ParamIdValidationPipe) id: number,
-  ) {
-    return this.messageService.getMessages(id);
-  }
+  // @Get()
+  // async getAll(
+  //   @User() userId: number,
+  //   @Param('id', ParamIdValidationPipe) id: number,
+  // ) {
+  //   return this.messageService.getMessages(id);
+  // }
 
   @Delete(':messageId')
   async delete(

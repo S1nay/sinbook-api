@@ -4,10 +4,10 @@ import {
   OmitType,
   PickType,
 } from '@nestjs/swagger';
-import { Post } from '@prisma/client';
 
-import { CommentOpenApi } from './comment.openapi';
 import { UserOpenApi } from './user.openapi';
+import { Post } from '#utils/types';
+import { CommentOpenApi } from './comment.openapi';
 
 export namespace PostOpenApi {
   // Count Fields of Post
@@ -17,7 +17,7 @@ export namespace PostOpenApi {
       example: 1,
       type: Number,
     })
-    commentsCount?: number;
+    commentsCount: number;
   }
 
   //Post Model
@@ -60,23 +60,15 @@ export namespace PostOpenApi {
 
     @ApiProperty({
       description: 'Автор поста',
-      type: PickType(UserOpenApi.UserModel, [
-        'id',
-        'name',
-        'secondName',
-        'middleName',
-      ]),
+      type: UserOpenApi.ShortUser,
     })
-    user: () => UserOpenApi.UserModel;
+    user: UserOpenApi.ShortUser;
 
     @ApiHideProperty()
     userId: number;
 
-    @ApiProperty({
-      description: 'Комментарии поста',
-      type: [CommentOpenApi.CommentModel],
-    })
-    comments: () => CommentOpenApi.CommentModel[];
+    @ApiHideProperty()
+    comments: [CommentOpenApi.CommentModel];
 
     @ApiProperty({
       description: 'Дата обновления поста',

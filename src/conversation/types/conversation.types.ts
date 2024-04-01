@@ -18,10 +18,3 @@ export type CreateConversationParams = {
   creatorId: number;
   recipientId: number;
 };
-
-export type ConversationUser = {
-  id: string;
-  name: string;
-  secondName: string;
-  avatarPath: string;
-};

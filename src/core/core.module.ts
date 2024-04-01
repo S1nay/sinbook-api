@@ -4,8 +4,8 @@ import { JwtModule } from '@nestjs/jwt';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { path } from 'app-root-path';
 
-import { getJWTConfig } from '#config/jwt.config';
 import { PrismaModule } from '#prisma/prisma.module';
+import { getJWTConfig } from '#utils/config';
 
 @Global()
 @Module({

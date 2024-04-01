@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { Conversation as ConversationModel } from '@prisma/client';
 
 import { PrismaService } from '#prisma/prisma.service';
 import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { UserService } from '#user/user.service';
 import { createObjectByKeys, exclude } from '#utils/helpers';
+import { Conversation, ConversationInfo, ShortUserInfo } from '#utils/types';
 
 import {
   CannotCreateConversationWithYourselfException,
@@ -13,7 +15,6 @@ import {
 import {
   AccessParams,
   CheckConversationIsCreatedParams,
-  ConversationUser,
   CreateConversationParams,
   SetLastConversationMessageParams,
 } from './types/conversation.types';
@@ -24,6 +25,16 @@ export class ConversationService {
     private readonly prismaService: PrismaService,
     private readonly userService: UserService,
   ) {}
+
+  private selectUserFields() {
+    return createObjectByKeys<ShortUserInfo>([
+      'id',
+      'name',
+      'nickName',
+      'secondName',
+      'avatarPath',
+    ]);
+  }
 
   async createConversation(params: CreateConversationParams) {
     const { creatorId, message: content, recipientId } = params;
@@ -59,33 +70,25 @@ export class ConversationService {
       },
     });
 
-    await this.setLastConversationMessage({
-      conversationId: newConversation.id,
-      messageId: firstMessage.id,
-    });
+    const newConversationWithFirstMessage =
+      await this.setLastConversationMessage({
+        conversationId: newConversation.id,
+        messageId: firstMessage.id,
+      });
 
-    return newConversation;
+    return newConversationWithFirstMessage;
   }
 
-  async getConversationById(conversationId: number) {
-    const selectUserFields = createObjectByKeys<ConversationUser>([
-      'id',
-      'name',
-      'secondName',
-      'avatarPath',
-    ]);
-
+  async getConversationById(conversationId: number): Promise<ConversationInfo> {
     const conversation = await this.prismaService.conversation.findUnique({
       where: {
         id: conversationId,
       },
       include: {
-        recipient: { select: selectUserFields },
-        creator: { select: selectUserFields },
+        recipient: { select: this.selectUserFields() },
+        creator: { select: this.selectUserFields() },
         messages: {
-          include: {
-            author: { select: selectUserFields },
-          },
+          include: { author: { select: this.selectUserFields() } },
         },
       },
     });
@@ -101,7 +104,7 @@ export class ConversationService {
   async checkConversationIsCreated({
     userId,
     recipientId,
-  }: CheckConversationIsCreatedParams) {
+  }: CheckConversationIsCreatedParams): Promise<ConversationModel> {
     return this.prismaService.conversation.findFirst({
       where: {
         OR: [
@@ -118,21 +121,14 @@ export class ConversationService {
     });
   }
 
-  async getConversations(userId: number) {
-    const selectUserFields = createObjectByKeys<ConversationUser>([
-      'id',
-      'name',
-      'secondName',
-      'avatarPath',
-    ]);
-
+  async getConversations(userId: number): Promise<Conversation[]> {
     const conversations = await this.prismaService.conversation.findMany({
       where: {
         OR: [{ creatorId: userId }, { recipientId: userId }],
       },
       include: {
-        creator: { select: selectUserFields },
-        recipient: { select: selectUserFields },
+        creator: { select: this.selectUserFields() },
+        recipient: { select: this.selectUserFields() },
         lastMessage: true,
       },
     });
@@ -142,7 +138,7 @@ export class ConversationService {
     }));
   }
 
-  async hasAccess({ conversationId, userId }: AccessParams) {
+  async hasAccess({ conversationId, userId }: AccessParams): Promise<boolean> {
     const conversation = await this.getConversationById(conversationId);
     if (!conversation) throw new ConversationNotFoundException();
     return (
@@ -153,8 +149,8 @@ export class ConversationService {
   async setLastConversationMessage({
     conversationId,
     messageId,
-  }: SetLastConversationMessageParams) {
-    const selectUserFields = createObjectByKeys<ConversationUser>([
+  }: SetLastConversationMessageParams): Promise<Conversation> {
+    const selectUserFields = createObjectByKeys<ShortUserInfo>([
       'id',
       'name',
       'secondName',

@@ -1,21 +1,22 @@
 import { Injectable } from '@nestjs/common';
 
 import { ConversationService } from '#conversation/conversation.service';
-import { PrismaService } from '#prisma/prisma.service';
 import { ConversationNotFoundException } from '#conversation/exceptions/conversation.exceptions';
-import {
-  CreateMessageParams,
-  DeleteMessageParams,
-  EditMessageParams,
-} from './types/message.types';
+import { PrismaService } from '#prisma/prisma.service';
+import { createObjectByKeys, exclude } from '#utils/helpers';
+import { ConversationInfo, Message, ShortUserInfo } from '#utils/types';
+
 import {
   HasNoAccessForEditMessageException,
   HasNoAccessForSendMessageException,
   MessageNotFoundException,
 } from './exceptions/message.exceptions';
-
-import { createObjectByKeys } from '#utils/helpers';
-import { ConversationUser } from '#conversation/types/conversation.types';
+import {
+  CreateMessageParams,
+  CreateMessageReponse,
+  DeleteMessageParams,
+  EditMessageParams,
+} from './types/message.types';
 
 @Injectable()
 export class MessageService {
@@ -24,29 +25,35 @@ export class MessageService {
     private readonly conversationService: ConversationService,
   ) {}
 
-  async getConversationMessages(conversationId: number) {
-    const selectUserFields = createObjectByKeys<ConversationUser>([
+  private selectUserFields() {
+    return createObjectByKeys<ShortUserInfo>([
       'id',
       'name',
       'secondName',
       'avatarPath',
     ]);
+  }
 
+  async getConversationMessages(conversationId: number): Promise<Message[]> {
     const conversation =
       await this.conversationService.getConversationById(conversationId);
 
     if (!conversation) throw new ConversationNotFoundException();
+
+    const messages = await this.prismaService.message.findMany({
+      where: { conversationId },
+      include: {
+        author: { select: this.selectUserFields() },
+      },
+    });
+
+    return messages.map((message) => exclude(message, ['authorId']));
   }
 
-  async createMessage(params: CreateMessageParams) {
+  async createMessage(
+    params: CreateMessageParams,
+  ): Promise<CreateMessageReponse> {
     const { content, conversationId, userId } = params;
-
-    const selectUserFields = createObjectByKeys<ConversationUser>([
-      'id',
-      'name',
-      'secondName',
-      'avatarPath',
-    ]);
 
     const conversation =
       await this.conversationService.getConversationById(conversationId);
@@ -64,7 +71,7 @@ export class MessageService {
         author: { connect: { id: userId } },
       },
       include: {
-        author: { select: selectUserFields },
+        author: { select: this.selectUserFields() },
       },
     });
 
@@ -74,10 +81,13 @@ export class MessageService {
         messageId: message.id,
       });
 
-    return { message, conversation: updatedConversation };
+    return {
+      message: exclude(message, ['authorId']),
+      conversation: updatedConversation,
+    };
   }
 
-  async getUnreadMessagesCount(conversationId: number) {
+  async getUnreadMessagesCount(conversationId: number): Promise<number> {
     const conversation =
       await this.conversationService.getConversationById(conversationId);
 
@@ -92,7 +102,7 @@ export class MessageService {
     return unreadMessagesCount;
   }
 
-  async setMessagesIsReaded(conversationId: number) {
+  async setMessagesIsReaded(conversationId: number): Promise<number> {
     const conversation =
       await this.conversationService.getConversationById(conversationId);
 
@@ -108,15 +118,8 @@ export class MessageService {
     return this.getUnreadMessagesCount(conversationId);
   }
 
-  async editMessage(params: EditMessageParams) {
+  async editMessage(params: EditMessageParams): Promise<Message> {
     const { content, messageId, userId } = params;
-
-    const selectUserFields = createObjectByKeys<ConversationUser>([
-      'id',
-      'name',
-      'secondName',
-      'avatarPath',
-    ]);
 
     const message = await this.prismaService.message.findUnique({
       where: {
@@ -134,14 +137,14 @@ export class MessageService {
       where: { id: messageId },
       data: { content },
       include: {
-        author: { select: selectUserFields },
+        author: { select: this.selectUserFields() },
       },
     });
 
-    return updatedMessage;
+    return exclude(updatedMessage, ['authorId']);
   }
 
-  async deleteMessage(params: DeleteMessageParams) {
+  async deleteMessage(params: DeleteMessageParams): Promise<Message> {
     const { conversationId, messageId, userId } = params;
 
     const conversation =
@@ -165,13 +168,19 @@ export class MessageService {
     if (conversation.lastMessagId !== message.id) {
       return this.prismaService.message.delete({
         where: { id: messageId },
+        include: {
+          author: { select: this.selectUserFields() },
+        },
       });
     }
 
     return this.deleteLastMessage(conversation, messageId);
   }
 
-  async deleteLastMessage(conversation: any, messageId: number) {
+  async deleteLastMessage(
+    conversation: ConversationInfo,
+    messageId: number,
+  ): Promise<Message> {
     const size = conversation.messages.length;
     const LAST_MESSAGE_INDEX = size - 1;
 
@@ -180,7 +189,14 @@ export class MessageService {
         conversationId: conversation.id,
       });
 
-      return this.prismaService.message.delete({ where: { id: messageId } });
+      const deletedMessage = await this.prismaService.message.delete({
+        where: { id: messageId },
+        include: {
+          author: { select: this.selectUserFields() },
+        },
+      });
+
+      return exclude(deletedMessage, ['authorId']);
     } else {
       const newLastMessage = conversation.messages[LAST_MESSAGE_INDEX];
 
@@ -189,7 +205,14 @@ export class MessageService {
         messageId: newLastMessage.id,
       });
 
-      return this.prismaService.message.delete({ where: { id: messageId } });
+      const deletedMessage = await this.prismaService.message.delete({
+        where: { id: messageId },
+        include: {
+          author: { select: this.selectUserFields() },
+        },
+      });
+
+      return exclude(deletedMessage, ['authorId']);
     }
   }
 }

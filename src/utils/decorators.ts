@@ -11,5 +11,5 @@ export const SkipAuth = (...metadata: string[]) =>
 
 export const User = createParamDecorator((_, ctx: ExecutionContext) => {
   const request = ctx.switchToHttp().getRequest();
-  return request.user.user_id;
+  return request.user.id;
 });
