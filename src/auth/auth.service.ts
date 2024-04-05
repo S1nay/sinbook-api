@@ -5,6 +5,7 @@ import { User } from '@prisma/client';
 import { compare, genSalt, hash } from 'bcryptjs';
 
 import { UserService } from '#user/user.service';
+import { AuthUser, JwtTokens, TokenInfo } from '#utils/types';
 
 import {
   IncorrectAuthDataException,
@@ -19,7 +20,6 @@ import {
   RegisterParams,
   ValidateUserParams,
 } from './types/auth.types';
-import { AuthUser, JwtTokens, TokenInfo } from '#utils/types';
 
 @Injectable()
 export class AuthService {

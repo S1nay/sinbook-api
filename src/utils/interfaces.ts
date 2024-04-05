@@ -10,4 +10,5 @@ export interface AuthenticatedRequest extends Request {
 
 export interface AuthenticatedSocket extends Socket {
   user?: TokenInfo;
+  conversationId?: number;
 }

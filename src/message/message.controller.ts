@@ -1,6 +1,17 @@
-import { Body, Controller, Delete, Param, Patch, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { ApiTags } from '@nestjs/swagger';
 
+import { ConversationGuard } from '#conversation/guards/conversation.guard';
 import { User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
 
@@ -9,9 +20,13 @@ import { EditMessageDto } from './dto/editMessage.dto';
 import { MessageService } from './message.service';
 
 @ApiTags('Сообщения')
+@UseGuards(ConversationGuard)
 @Controller('conversation/:id/messages')
 export class MessageController {
-  constructor(private readonly messageService: MessageService) {}
+  constructor(
+    private readonly messageService: MessageService,
+    private readonly eventsEmmiter: EventEmitter2,
+  ) {}
 
   @Post()
   async create(
@@ -25,16 +40,15 @@ export class MessageController {
       conversationId,
     });
 
-    return { message, conversation };
+    this.eventsEmmiter.emit('create.message', { message, conversation });
+
+    return;
   }
 
-  // @Get()
-  // async getAll(
-  //   @User() userId: number,
-  //   @Param('id', ParamIdValidationPipe) id: number,
-  // ) {
-  //   return this.messageService.getMessages(id);
-  // }
+  @Get()
+  async getAll(@Param('id', ParamIdValidationPipe) id: number) {
+    return this.messageService.getConversationMessages(id);
+  }
 
   @Delete(':messageId')
   async delete(
@@ -44,9 +58,22 @@ export class MessageController {
   ) {
     const params = { userId, conversationId, messageId };
 
-    await this.messageService.deleteMessage(params);
+    const payload = await this.messageService.deleteMessage(params);
 
-    return { conversationId, messageId };
+    if ('message' in payload) {
+      this.eventsEmmiter.emit('delete.message', {
+        message: payload.message,
+        conversation: payload.conversation,
+      });
+
+      return payload.message;
+    } else {
+      this.eventsEmmiter.emit('delete.message', {
+        message: payload,
+      });
+
+      return payload;
+    }
   }
 
   @Patch(':messageId')
@@ -58,8 +85,21 @@ export class MessageController {
   ) {
     const params = { userId, content, conversationId, messageId };
 
-    const message = await this.messageService.editMessage(params);
+    const payload = await this.messageService.editMessage(params);
 
-    return message;
+    if ('message' in payload) {
+      this.eventsEmmiter.emit('edit.message', {
+        message: payload.message,
+        conversation: payload.conversation,
+      });
+
+      return payload.message;
+    } else {
+      this.eventsEmmiter.emit('edit.message', {
+        message: payload,
+      });
+
+      return payload;
+    }
   }
 }

@@ -7,9 +7,8 @@ import { CoreModule } from '#core/core.module';
 import { FileModule } from '#file/file.module';
 import { MessageModule } from '#message/message.module';
 import { PostModule } from '#post/post.module';
+import { SocketModule } from '#socket/socket.module';
 import { UserModule } from '#user/user.module';
-
-import { ChatModule } from './gateway/gateway.module';
 
 @Module({
   imports: [
@@ -21,7 +20,7 @@ import { ChatModule } from './gateway/gateway.module';
     FileModule,
     MessageModule,
     ConversationModule,
-    ChatModule,
+    SocketModule,
   ],
 })
 export class AppModule {}

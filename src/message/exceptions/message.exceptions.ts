@@ -1,6 +1,7 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 
 import {
+  HAS_NO_ACCESS_FOR_EDIT_MESSAGE,
   HAS_NO_ACCESS_FOR_SEND_MESSAGE,
   MESSAGE_NOT_FOUND,
 } from '#message/constants/message.constants';
@@ -13,7 +14,7 @@ export class HasNoAccessForSendMessageException extends ForbiddenException {
 
 export class HasNoAccessForEditMessageException extends ForbiddenException {
   constructor() {
-    super(HAS_NO_ACCESS_FOR_SEND_MESSAGE);
+    super(HAS_NO_ACCESS_FOR_EDIT_MESSAGE);
   }
 }
 

@@ -14,8 +14,10 @@ import {
 import {
   CreateMessageParams,
   CreateMessageReponse,
+  DeleteLastMessageResponse,
   DeleteMessageParams,
   EditMessageParams,
+  EditMessageResponse,
 } from './types/message.types';
 
 @Injectable()
@@ -118,8 +120,15 @@ export class MessageService {
     return this.getUnreadMessagesCount(conversationId);
   }
 
-  async editMessage(params: EditMessageParams): Promise<Message> {
-    const { content, messageId, userId } = params;
+  async editMessage(
+    params: EditMessageParams,
+  ): Promise<EditMessageResponse | Message> {
+    const { content, messageId, userId, conversationId } = params;
+
+    const conversation =
+      await this.conversationService.getConversationById(conversationId);
+
+    if (!conversation) throw new ConversationNotFoundException();
 
     const message = await this.prismaService.message.findUnique({
       where: {
@@ -135,16 +144,31 @@ export class MessageService {
 
     const updatedMessage = await this.prismaService.message.update({
       where: { id: messageId },
-      data: { content },
+      data: { content, updatedAt: new Date() },
       include: {
         author: { select: this.selectUserFields() },
       },
     });
 
-    return exclude(updatedMessage, ['authorId']);
+    if (conversation.lastMessageId !== messageId) {
+      return exclude(updatedMessage, ['authorId']);
+    }
+
+    const updatedConversation =
+      await this.conversationService.setLastConversationMessage({
+        conversationId: conversation.id,
+        messageId: updatedMessage.id,
+      });
+
+    return {
+      message: exclude(updatedMessage, ['authorId']),
+      conversation: updatedConversation,
+    };
   }
 
-  async deleteMessage(params: DeleteMessageParams): Promise<Message> {
+  async deleteMessage(
+    params: DeleteMessageParams,
+  ): Promise<Message | DeleteLastMessageResponse> {
     const { conversationId, messageId, userId } = params;
 
     const conversation =
@@ -165,7 +189,7 @@ export class MessageService {
     if (message.authorId !== userId)
       throw new HasNoAccessForEditMessageException();
 
-    if (conversation.lastMessagId !== message.id) {
+    if (conversation.lastMessageId !== message.id) {
       return this.prismaService.message.delete({
         where: { id: messageId },
         include: {
@@ -180,14 +204,14 @@ export class MessageService {
   async deleteLastMessage(
     conversation: ConversationInfo,
     messageId: number,
-  ): Promise<Message> {
+  ): Promise<DeleteLastMessageResponse> {
     const size = conversation.messages.length;
-    const LAST_MESSAGE_INDEX = size - 1;
 
     if (size <= 1) {
-      await this.conversationService.setLastConversationMessage({
-        conversationId: conversation.id,
-      });
+      const updatedConversation =
+        await this.conversationService.setLastConversationMessage({
+          conversationId: conversation.id,
+        });
 
       const deletedMessage = await this.prismaService.message.delete({
         where: { id: messageId },
@@ -196,14 +220,20 @@ export class MessageService {
         },
       });
 
-      return exclude(deletedMessage, ['authorId']);
+      return {
+        conversation: updatedConversation,
+        message: exclude(deletedMessage, ['authorId']),
+      };
     } else {
+      const LAST_MESSAGE_INDEX = size - 2;
+
       const newLastMessage = conversation.messages[LAST_MESSAGE_INDEX];
 
-      await this.conversationService.setLastConversationMessage({
-        conversationId: conversation.id,
-        messageId: newLastMessage.id,
-      });
+      const updatedConversation =
+        await this.conversationService.setLastConversationMessage({
+          conversationId: conversation.id,
+          messageId: newLastMessage.id,
+        });
 
       const deletedMessage = await this.prismaService.message.delete({
         where: { id: messageId },
@@ -212,7 +242,10 @@ export class MessageService {
         },
       });
 
-      return exclude(deletedMessage, ['authorId']);
+      return {
+        conversation: updatedConversation,
+        message: exclude(deletedMessage, ['authorId']),
+      };
     }
   }
 }

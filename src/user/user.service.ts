@@ -2,16 +2,16 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '#prisma/prisma.service';
 import { exclude } from '#utils/helpers';
-
-import { CreateUserParams, EditUserParams } from './types/user.type';
 import {
+  FollowersCountFields,
+  SelectUserFollowsCount,
+  User,
   UserWithFollowsCount,
   UserWithoutEmailWithFollowCount,
-  User,
-  SelectUserFollowsCount,
-  FollowersCountFields,
   UserWithPasswordHash,
 } from '#utils/types';
+
+import { CreateUserParams, EditUserParams } from './types/user.type';
 
 @Injectable()
 export class UserService {

@@ -5,4 +5,6 @@ export const CANNOT_CREATE_CONVERSATION_WITH_YOURSELF =
 
 export const CONVERSATION_IS_ALREADY_EXIST = 'Чат уже существует';
 
-export const HasNoAccessToConversation = 'Нет доступа к данному чату';
+export const HAS_NO_ACCESS_TO_CONVERSATION = 'Нет доступа к данному чату';
+
+export const INVALID_CONVERSATION_ID = 'Некорректный id чата';

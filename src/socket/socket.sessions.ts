@@ -10,10 +10,10 @@ export interface IGatewaySessionManager {
 }
 
 @Injectable()
-export class GatewaySessionManager implements IGatewaySessionManager {
+export class SocketSessionManager implements IGatewaySessionManager {
   private readonly sessions: Map<number, AuthenticatedSocket> = new Map();
 
-  getUserSocket(id: number) {
+  getUserSocket(id: number): AuthenticatedSocket {
     return this.sessions.get(id);
   }
 

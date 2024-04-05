@@ -36,7 +36,9 @@ export class ConversationService {
     ]);
   }
 
-  async createConversation(params: CreateConversationParams) {
+  async createConversation(
+    params: CreateConversationParams,
+  ): Promise<Conversation> {
     const { creatorId, message: content, recipientId } = params;
 
     const recipient = await this.userService.findUserById(recipientId);
@@ -56,7 +58,6 @@ export class ConversationService {
 
     const newConversation = await this.prismaService.conversation.create({
       data: {
-        lastMessage: null,
         creator: { connect: { id: creatorId } },
         recipient: { connect: { id: recipientId } },
       },
@@ -95,7 +96,7 @@ export class ConversationService {
 
     return {
       ...conversation,
-      messages: conversation.messages.map((message) =>
+      messages: conversation?.messages.map((message) =>
         exclude(message, ['authorId']),
       ),
     };
@@ -134,7 +135,7 @@ export class ConversationService {
     });
 
     return conversations.map((conversation) => ({
-      ...exclude(conversation, ['creatorId', 'recipientId', 'lastMessagId']),
+      ...exclude(conversation, ['creatorId', 'recipientId', 'lastMessageId']),
     }));
   }
 
@@ -142,7 +143,8 @@ export class ConversationService {
     const conversation = await this.getConversationById(conversationId);
     if (!conversation) throw new ConversationNotFoundException();
     return (
-      conversation.creator.id === userId || conversation.recipient.id === userId
+      conversation?.creator?.id === userId ||
+      conversation?.recipient?.id === userId
     );
   }
 
@@ -150,13 +152,6 @@ export class ConversationService {
     conversationId,
     messageId,
   }: SetLastConversationMessageParams): Promise<Conversation> {
-    const selectUserFields = createObjectByKeys<ShortUserInfo>([
-      'id',
-      'name',
-      'secondName',
-      'avatarPath',
-    ]);
-
     const updateConversation = await this.prismaService.conversation.update({
       where: { id: conversationId },
       data: {
@@ -164,17 +159,17 @@ export class ConversationService {
           ? {
               connect: { id: messageId },
             }
-          : null,
+          : { disconnect: true },
       },
       include: {
-        recipient: { select: selectUserFields },
-        creator: { select: selectUserFields },
+        recipient: { select: this.selectUserFields() },
+        creator: { select: this.selectUserFields() },
         lastMessage: true,
       },
     });
 
     return exclude(updateConversation, [
-      'lastMessagId',
+      'lastMessageId',
       'creatorId',
       'recipientId',
     ]);

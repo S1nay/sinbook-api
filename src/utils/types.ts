@@ -23,7 +23,11 @@ export type SelectUserFollowsCount = Prisma.UserGetPayload<{
     _count: {
       select: Omit<
         Prisma.UserCountOutputTypeSelect,
-        'posts' | 'comments' | 'conversations' | 'messages'
+        | 'posts'
+        | 'comments'
+        | 'conversationRecipient'
+        | 'conversationCreator'
+        | 'messages'
       >;
     };
   };
@@ -102,11 +106,12 @@ export type LastMessage = MessageModel;
 
 export type Conversation = Omit<
   ConversationModel,
-  'recipientId' | 'creatorId' | 'lastMessagId'
+  'recipientId' | 'creatorId' | 'lastMessageId'
 > & {
   creator: ShortUserInfo;
   recipient: ShortUserInfo;
   lastMessage: LastMessage;
+  unreadMessagesCount?: number;
 };
 
 export type ConversationInfo = ConversationModel & {

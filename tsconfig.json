@@ -30,7 +30,7 @@
       "#file/*": ["file/*"],
       "#conversation/*": ["conversation/*"],
       "#message/*": ["message/*"],
-      "#gateway/*": ["gateway/*"],
+      "#socket/*": ["socket/*"],
       "#openapi/*": ["openapi/*"],
     }
   }

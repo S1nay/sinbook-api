@@ -3,7 +3,7 @@ import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '#auth/guards/jwt.guard';
-import { WebsocketAdapter } from '#gateway/gateway.adapter';
+import { WebsocketAdapter } from '#socket/socket.adapter';
 import { HttpExceptionFilter } from '#utils/filters';
 
 import { AppModule } from './app.module';
@@ -32,6 +32,7 @@ async function bootstrap() {
     .addTag('sinbook api')
     .build();
   const document = SwaggerModule.createDocument(app, config);
+
   SwaggerModule.setup('api', app, document);
 
   app.useWebSocketAdapter(new WebsocketAdapter(app));

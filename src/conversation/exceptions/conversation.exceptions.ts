@@ -8,7 +8,8 @@ import {
   CANNOT_CREATE_CONVERSATION_WITH_YOURSELF,
   CONVERSATION_IS_ALREADY_EXIST,
   CONVERSATION_NOT_FOUND,
-  HasNoAccessToConversation,
+  HAS_NO_ACCESS_TO_CONVERSATION,
+  INVALID_CONVERSATION_ID,
 } from '../constants/conversation.constants';
 
 export class ConversationNotFoundException extends NotFoundException {
@@ -31,6 +32,12 @@ export class ConversationIsAlreadyExistException extends NotFoundException {
 
 export class HasNoAccessToConversationException extends ForbiddenException {
   constructor() {
-    super(HasNoAccessToConversation);
+    super(HAS_NO_ACCESS_TO_CONVERSATION);
+  }
+}
+
+export class InvalidaConversationIdException extends BadRequestException {
+  constructor() {
+    super(INVALID_CONVERSATION_ID);
   }
 }
