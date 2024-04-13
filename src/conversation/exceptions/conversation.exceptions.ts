@@ -1,8 +1,5 @@
-import {
-  BadRequestException,
-  ForbiddenException,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 
 import {
   CANNOT_CREATE_CONVERSATION_WITH_YOURSELF,
@@ -24,19 +21,19 @@ export class CannotCreateConversationWithYourselfException extends BadRequestExc
   }
 }
 
-export class ConversationIsAlreadyExistException extends NotFoundException {
+export class ConversationIsAlreadyExistException extends WsException {
   constructor() {
     super(CONVERSATION_IS_ALREADY_EXIST);
   }
 }
 
-export class HasNoAccessToConversationException extends ForbiddenException {
+export class HasNoAccessToConversationException extends WsException {
   constructor() {
     super(HAS_NO_ACCESS_TO_CONVERSATION);
   }
 }
 
-export class InvalidaConversationIdException extends BadRequestException {
+export class InvalidaConversationIdException extends WsException {
   constructor() {
     super(INVALID_CONVERSATION_ID);
   }

@@ -2,8 +2,8 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
+import { WebsocketAdapter } from '#adapters/socket.adapter';
 import { JwtAuthGuard } from '#auth/guards/jwt.guard';
-import { WebsocketAdapter } from '#socket/socket.adapter';
 import { HttpExceptionFilter } from '#utils/filters';
 
 import { AppModule } from './app.module';
