@@ -121,7 +121,7 @@ export type SelectConversationWithFields = Prisma.ConversationGetPayload<{
   };
 }>;
 
-type ConversationCount = {
+export type ConversationUnreadMessagesCount = {
   unreadMessagesCount?: number;
 };
 
@@ -129,7 +129,7 @@ export type Conversation = Omit<
   ConversationModel,
   'recipientId' | 'creatorId' | 'lastMessageId' | '_count'
 > &
-  ConversationCount & {
+  ConversationUnreadMessagesCount & {
     recipient: ShortUserInfo;
     creator: ShortUserInfo;
     lastMessage: LastMessage;

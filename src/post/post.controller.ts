@@ -30,7 +30,6 @@ import {
   CannotModifyPostException,
   PostNotFoundException,
 } from './exceptions/post.exceptions';
-
 import { PostService } from './post.service';
 
 @ApiTags('Посты')

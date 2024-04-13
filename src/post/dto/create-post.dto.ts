@@ -7,8 +7,8 @@ import {
 } from 'class-validator';
 
 export class CreatePostDto {
-  @IsString({ message: 'Поле title должно быть строкой' })
-  @IsNotEmpty({ message: 'Поле title не должно быть пустым' })
+  @IsString({ message: 'Поле content должно быть строкой' })
+  @IsNotEmpty({ message: 'Поле content не должно быть пустым' })
   content: string;
 
   @IsOptional()

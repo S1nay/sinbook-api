@@ -4,7 +4,11 @@ import { Post as PostModel } from '@prisma/client';
 import { PrismaService } from '#prisma/prisma.service';
 import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { UserService } from '#user/user.service';
-import { createObjectByKeys, exclude } from '#utils/helpers';
+import {
+  createObjectByKeys,
+  exclude,
+  transformFieldCount,
+} from '#utils/helpers';
 import {
   CommentsCountFields,
   Post,
@@ -30,23 +34,6 @@ export class PostService {
     private readonly userService: UserService,
   ) {}
 
-  private transformPostCount<T>(post: SelectPostCommentsCount) {
-    const postCount = post._count;
-
-    const modifiedValues = Object.keys(postCount).reduce((acc, key) => {
-      const modifiedKey = `${key}Count`;
-      acc[modifiedKey] = postCount[key];
-      return acc;
-    }, {}) as T;
-
-    delete post._count;
-
-    return {
-      ...post,
-      ...modifiedValues,
-    };
-  }
-
   private getPostUserFields() {
     return createObjectByKeys<ShortUserInfo>([
       'id',
@@ -71,8 +58,10 @@ export class PostService {
       },
     });
 
-    const postWithCommentsCount =
-      this.transformPostCount<CommentsCountFields>(post);
+    const postWithCommentsCount = transformFieldCount<
+      SelectPostCommentsCount,
+      CommentsCountFields
+    >(post, ['commentsCount']);
 
     return exclude(postWithCommentsCount, ['userId']);
   }
@@ -86,7 +75,10 @@ export class PostService {
       },
     });
 
-    return this.transformPostCount<CommentsCountFields>(post);
+    return transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(
+      post,
+      ['commentsCount'],
+    );
   }
 
   async editPost(params: EditPostParams): Promise<Post> {
@@ -114,8 +106,10 @@ export class PostService {
       },
     });
 
-    const postWithCommentsCount =
-      this.transformPostCount<CommentsCountFields>(updatedPost);
+    const postWithCommentsCount = transformFieldCount<
+      SelectPostCommentsCount,
+      CommentsCountFields
+    >(updatedPost, ['commentsCount']);
 
     return exclude(postWithCommentsCount, ['userId']);
   }
@@ -152,7 +146,9 @@ export class PostService {
     });
 
     const postsWithCommentsCount = posts.map((post) =>
-      this.transformPostCount<CommentsCountFields>(post),
+      transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(post, [
+        'commentsCount',
+      ]),
     );
 
     return postsWithCommentsCount.map((post) => exclude(post, ['userId']));

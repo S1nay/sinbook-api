@@ -26,7 +26,7 @@ model User {
   gender                Gender
   isDeleted             Boolean        @default(false) @map("is_deleted")
   followers             Follows[]      @relation("following")
-  following             Follows[]      @relation("follower")
+  follows               Follows[]      @relation("follower")
   createdAt             DateTime       @default(now()) @map("created_at")
   updatedAt             DateTime       @updatedAt @map("updated_at")
   messages              Message[]      @relation("author")

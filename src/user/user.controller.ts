@@ -30,6 +30,32 @@ export class UserController {
     return this.userService.findMyProfile(id);
   }
 
+  @Get('me/followers')
+  findMyFollowers(@User() userId: number) {
+    return this.userService.getFollowers(userId);
+  }
+
+  @Get('me/follows')
+  findMyFollows(@User() userId: number) {
+    return this.userService.getFollows(userId);
+  }
+
+  @Patch('follows/:followingUserId')
+  followUser(
+    @User() userId: number,
+    @Param('followingUserId') followingUserId: number,
+  ) {
+    return this.userService.followUser(userId, +followingUserId);
+  }
+
+  @Delete('follows/:followingUserId')
+  unFollowUser(
+    @User() userId: number,
+    @Param('followingUserId') followingUserId: number,
+  ) {
+    return this.userService.unFollowUser(userId, +followingUserId);
+  }
+
   @ApiOkResponse({ type: UserOpenApi.FindUniqueUserResponse })
   @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @ApiParam({ type: Number, example: 1, name: 'id' })
