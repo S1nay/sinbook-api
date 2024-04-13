@@ -4,7 +4,7 @@ import { ConversationService } from '#conversation/conversation.service';
 import { ConversationNotFoundException } from '#conversation/exceptions/conversation.exceptions';
 import { PrismaService } from '#prisma/prisma.service';
 import { createObjectByKeys, exclude } from '#utils/helpers';
-import { FullConversation, Message, ShortUserInfo } from '#utils/types';
+import { Conversation, Message, ShortUserInfo } from '#utils/types';
 
 import {
   HasNoAccessForEditMessageException,
@@ -37,9 +37,8 @@ export class MessageService {
   }
 
   async getConversationMessages(conversationId: number): Promise<Message[]> {
-    const conversation = await this.conversationService.getConversationById({
-      conversationId,
-    });
+    const conversation =
+      await this.conversationService.getConversationById(conversationId);
 
     if (!conversation) throw new ConversationNotFoundException();
 
@@ -58,10 +57,8 @@ export class MessageService {
   ): Promise<CreateMessageReponse> {
     const { content, conversationId, userId, isAllInChatRoom } = params;
 
-    const conversation = await this.conversationService.getConversationById({
-      conversationId,
-      withLastMessage: true,
-    });
+    const conversation =
+      await this.conversationService.getConversationById(conversationId);
     if (!conversation) throw new ConversationNotFoundException();
 
     const { creator, recipient } = conversation;
@@ -98,10 +95,8 @@ export class MessageService {
   ): Promise<EditMessageResponse | Message> {
     const { content, messageId, userId, conversationId } = params;
 
-    const conversation = await this.conversationService.getConversationById({
-      conversationId,
-      withLastMessage: true,
-    });
+    const conversation =
+      await this.conversationService.getConversationById(conversationId);
 
     if (!conversation) throw new ConversationNotFoundException();
 
@@ -125,7 +120,7 @@ export class MessageService {
       },
     });
 
-    if (conversation.lastMessageId !== messageId) {
+    if (conversation.lastMessage.id !== messageId) {
       return exclude(updatedMessage, ['authorId']);
     }
 
@@ -146,10 +141,8 @@ export class MessageService {
   ): Promise<DeleteLastMessageResponse> {
     const { conversationId, messageId, userId } = params;
 
-    const conversation = await this.conversationService.getConversationById({
-      conversationId,
-      withLastMessage: true,
-    });
+    const conversation =
+      await this.conversationService.getConversationById(conversationId);
 
     if (!conversation) throw new ConversationNotFoundException();
 
@@ -166,7 +159,7 @@ export class MessageService {
     if (message.authorId !== userId)
       throw new HasNoAccessForEditMessageException();
 
-    if (conversation.lastMessageId !== message.id) {
+    if (conversation.lastMessage.id !== message.id) {
       const deletedMessage = await this.prismaService.message.delete({
         where: { id: messageId },
         include: {
@@ -175,10 +168,7 @@ export class MessageService {
       });
 
       const updatedConversation =
-        await this.conversationService.getConversationById({
-          conversationId,
-          withLastMessage: true,
-        });
+        await this.conversationService.getConversationById(conversationId);
 
       return {
         message: deletedMessage,
@@ -190,7 +180,7 @@ export class MessageService {
   }
 
   async deleteLastMessage(
-    conversation: FullConversation,
+    conversation: Conversation,
     messageId: number,
   ): Promise<DeleteLastMessageResponse> {
     const size = conversation.messages.length;
