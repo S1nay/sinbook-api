@@ -1,4 +1,3 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { WsException } from '@nestjs/websockets';
 
 import {
@@ -9,13 +8,13 @@ import {
   INVALID_CONVERSATION_ID,
 } from '../constants/conversation.constants';
 
-export class ConversationNotFoundException extends NotFoundException {
+export class ConversationNotFoundException extends WsException {
   constructor() {
     super(CONVERSATION_NOT_FOUND);
   }
 }
 
-export class CannotCreateConversationWithYourselfException extends BadRequestException {
+export class CannotCreateConversationWithYourselfException extends WsException {
   constructor() {
     super(CANNOT_CREATE_CONVERSATION_WITH_YOURSELF);
   }

@@ -18,8 +18,3 @@ export type CreateConversationParams = {
   creatorId: number;
   recipientId: number;
 };
-
-export type GetConversationByIdParams = {
-  conversationId?: number;
-  withLastMessage?: boolean;
-};
