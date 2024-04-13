@@ -60,20 +60,12 @@ export class MessageController {
 
     const payload = await this.messageService.deleteMessage(params);
 
-    if ('message' in payload) {
-      this.eventsEmmiter.emit('delete.message', {
-        message: payload.message,
-        conversation: payload.conversation,
-      });
+    this.eventsEmmiter.emit('delete.message', {
+      message: payload.message,
+      conversation: payload.conversation,
+    });
 
-      return payload.message;
-    } else {
-      this.eventsEmmiter.emit('delete.message', {
-        message: payload,
-      });
-
-      return payload;
-    }
+    return payload.message;
   }
 
   @Patch(':messageId')

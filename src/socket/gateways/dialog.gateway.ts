@@ -9,6 +9,8 @@ import {
 } from '@nestjs/websockets';
 import { Namespace } from 'socket.io';
 
+import { ConversationService } from '#conversation/conversation.service';
+import { PrismaService } from '#prisma/prisma.service';
 import { NAMESPACES } from '#socket/socket.namespaces';
 import { SocketSessionManager } from '#socket/socket.sessions';
 import { WebsocketExceptionsFilter } from '#utils/filters';
@@ -31,7 +33,11 @@ import { Conversation, Message } from '#utils/types';
 export class DialogGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
-  constructor(private readonly socketSessions: SocketSessionManager) {}
+  constructor(
+    private readonly socketSessions: SocketSessionManager,
+    private readonly prismaService: PrismaService,
+    private readonly conversationService: ConversationService,
+  ) {}
 
   @WebSocketServer()
   conversationServer: Namespace;
@@ -44,8 +50,35 @@ export class DialogGateway
     this.dialogServer = namespace.server.of(NAMESPACES.DIALOG);
   }
 
-  handleConnection(socket: AuthenticatedSocket) {
+  async handleConnection(socket: AuthenticatedSocket) {
     socket.join(`conversation-${socket.handshake.query.conversationId}`);
+
+    const foundedConversation =
+      await this.prismaService.conversation.findUnique({
+        where: {
+          id: +socket.handshake.query.conversationId,
+        },
+      });
+
+    const isRecipient = foundedConversation.recipientId === socket.user.id;
+
+    if (isRecipient) {
+      const conversation = await this.conversationService.checkUnreadMessages(
+        +socket.handshake.query.conversationId,
+      );
+
+      const recipient = this.socketSessions.getUserSocket(
+        conversation.recipient.id,
+      );
+      const creator = this.socketSessions.getUserSocket(
+        conversation.creator.id,
+      );
+
+      this.conversationServer
+        .to(recipient.id)
+        .to(creator.id)
+        .emit('update_message_count', conversation);
+    }
 
     console.log(
       `User ${socket.user.nickName} is connected to conversation-${socket.handshake.query.conversationId}`,
@@ -111,24 +144,18 @@ export class DialogGateway
   }) {
     const { message, conversation } = payload;
 
-    const conversationId = conversation
-      ? conversation.id
-      : message.conversationId;
-
     this.dialogServer
-      .in(`conversation-${conversationId}`)
+      .in(`conversation-${conversation.id}`)
       .emit('delete_message', message);
 
-    if (conversation) {
-      const recipientSocket = this.socketSessions.getUserSocket(
-        conversation.recipient.id,
-      );
+    const recipientSocket = this.socketSessions.getUserSocket(
+      conversation.recipient.id,
+    );
 
-      if (recipientSocket) {
-        this.conversationServer
-          .to(recipientSocket.id)
-          .emit('delete_message', conversation);
-      }
+    if (recipientSocket) {
+      this.conversationServer
+        .to(recipientSocket.id)
+        .emit('delete_message', conversation);
     }
   }
 }

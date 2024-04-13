@@ -27,8 +27,8 @@ export class ConversationController {
 
   @UseGuards(ConversationGuard)
   @Get(':id')
-  getById(@Param('id', ParamIdValidationPipe) userId: number) {
-    return this.conversationService.getConversationById(userId);
+  getById(@Param('id', ParamIdValidationPipe) conversationId: number) {
+    return this.conversationService.getConversationById({ conversationId });
   }
 
   @Post()

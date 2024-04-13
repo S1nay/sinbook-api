@@ -4,7 +4,7 @@ import { ConversationService } from '#conversation/conversation.service';
 import { ConversationNotFoundException } from '#conversation/exceptions/conversation.exceptions';
 import { PrismaService } from '#prisma/prisma.service';
 import { createObjectByKeys, exclude } from '#utils/helpers';
-import { ConversationInfo, Message, ShortUserInfo } from '#utils/types';
+import { FullConversation, Message, ShortUserInfo } from '#utils/types';
 
 import {
   HasNoAccessForEditMessageException,
@@ -37,8 +37,9 @@ export class MessageService {
   }
 
   async getConversationMessages(conversationId: number): Promise<Message[]> {
-    const conversation =
-      await this.conversationService.getConversationById(conversationId);
+    const conversation = await this.conversationService.getConversationById({
+      conversationId,
+    });
 
     if (!conversation) throw new ConversationNotFoundException();
 
@@ -57,8 +58,10 @@ export class MessageService {
   ): Promise<CreateMessageReponse> {
     const { content, conversationId, userId } = params;
 
-    const conversation =
-      await this.conversationService.getConversationById(conversationId);
+    const conversation = await this.conversationService.getConversationById({
+      conversationId,
+      withLastMessage: true,
+    });
     if (!conversation) throw new ConversationNotFoundException();
 
     const { creator, recipient } = conversation;
@@ -89,44 +92,15 @@ export class MessageService {
     };
   }
 
-  async getUnreadMessagesCount(conversationId: number): Promise<number> {
-    const conversation =
-      await this.conversationService.getConversationById(conversationId);
-
-    if (!conversation) throw new ConversationNotFoundException();
-
-    const unreadMessagesCount = await this.prismaService.message.count({
-      where: {
-        AND: [{ isReaded: false }, { conversationId }],
-      },
-    });
-
-    return unreadMessagesCount;
-  }
-
-  async setMessagesIsReaded(conversationId: number): Promise<number> {
-    const conversation =
-      await this.conversationService.getConversationById(conversationId);
-
-    if (!conversation) throw new ConversationNotFoundException();
-
-    await this.prismaService.message.updateMany({
-      where: {
-        AND: [{ conversationId }, { isReaded: false }],
-      },
-      data: { isReaded: true },
-    });
-
-    return this.getUnreadMessagesCount(conversationId);
-  }
-
   async editMessage(
     params: EditMessageParams,
   ): Promise<EditMessageResponse | Message> {
     const { content, messageId, userId, conversationId } = params;
 
-    const conversation =
-      await this.conversationService.getConversationById(conversationId);
+    const conversation = await this.conversationService.getConversationById({
+      conversationId,
+      withLastMessage: true,
+    });
 
     if (!conversation) throw new ConversationNotFoundException();
 
@@ -168,11 +142,13 @@ export class MessageService {
 
   async deleteMessage(
     params: DeleteMessageParams,
-  ): Promise<Message | DeleteLastMessageResponse> {
+  ): Promise<DeleteLastMessageResponse> {
     const { conversationId, messageId, userId } = params;
 
-    const conversation =
-      await this.conversationService.getConversationById(conversationId);
+    const conversation = await this.conversationService.getConversationById({
+      conversationId,
+      withLastMessage: true,
+    });
 
     if (!conversation) throw new ConversationNotFoundException();
 
@@ -190,35 +166,46 @@ export class MessageService {
       throw new HasNoAccessForEditMessageException();
 
     if (conversation.lastMessageId !== message.id) {
-      return this.prismaService.message.delete({
-        where: { id: messageId },
-        include: {
-          author: { select: this.selectUserFields() },
-        },
-      });
-    }
-
-    return this.deleteLastMessage(conversation, messageId);
-  }
-
-  async deleteLastMessage(
-    conversation: ConversationInfo,
-    messageId: number,
-  ): Promise<DeleteLastMessageResponse> {
-    const size = conversation.messages.length;
-
-    if (size <= 1) {
-      const updatedConversation =
-        await this.conversationService.setLastConversationMessage({
-          conversationId: conversation.id,
-        });
-
       const deletedMessage = await this.prismaService.message.delete({
         where: { id: messageId },
         include: {
           author: { select: this.selectUserFields() },
         },
       });
+
+      const updatedConversation =
+        await this.conversationService.getConversationById({
+          conversationId,
+          withLastMessage: true,
+        });
+
+      return {
+        message: deletedMessage,
+        conversation: exclude(updatedConversation, ['messages']),
+      };
+    }
+
+    return this.deleteLastMessage(conversation, messageId);
+  }
+
+  async deleteLastMessage(
+    conversation: FullConversation,
+    messageId: number,
+  ): Promise<DeleteLastMessageResponse> {
+    const size = conversation.messages.length;
+
+    if (size <= 1) {
+      const deletedMessage = await this.prismaService.message.delete({
+        where: { id: messageId },
+        include: {
+          author: { select: this.selectUserFields() },
+        },
+      });
+
+      const updatedConversation =
+        await this.conversationService.setLastConversationMessage({
+          conversationId: conversation.id,
+        });
 
       return {
         conversation: updatedConversation,
@@ -229,18 +216,18 @@ export class MessageService {
 
       const newLastMessage = conversation.messages[LAST_MESSAGE_INDEX];
 
-      const updatedConversation =
-        await this.conversationService.setLastConversationMessage({
-          conversationId: conversation.id,
-          messageId: newLastMessage.id,
-        });
-
       const deletedMessage = await this.prismaService.message.delete({
         where: { id: messageId },
         include: {
           author: { select: this.selectUserFields() },
         },
       });
+
+      const updatedConversation =
+        await this.conversationService.setLastConversationMessage({
+          conversationId: conversation.id,
+          messageId: newLastMessage.id,
+        });
 
       return {
         conversation: updatedConversation,

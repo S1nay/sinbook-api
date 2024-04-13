@@ -104,20 +104,27 @@ export type LastMessage = MessageModel;
 
 // -------------CONVERSATION-------------
 
-export type Conversation = Omit<
-  ConversationModel,
-  'recipientId' | 'creatorId' | 'lastMessageId'
-> & {
+export type FullConversation = {
   creator: ShortUserInfo;
   recipient: ShortUserInfo;
-  lastMessage: LastMessage;
+  lastMessage?: LastMessage;
   unreadMessagesCount?: number;
-};
+  recipientId?: number;
+  creatorId?: number;
+  lastMessageId?: number;
+  messages?: Omit<Message, 'author'>[];
+  _count?: { messages: number };
+} & ConversationModel;
+
+export type Conversation = Omit<
+  FullConversation,
+  'recipientId' | 'creatorId' | 'lastMessageId' | '_count'
+>;
 
 export type ConversationInfo = ConversationModel & {
   creator: ShortUserInfo;
   recipient: ShortUserInfo;
-  messages: Message[];
+  messages?: Message[];
 };
 
 // -------------COMMENT-------------
