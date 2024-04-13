@@ -1,0 +1,25 @@
+export type AccessParams = {
+  conversationId: number;
+  userId: number;
+};
+
+export type CheckConversationIsCreatedParams = {
+  userId: number;
+  recipientId: number;
+};
+
+export type SetLastConversationMessageParams = {
+  conversationId: number;
+  messageId?: number;
+};
+
+export type CreateConversationParams = {
+  message: string;
+  creatorId: number;
+  recipientId: number;
+};
+
+export type GetConversationByIdParams = {
+  conversationId?: number;
+  withLastMessage?: boolean;
+};

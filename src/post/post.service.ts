@@ -1,13 +1,27 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { Post } from '@prisma/client';
+import { Injectable } from '@nestjs/common';
+import { Post as PostModel } from '@prisma/client';
 
 import { PrismaService } from '#prisma/prisma.service';
+import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { UserService } from '#user/user.service';
+import { createObjectByKeys, exclude } from '#utils/helpers';
+import {
+  CommentsCountFields,
+  Post,
+  SelectPostCommentsCount,
+  ShortUserInfo,
+} from '#utils/types';
 
-import { POST_NOT_FOUND } from './constants/post.constants';
-import { CreatePostDto } from './dto/create-post.dto';
-import { UpdatePostDto } from './dto/update-post.dto';
-import { PostCountFields, PostWithCountField } from './types/post.types';
+import {
+  CannotDeletePostException,
+  CannotModifyPostException,
+  PostNotFoundException,
+} from './exceptions/post.exceptions';
+import {
+  CreatePostParams,
+  DeletePostParams,
+  EditPostParams,
+} from './types/post.types';
 
 @Injectable()
 export class PostService {
@@ -16,7 +30,7 @@ export class PostService {
     private readonly userService: UserService,
   ) {}
 
-  private transformPostCount<T>(post: PostWithCountField) {
+  private transformPostCount<T>(post: SelectPostCommentsCount) {
     const postCount = post._count;
 
     const modifiedValues = Object.keys(postCount).reduce((acc, key) => {
@@ -33,117 +47,114 @@ export class PostService {
     };
   }
 
-  async createPost(createPostDto: CreatePostDto, userId: number) {
+  private getPostUserFields() {
+    return createObjectByKeys<ShortUserInfo>([
+      'id',
+      'name',
+      'nickName',
+      'secondName',
+    ]);
+  }
+
+  async createPost(params: CreatePostParams): Promise<Post> {
+    const { content, userId, images } = params;
+
     const post = await this.prismaService.post.create({
       data: {
-        ...createPostDto,
-        user: {
-          connect: { id: userId },
-        },
+        content,
+        images,
+        user: { connect: { id: userId } },
       },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            secondName: true,
-            nickName: true,
-          },
-        },
+        user: { select: this.getPostUserFields() },
+        _count: { select: { comments: true } },
       },
     });
 
-    return post;
+    const postWithCommentsCount =
+      this.transformPostCount<CommentsCountFields>(post);
+
+    return exclude(postWithCommentsCount, ['userId']);
   }
 
-  async findPostById(id: number) {
+  async findPostById(id: number): Promise<PostModel> {
     const post = await this.prismaService.post.findUnique({
       where: { id },
       include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            secondName: true,
-            nickName: true,
-          },
-        },
-        _count: {
-          select: { comments: true },
-        },
+        user: { select: this.getPostUserFields() },
+        _count: { select: { comments: true } },
       },
     });
+
+    return this.transformPostCount<CommentsCountFields>(post);
+  }
+
+  async editPost(params: EditPostParams): Promise<Post> {
+    const { content, id, userId, images } = params;
+
+    const post = await this.findPostById(id);
 
     if (!post) {
-      throw new NotFoundException(POST_NOT_FOUND);
+      throw new PostNotFoundException();
     }
 
-    return this.transformPostCount<PostCountFields>(post);
-  }
+    if (post.userId !== userId) {
+      throw new CannotModifyPostException();
+    }
 
-  async updatePost(id: number, updatePostDto: UpdatePostDto, userId: number) {
-    await this.findPostById(id);
-
-    const post = await this.prismaService.post.update({
+    const updatedPost = await this.prismaService.post.update({
       where: { id },
       data: {
-        ...updatePostDto,
-        user: {
-          connect: {
-            id: userId,
-          },
-        },
+        content,
+        images,
       },
       include: {
-        _count: {
-          select: {
-            comments: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            secondName: true,
-            nickName: true,
-          },
-        },
+        _count: { select: { comments: true } },
+        user: { select: this.getPostUserFields() },
       },
     });
 
-    return this.transformPostCount<PostCountFields>(post);
+    const postWithCommentsCount =
+      this.transformPostCount<CommentsCountFields>(updatedPost);
+
+    return exclude(postWithCommentsCount, ['userId']);
   }
 
-  async deletePost(id: number): Promise<void> {
-    await this.findPostById(id);
+  async deletePost(params: DeletePostParams): Promise<void> {
+    const { id, userId } = params;
 
-    this.prismaService.post.delete({
+    const post = await this.findPostById(id);
+
+    if (!post) {
+      throw new PostNotFoundException();
+    }
+
+    if (post.userId !== userId) {
+      throw new CannotDeletePostException();
+    }
+
+    await this.prismaService.post.delete({
       where: { id },
     });
   }
 
-  async findUserPosts(userId: number): Promise<Post[]> {
-    await this.userService.findUserById(userId);
+  async findShortUserInfos(userId: number): Promise<Post[]> {
+    const user = await this.userService.findUserById(userId);
+
+    if (!user) throw new UserNotFoundException();
 
     const posts = await this.prismaService.post.findMany({
       where: { userId },
       include: {
-        _count: {
-          select: {
-            comments: true,
-          },
-        },
-        user: {
-          select: {
-            id: true,
-            name: true,
-            secondName: true,
-            nickName: true,
-          },
-        },
+        _count: { select: { comments: true } },
+        user: { select: this.getPostUserFields() },
       },
     });
 
-    return posts.map((post) => this.transformPostCount<PostCountFields>(post));
+    const postsWithCommentsCount = posts.map((post) =>
+      this.transformPostCount<CommentsCountFields>(post),
+    );
+
+    return postsWithCommentsCount.map((post) => exclude(post, ['userId']));
   }
 }

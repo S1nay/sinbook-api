@@ -1,21 +1,12 @@
-import { Prisma } from '@prisma/client';
+export type CreatePostParams = {
+  content: string;
+  images?: string[];
+  userId: number;
+};
 
-export type PostWithCountField = Prisma.PostGetPayload<{
-  include: {
-    user: {
-      select: {
-        id: true;
-        name: true;
-        secondName: true;
-        nickName: true;
-      };
-    };
-    _count: {
-      select: Omit<Prisma.PostCountOutputTypeSelect, 'comments'>;
-    };
-  };
-}>;
+export type EditPostParams = CreatePostParams & { id: number };
 
-export type PostCountFields = {
-  comments: number;
+export type DeletePostParams = {
+  userId: number;
+  id: number;
 };

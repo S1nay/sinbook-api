@@ -2,8 +2,9 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
-import { JwtAuthGuard } from '#auth/guards/jwt-guard';
-import { HttpExceptionFilter } from '#filters/http-exception.filter';
+import { JwtAuthGuard } from '#auth/guards/jwt.guard';
+import { WebsocketAdapter } from '#socket/socket.adapter';
+import { HttpExceptionFilter } from '#utils/filters';
 
 import { AppModule } from './app.module';
 
@@ -15,7 +16,12 @@ async function bootstrap() {
   const httpAdapter = app.get(HttpAdapterHost);
 
   app.setGlobalPrefix('api');
-  app.enableCors();
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+    allowedHeaders: ['Authorization', 'Content-type', 'Accept'],
+    methods: ['PUT', 'POST', 'DELETE', 'GET', 'OPTIONS'],
+  });
   app.enableShutdownHooks();
 
   const config = new DocumentBuilder()
@@ -26,8 +32,10 @@ async function bootstrap() {
     .addTag('sinbook api')
     .build();
   const document = SwaggerModule.createDocument(app, config);
+
   SwaggerModule.setup('api', app, document);
 
+  app.useWebSocketAdapter(new WebsocketAdapter(app));
   app.useGlobalPipes(new ValidationPipe());
   app.useGlobalFilters(new HttpExceptionFilter(httpAdapter));
   app.useGlobalGuards(new JwtAuthGuard(reflector));

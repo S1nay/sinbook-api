@@ -8,7 +8,6 @@ import {
   Patch,
   Post,
   Query,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -19,8 +18,10 @@ import {
   ApiTags,
 } from '@nestjs/swagger';
 
-import { UserNotAuthorizedException } from '#auth/exceptions/auth-exceptions';
-import { User } from '#decorators/user.decorator';
+import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
+import { PostOpenApi } from '#openapi/post.openapi';
+import { User } from '#utils/decorators';
+import { ParamIdValidationPipe } from '#utils/pipes';
 
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -28,12 +29,8 @@ import {
   CannotDeletePostException,
   CannotModifyPostException,
   PostNotFoundException,
-} from './exceptions/post-exceptions';
-import { PostActionGuard } from './guards/post-action.guard';
-import { PostOpenApi } from './openapi/post.openapi';
-import { DeletePostParams } from './params/delete-post.params';
-import { FindPostByUserIdParams } from './params/find-post-by-userId.params';
-import { UpdatePostParams } from './params/update-post.params';
+} from './exceptions/post.exceptions';
+
 import { PostService } from './post.service';
 
 @ApiTags('Посты')
@@ -47,7 +44,10 @@ export class PostController {
   @ApiException(() => [UserNotAuthorizedException])
   @Post()
   create(@Body() createPostDto: CreatePostDto, @User() userId: number) {
-    return this.postService.createPost(createPostDto, userId);
+    return this.postService.createPost({
+      userId,
+      ...createPostDto,
+    });
   }
 
   @ApiParam({ name: 'id', type: Number })
@@ -58,14 +58,17 @@ export class PostController {
     PostNotFoundException,
     CannotModifyPostException,
   ])
-  @UseGuards(PostActionGuard)
   @Patch(':id')
   update(
-    @Param() params: UpdatePostParams,
+    @Param('id', ParamIdValidationPipe) id: number,
     @Body() updatePostDto: UpdatePostDto,
     @User() userId: number,
   ) {
-    return this.postService.updatePost(+params.id, updatePostDto, userId);
+    return this.postService.editPost({
+      id,
+      userId,
+      ...updatePostDto,
+    });
   }
 
   @ApiParam({ name: 'id', type: Number })
@@ -74,24 +77,26 @@ export class PostController {
     PostNotFoundException,
     CannotDeletePostException,
   ])
-  @UseGuards(PostActionGuard)
   @Delete(':id')
-  delete(@Param() params: DeletePostParams) {
-    return this.postService.deletePost(+params.id);
+  delete(
+    @Param('id', ParamIdValidationPipe) id: number,
+    @User() userId: number,
+  ) {
+    return this.postService.deletePost({ id, userId });
   }
 
   @ApiOkResponse({ type: PostOpenApi.FindPosts, isArray: true })
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
   @Get('me')
   findMyPosts(@User() userId: number) {
-    return this.postService.findUserPosts(userId);
+    return this.postService.findShortUserInfos(userId);
   }
 
   @ApiOkResponse({ type: PostOpenApi.FindPosts, isArray: true })
   @ApiQuery({ name: 'userId', type: Number })
   @ApiException(() => [UserNotAuthorizedException])
   @Get()
-  findPostsByUserId(@Query() params: FindPostByUserIdParams) {
-    return this.postService.findUserPosts(+params.userId);
+  findPostsByUserId(@Query('userId', ParamIdValidationPipe) userId: number) {
+    return this.postService.findShortUserInfos(userId);
   }
 }

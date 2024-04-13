@@ -1,14 +1,20 @@
-import { Prisma } from '@prisma/client';
+import { User } from '@prisma/client';
 
-export type UserWithCountField = Prisma.UserGetPayload<{
-  include: {
-    _count: {
-      select: Omit<Prisma.UserCountOutputTypeSelect, 'posts' | 'comments'>;
-    };
-  };
-}>;
+type CreateUserData = Omit<
+  User,
+  'id' | 'isDeleted' | 'createdAt' | 'updatedAt'
+>;
 
-export type CountFields = {
-  followersCount: number;
-  followersOfCount: number;
+type UpdateUserData = Omit<
+  User,
+  'id' | 'isDeleted' | 'createdAt' | 'updatedAt' | 'passwordHash'
+>;
+
+export type EditUserParams = {
+  userId: number;
+  userData: UpdateUserData;
+};
+
+export type CreateUserParams = {
+  userData: CreateUserData;
 };

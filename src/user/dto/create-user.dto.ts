@@ -19,7 +19,7 @@ export class CreateUserDto implements Prisma.UserCreateInput {
 
   @IsString({ message: 'Поле avatarPath должно быть строкой' })
   @IsOptional()
-  avatarPath?: string;
+  avatarPath: string;
 
   @IsString({ message: 'Поле name должно быть строкой' })
   @IsNotEmpty({ message: 'Поле name не должно быть пустым' })

@@ -10,16 +10,14 @@ import {
 import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
-import { Host } from '#decorators/host.decorator';
-import { SkipAuth } from '#decorators/skip-auth.decorator';
+import { ApiFile, FileOpenApi } from '#openapi/file.openapi';
+import { Host, SkipAuth } from '#utils/decorators';
 
 import {
   FileIsRequiredException,
   InvalidImageTypeException,
   MaxBufferSizeException,
-} from './exceptions/file-exceptions';
-import { ApiFile } from './openapi/api-file.decorator';
-import { FileOpenApi } from './openapi/file.openapi';
+} from './exceptions/file.exceptions';
 import { FileValidatorPipe } from './pipes/file-validator.pipe';
 import { FileService } from './file.service';
 

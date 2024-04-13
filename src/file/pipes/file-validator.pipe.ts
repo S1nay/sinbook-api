@@ -4,7 +4,7 @@ import {
   FileIsRequiredException,
   InvalidImageTypeException,
   MaxBufferSizeException,
-} from '#file/exceptions/file-exceptions';
+} from '#file/exceptions/file.exceptions';
 
 @Injectable()
 export class FileValidatorPipe implements PipeTransform {

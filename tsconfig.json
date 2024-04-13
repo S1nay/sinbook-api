@@ -22,15 +22,16 @@
     "paths": {
       "#auth/*": ["auth/*"],
       "#comment/*": ["comment/*"],
-      "#config/*": ["config/*"],
       "#core/*": ["core/*"],
-      "#decorators/*": ["decorators/*"],
-      "#filters/*": ["filters/*"],
       "#post/*": ["post/*"],
       "#prisma/*": ["prisma/*"],
       "#user/*": ["user/*"],
       "#utils/*": ["utils/*"],
       "#file/*": ["file/*"],
+      "#conversation/*": ["conversation/*"],
+      "#message/*": ["message/*"],
+      "#socket/*": ["socket/*"],
+      "#openapi/*": ["openapi/*"],
     }
   }
 }
