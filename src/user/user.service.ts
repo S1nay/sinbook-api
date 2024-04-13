@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '#prisma/prisma.service';
-import { exclude } from '#utils/helpers';
+import { exclude, transformFieldCount } from '#utils/helpers';
 import {
   FollowersCountFields,
   SelectUserFollowsCount,
@@ -17,33 +17,18 @@ import { CreateUserParams, EditUserParams } from './types/user.type';
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  private transformUserCount<T>(user: SelectUserFollowsCount) {
-    const userCount = user._count;
-
-    const modifiedValues = Object.keys(userCount).reduce((acc, key) => {
-      const modifiedKey = `${key}Count`;
-      acc[modifiedKey] = userCount[key];
-      return acc;
-    }, {}) as T;
-
-    delete user._count;
-
-    return {
-      ...user,
-      ...modifiedValues,
-    };
-  }
-
   async findMyProfile(userId: number): Promise<UserWithFollowsCount> {
     const user = await this.prismaService.user.findUnique({
       where: { id: userId },
       include: {
-        _count: { select: { followers: true, following: true } },
+        _count: { select: { followers: true, follows: true } },
       },
     });
 
-    const userWithFollowsCount =
-      this.transformUserCount<FollowersCountFields>(user);
+    const userWithFollowsCount = transformFieldCount<
+      SelectUserFollowsCount,
+      FollowersCountFields
+    >(user, ['followersCount', 'followsCount']);
 
     return exclude(userWithFollowsCount, ['passwordHash']);
   }
@@ -62,14 +47,16 @@ export class UserService {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       include: {
-        _count: { select: { followers: true, following: true } },
+        _count: { select: { followers: true, follows: true } },
       },
     });
 
-    return exclude(this.transformUserCount<FollowersCountFields>(user), [
-      'passwordHash',
-      'email',
-    ]);
+    const userWithFollowsCount = transformFieldCount<
+      SelectUserFollowsCount,
+      FollowersCountFields
+    >(user, ['followersCount', 'followsCount']);
+
+    return exclude(userWithFollowsCount, ['passwordHash', 'email']);
   }
 
   async findUserByEmail(email: string): Promise<UserWithPasswordHash> {
@@ -90,12 +77,14 @@ export class UserService {
         birthDate: new Date(userData.birthDate),
       },
       include: {
-        _count: { select: { followers: true, following: true } },
+        _count: { select: { followers: true, follows: true } },
       },
     });
 
-    const userWithFollowsCount =
-      this.transformUserCount<FollowersCountFields>(user);
+    const userWithFollowsCount = transformFieldCount<
+      SelectUserFollowsCount,
+      FollowersCountFields
+    >(user, ['followersCount', 'followsCount']);
 
     return exclude(userWithFollowsCount, ['passwordHash']);
   }

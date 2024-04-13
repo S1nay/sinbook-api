@@ -7,10 +7,11 @@ import { UserService } from '#user/user.service';
 import {
   createObjectByKeys,
   exclude,
-  transformConversationCount,
+  transformFieldCount,
 } from '#utils/helpers';
 import {
   Conversation,
+  ConversationUnreadMessagesCount,
   SelectConversationWithFields,
   ShortUserInfo,
 } from '#utils/types';
@@ -108,11 +109,10 @@ export class ConversationService {
 
     if (!conversation) throw new ConversationNotFoundException();
 
-    const transformedConversation =
-      transformConversationCount<SelectConversationWithFields>(
-        conversation,
-        'unreadMessagesCount',
-      );
+    const transformedConversation = transformFieldCount<
+      SelectConversationWithFields,
+      ConversationUnreadMessagesCount
+    >(conversation, ['unreadMessagesCount']);
 
     return {
       ...exclude(transformedConversation, [
@@ -163,11 +163,10 @@ export class ConversationService {
     });
 
     return conversations.map((conversation) => {
-      const transformedConversation =
-        transformConversationCount<SelectConversationWithFields>(
-          conversation,
-          'unreadMessagesCount',
-        );
+      const transformedConversation = transformFieldCount<
+        SelectConversationWithFields,
+        ConversationUnreadMessagesCount
+      >(conversation, ['unreadMessagesCount']);
 
       return {
         ...exclude(transformedConversation, [
@@ -211,11 +210,10 @@ export class ConversationService {
       },
     });
 
-    const transformedConversation =
-      transformConversationCount<SelectConversationWithFields>(
-        updateConversation,
-        'unreadMessagesCount',
-      );
+    const transformedConversation = transformFieldCount<
+      SelectConversationWithFields,
+      ConversationUnreadMessagesCount
+    >(updateConversation, ['unreadMessagesCount']);
 
     return exclude(transformedConversation, [
       'lastMessageId',
@@ -245,11 +243,10 @@ export class ConversationService {
       },
     });
 
-    const transformedConversation =
-      transformConversationCount<SelectConversationWithFields>(
-        updateConversation,
-        'unreadMessagesCount',
-      );
+    const transformedConversation = transformFieldCount<
+      SelectConversationWithFields,
+      ConversationUnreadMessagesCount
+    >(updateConversation, ['unreadMessagesCount']);
 
     return exclude(transformedConversation, [
       'lastMessageId',

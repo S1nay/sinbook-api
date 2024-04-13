@@ -22,19 +22,23 @@ export function createObjectByKeys<T>(
   return object as Record<(typeof keys)[number], true>;
 }
 
-export function transformConversationCount<
+export function transformFieldCount<
   K extends {
     _count?: {
       [key: string]: number;
     };
   },
->(entity: K, modifiedKey: string) {
+  T,
+>(entity: K, modifiedKeys: string[]) {
   const count = entity._count;
 
   const modifiedValues = Object.keys(count).reduce((acc, key) => {
-    acc[modifiedKey] = count[key];
-    return acc;
-  }, {});
+    for (const modifiedKey of modifiedKeys) {
+      if (!modifiedKey.toLocaleLowerCase().includes(key)) continue;
+      acc[modifiedKey] = count[key];
+      return acc;
+    }
+  }, {}) as T;
 
   delete entity._count;
 
