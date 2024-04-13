@@ -1,4 +1,4 @@
-import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import { WsException } from '@nestjs/websockets';
 
 import {
   HAS_NO_ACCESS_FOR_EDIT_MESSAGE,
@@ -6,19 +6,19 @@ import {
   MESSAGE_NOT_FOUND,
 } from '#message/constants/message.constants';
 
-export class HasNoAccessForSendMessageException extends ForbiddenException {
+export class HasNoAccessForSendMessageException extends WsException {
   constructor() {
     super(HAS_NO_ACCESS_FOR_SEND_MESSAGE);
   }
 }
 
-export class HasNoAccessForEditMessageException extends ForbiddenException {
+export class HasNoAccessForEditMessageException extends WsException {
   constructor() {
     super(HAS_NO_ACCESS_FOR_EDIT_MESSAGE);
   }
 }
 
-export class MessageNotFoundException extends NotFoundException {
+export class MessageNotFoundException extends WsException {
   constructor() {
     super(MESSAGE_NOT_FOUND);
   }

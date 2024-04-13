@@ -1,6 +1,7 @@
 import { INestApplicationContext } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { WsException } from '@nestjs/websockets';
+import { NAMESPACES } from 'adapters/socket.namespaces';
 import { Server } from 'socket.io';
 
 import { AuthService } from '#auth/auth.service';
@@ -10,13 +11,14 @@ import {
   INVALID_CONVERSATION_ID,
 } from '#conversation/constants/conversation.constants';
 import { ConversationService } from '#conversation/conversation.service';
+import { SocketSessionManager } from '#core/session.manager';
 import { AuthenticatedSocket } from '#utils/interfaces';
-
-import { NAMESPACES } from './socket.namespaces';
 
 export class WebsocketAdapter extends IoAdapter {
   private authService: AuthService;
   private conversationService: ConversationService;
+  private sessionManager: SocketSessionManager;
+
   private readonly namespaces: string[] = [
     NAMESPACES.CONVERSATION,
     NAMESPACES.DIALOG,
@@ -32,6 +34,12 @@ export class WebsocketAdapter extends IoAdapter {
       .resolve<ConversationService>(ConversationService)
       .then((conversationService) => {
         this.conversationService = conversationService;
+      });
+
+    app
+      .resolve<SocketSessionManager>(SocketSessionManager)
+      .then((sessionManager) => {
+        this.sessionManager = sessionManager;
       });
   }
 
@@ -57,6 +65,13 @@ export class WebsocketAdapter extends IoAdapter {
               socket.user = userData;
 
               if (namespace === NAMESPACES.DIALOG) {
+                const connectedSocket = this.sessionManager.getUserSocket(
+                  socket.user.id,
+                );
+
+                if (!connectedSocket) {
+                  throw new WsException('Нет подключения');
+                }
                 const conversationId = +socket.handshake.query.conversationId;
 
                 if (isNaN(conversationId)) {

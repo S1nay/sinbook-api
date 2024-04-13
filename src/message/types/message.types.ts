@@ -4,6 +4,7 @@ export type CreateMessageParams = {
   userId: number;
   content: string;
   conversationId: number;
+  isAllInChatRoom: boolean;
 };
 
 export type EditMessageParams = {

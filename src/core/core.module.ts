@@ -8,6 +8,8 @@ import { path } from 'app-root-path';
 import { PrismaModule } from '#prisma/prisma.module';
 import { getJWTConfig } from '#utils/config';
 
+import { SocketSessionManager } from './session.manager';
+
 @Global()
 @Module({
   imports: [
@@ -29,6 +31,7 @@ import { getJWTConfig } from '#utils/config';
     }),
     EventEmitterModule.forRoot(),
   ],
-  exports: [JwtModule, ConfigModule, PrismaModule],
+  providers: [SocketSessionManager],
+  exports: [JwtModule, ConfigModule, PrismaModule, SocketSessionManager],
 })
 export class CoreModule {}

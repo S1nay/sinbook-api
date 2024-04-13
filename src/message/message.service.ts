@@ -56,7 +56,7 @@ export class MessageService {
   async createMessage(
     params: CreateMessageParams,
   ): Promise<CreateMessageReponse> {
-    const { content, conversationId, userId } = params;
+    const { content, conversationId, userId, isAllInChatRoom } = params;
 
     const conversation = await this.conversationService.getConversationById({
       conversationId,
@@ -72,6 +72,7 @@ export class MessageService {
     const message = await this.prismaService.message.create({
       data: {
         content,
+        isReaded: isAllInChatRoom,
         conversation: { connect: { id: conversationId } },
         author: { connect: { id: userId } },
       },
