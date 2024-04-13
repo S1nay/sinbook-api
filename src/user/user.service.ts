@@ -1,15 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '#prisma/prisma.service';
-import {
-  createObjectByKeys,
-  exclude,
-  transformFieldCount,
-} from '#utils/helpers';
+import { exclude, transformFieldCount } from '#utils/helpers';
 import {
   FollowersCountFields,
   SelectUserFollowsCount,
-  ShortUserInfo,
   User,
   UserWithFollowsCount,
   UserWithoutEmailWithFollowCount,
@@ -21,15 +16,6 @@ import { CreateUserParams, EditUserParams } from './types/user.type';
 @Injectable()
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
-
-  private getFollowerUserFields() {
-    return createObjectByKeys<ShortUserInfo>([
-      'id',
-      'name',
-      'nickName',
-      'secondName',
-    ]);
-  }
 
   async findMyProfile(userId: number): Promise<UserWithFollowsCount> {
     const user = await this.prismaService.user.findUnique({
@@ -110,75 +96,5 @@ export class UserService {
     });
 
     return exclude(user, ['passwordHash']);
-  }
-
-  async getFollowers(userId: number) {
-    const userWithFollowers = await this.prismaService.user.findUnique({
-      where: {
-        id: userId,
-      },
-      include: {
-        followers: {
-          select: {
-            follower: {
-              select: this.getFollowerUserFields(),
-            },
-          },
-        },
-      },
-    });
-
-    return userWithFollowers.followers.map((follower) => ({
-      ...follower.follower,
-    }));
-  }
-
-  async getFollows(userId: number) {
-    const userWithFollows = await this.prismaService.user.findUnique({
-      where: {
-        id: userId,
-      },
-      include: {
-        follows: {
-          select: {
-            following: {
-              select: this.getFollowerUserFields(),
-            },
-          },
-        },
-      },
-    });
-
-    return userWithFollows.follows.map((following) => ({
-      ...following.following,
-    }));
-  }
-
-  async followUser(userId: number, followingUserId: number) {
-    return this.prismaService.follows.create({
-      data: {
-        follower: {
-          connect: {
-            id: userId,
-          },
-        },
-        following: {
-          connect: {
-            id: followingUserId,
-          },
-        },
-      },
-    });
-  }
-
-  async unFollowUser(userId: number, followingUserId: number) {
-    return this.prismaService.follows.delete({
-      where: {
-        followerId_followingId: {
-          followerId: userId,
-          followingId: followingUserId,
-        },
-      },
-    });
   }
 }

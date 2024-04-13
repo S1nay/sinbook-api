@@ -8,6 +8,7 @@ import { FileModule } from '#file/file.module';
 import { MessageModule } from '#message/message.module';
 import { PostModule } from '#post/post.module';
 import { UserModule } from '#user/user.module';
+import { FollowsModule } from './follows/follows.module';
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { UserModule } from '#user/user.module';
     FileModule,
     MessageModule,
     ConversationModule,
+    FollowsModule,
   ],
 })
 export class AppModule {}

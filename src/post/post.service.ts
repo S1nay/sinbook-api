@@ -40,6 +40,7 @@ export class PostService {
       'name',
       'nickName',
       'secondName',
+      'avatarPath',
     ]);
   }
 

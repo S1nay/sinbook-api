@@ -29,9 +29,9 @@
       "#user/*": ["user/*"],
       "#utils/*": ["utils/*"],
       "#file/*": ["file/*"],
+      "#follows/*": ["follows/*"],
       "#conversation/*": ["conversation/*"],
       "#message/*": ["message/*"],
-      "#socket/*": ["socket/*"],
       "#openapi/*": ["openapi/*"],
     }
   }

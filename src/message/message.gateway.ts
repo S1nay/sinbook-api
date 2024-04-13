@@ -16,6 +16,7 @@ import { ConversationService } from '#conversation/conversation.service';
 import { SocketSessionManager } from '#core/session.manager';
 import { PrismaService } from '#prisma/prisma.service';
 import { WebsocketExceptionsFilter } from '#utils/filters';
+import { exclude } from '#utils/helpers';
 import { AuthenticatedSocket } from '#utils/interfaces';
 import { WSValidationPipe } from '#utils/pipes';
 
@@ -62,17 +63,14 @@ export class MessageGateway
 
     socket.join(`conversation-${conversationId}`);
 
-    const foundedConversation =
-      await this.prismaService.conversation.findUnique({
-        where: { id: conversationId },
-        include: { messages: true },
-      });
+    const conversation =
+      await this.conversationService.getConversationById(conversationId);
 
-    const isHaveUnreadedMessage = foundedConversation.messages.filter(
+    const isHaveUnreadedMessage = conversation.messages.filter(
       (message) => !message.isReaded,
     ).length;
 
-    const isRecipient = foundedConversation.recipientId === socket.user.id;
+    const isRecipient = conversation.recipient.id === socket.user.id;
 
     if (isRecipient && isHaveUnreadedMessage) {
       const conversation =
@@ -90,6 +88,11 @@ export class MessageGateway
         .to(creator.id)
         .emit('update_message_count', conversation);
     }
+
+    socket.emit(
+      'get_conversation_info',
+      exclude(conversation, ['lastMessage', 'unreadMessagesCount']),
+    );
 
     console.log(
       `User ${socket.user.nickName} is connected to conversation-${conversationId}`,
