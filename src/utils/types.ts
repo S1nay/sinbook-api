@@ -121,26 +121,20 @@ export type SelectConversationWithFields = Prisma.ConversationGetPayload<{
   };
 }>;
 
-export type FullConversation = {
-  creator: ShortUserInfo;
-  recipient: ShortUserInfo;
-  lastMessage?: LastMessage;
-  messages?: Omit<Message, 'author'>[];
-  _count?: { messages: number };
-} & ConversationModel;
-
-export type Conversation = Omit<
-  FullConversation,
-  'recipientId' | 'creatorId' | 'lastMessageId' | '_count'
-> & {
+type ConversationCount = {
   unreadMessagesCount?: number;
 };
 
-export type ConversationInfo = ConversationModel & {
-  creator: ShortUserInfo;
-  recipient: ShortUserInfo;
-  messages?: Message[];
-};
+export type Conversation = Omit<
+  ConversationModel,
+  'recipientId' | 'creatorId' | 'lastMessageId' | '_count'
+> &
+  ConversationCount & {
+    recipient: ShortUserInfo;
+    creator: ShortUserInfo;
+    lastMessage: LastMessage;
+    messages?: Message[];
+  };
 
 // -------------COMMENT-------------
 
