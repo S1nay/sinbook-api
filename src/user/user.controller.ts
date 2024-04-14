@@ -1,5 +1,13 @@
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -11,7 +19,11 @@ import {
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { UserOpenApi } from '#openapi/user.openapi';
 import { User } from '#utils/decorators';
-import { ParamIdValidationPipe, TransformGenderPipe } from '#utils/pipes';
+import {
+  ParamIdValidationPipe,
+  QueryNumericValidationPipe,
+  TransformGenderPipe,
+} from '#utils/pipes';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserNotFoundException } from './exceptions/user.exceptions';
@@ -22,6 +34,18 @@ import { UserService } from './user.service';
 @Controller('user')
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get()
+  findAll(
+    @Query(QueryNumericValidationPipe)
+    params: {
+      perPage: number;
+      page: number;
+      search: string;
+    },
+  ) {
+    return this.userService.findUsers(params);
+  }
 
   @ApiOkResponse({ type: UserOpenApi.FindMeResponse })
   @ApiException(() => UserNotAuthorizedException)
