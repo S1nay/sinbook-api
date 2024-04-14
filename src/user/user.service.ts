@@ -8,6 +8,8 @@ import {
 } from '#utils/helpers';
 import {
   FollowersCountFields,
+  PaginationParams,
+  PaginationResponse,
   SelectUserFollowsCount,
   ShortUserInfo,
   User,
@@ -113,11 +115,9 @@ export class UserService {
     return exclude(user, ['passwordHash']);
   }
 
-  async findUsers(params: {
-    page?: number;
-    perPage?: number;
-    search?: string;
-  }) {
+  async findUsers(
+    params: PaginationParams,
+  ): Promise<PaginationResponse<ShortUserInfo>> {
     const page = params?.page || 1;
     const limit =
       params?.perPage || params?.perPage === 0 ? params?.perPage : 10;
@@ -125,12 +125,7 @@ export class UserService {
     const take = limit === 0 ? undefined : limit;
     const skip = (page - 1) * limit ?? 0;
 
-    console.log(params);
-
-    const users = await this.prismaService.user.findMany({
-      select: this.getShortUserInfo(),
-      skip,
-      take,
+    const searchParams = {
       where: {
         ...(params?.search && {
           OR: [
@@ -141,13 +136,33 @@ export class UserService {
           ],
         }),
       },
-      orderBy: {
-        followers: {
-          _count: 'desc',
-        },
-      },
-    });
+    };
 
-    return users;
+    const [users, totalCount] = await this.prismaService.$transaction([
+      this.prismaService.user.findMany({
+        select: this.getShortUserInfo(),
+        skip,
+        take,
+        ...searchParams,
+        orderBy: {
+          followers: {
+            _count: 'desc',
+          },
+        },
+      }),
+      this.prismaService.user.count({
+        ...searchParams,
+      }),
+    ]);
+
+    return {
+      results: users,
+      meta: {
+        page: params?.page,
+        perPage: params?.perPage,
+        totalItems: totalCount,
+        totalPages: Math.ceil(totalCount / params?.perPage),
+      },
+    };
   }
 }
