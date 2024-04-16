@@ -20,6 +20,7 @@ import {
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { PostOpenApi } from '#openapi/post.openapi';
+import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { Pagination, User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
 import { PaginationParams } from '#utils/types';
@@ -85,13 +86,22 @@ export class PostController {
     return this.postService.deletePost({ id, userId });
   }
 
-  @ApiOkResponse({ type: PostOpenApi.FindPosts, isArray: true })
+  @ApiOkResponse({ type: PostOpenApi.FindAllPosts })
   @ApiParam({ name: 'userId', type: Number })
   @ApiQuery({
-    type: Number,
-    isArray: true,
+    type: String,
+    example: 'name',
+    name: 'search',
+    required: false,
   })
-  @ApiException(() => [UserNotAuthorizedException])
+  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
+  @ApiQuery({
+    type: Number,
+    example: 15,
+    name: 'perPage',
+    required: false,
+  })
+  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @Get()
   findPosts(
     @Query('userId', ParamIdValidationPipe) userId: number,
@@ -104,13 +114,21 @@ export class PostController {
     });
   }
 
-  @ApiOkResponse({ type: PostOpenApi.FindPosts, isArray: true })
-  @ApiParam({ name: 'userId', type: Number })
+  @ApiOkResponse({ type: PostOpenApi.FindAllPosts, isArray: true })
+  @ApiQuery({
+    type: String,
+    example: 'name',
+    name: 'search',
+    required: false,
+  })
+  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
   @ApiQuery({
     type: Number,
-    isArray: true,
+    example: 15,
+    name: 'perPage',
+    required: false,
   })
-  @ApiException(() => [UserNotAuthorizedException])
+  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @Get('me')
   findMyPosts(
     @User() userId: number,

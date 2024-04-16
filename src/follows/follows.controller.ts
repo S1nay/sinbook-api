@@ -4,11 +4,13 @@ import {
   ApiBearerAuth,
   ApiOkResponse,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { UserOpenApi } from '#openapi/user.openapi';
+import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { Pagination, User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
 import { PaginationParams } from '#utils/types';
@@ -25,8 +27,21 @@ import { FollowsService } from './follows.service';
 export class FollowsController {
   constructor(private readonly followsService: FollowsService) {}
 
-  @ApiOkResponse({ type: UserOpenApi.ShortUser, isArray: true })
-  @ApiException(() => [UserNotAuthorizedException])
+  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiQuery({
+    type: String,
+    example: 'name',
+    name: 'search',
+    required: false,
+  })
+  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
+  @ApiQuery({
+    type: Number,
+    example: 15,
+    name: 'perPage',
+    required: false,
+  })
+  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @Get('me/followers')
   findMyFollowers(
     @User() userId: number,
@@ -39,8 +54,11 @@ export class FollowsController {
     });
   }
 
-  @ApiOkResponse({ type: UserOpenApi.ShortUser, isArray: true })
-  @ApiException(() => [UserNotAuthorizedException])
+  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiQuery({ type: String, example: 'name', name: 'search' })
+  @ApiQuery({ type: Number, example: 1, name: 'page' })
+  @ApiQuery({ type: Number, example: 15, name: 'perPage' })
+  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @Get('me/following')
   findMyFollows(
     @User() userId: number,
@@ -53,8 +71,11 @@ export class FollowsController {
     });
   }
 
-  @ApiOkResponse({ type: UserOpenApi.ShortUser, isArray: true })
-  @ApiException(() => [UserNotAuthorizedException])
+  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiQuery({ type: String, example: 'name', name: 'search' })
+  @ApiQuery({ type: Number, example: 1, name: 'page' })
+  @ApiQuery({ type: Number, example: 15, name: 'perPage' })
+  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @ApiParam({ type: Number, example: 1, name: 'userId' })
   @Get(':userId/followers')
   findUserFollowers(
@@ -67,8 +88,11 @@ export class FollowsController {
     });
   }
 
-  @ApiOkResponse({ type: UserOpenApi.ShortUser, isArray: true })
-  @ApiException(() => [UserNotAuthorizedException])
+  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiQuery({ type: String, example: 'name', name: 'search' })
+  @ApiQuery({ type: Number, example: 1, name: 'page' })
+  @ApiQuery({ type: Number, example: 15, name: 'perPage' })
+  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @ApiParam({ type: Number, example: 1, name: 'userId' })
   @Get(':userId/following')
   findUserFollows(

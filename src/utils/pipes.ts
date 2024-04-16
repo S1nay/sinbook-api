@@ -57,25 +57,3 @@ export class ParamIdValidationPipe implements PipeTransform {
     return transformedValue;
   }
 }
-
-@Injectable()
-export class QueryNumericValidationPipe implements PipeTransform {
-  async transform(queryParams: { [key: string]: string }) {
-    const transformedValues = Object.entries(queryParams).reduce(
-      (acc, [key, value]) => {
-        const parsedValue = +value;
-
-        if (typeof parsedValue !== 'number') {
-          throw new BadRequestException(`Параметр ${key} должен быть числом`);
-        }
-
-        acc[key] = isNaN(parsedValue) ? value : parsedValue;
-
-        return acc;
-      },
-      {},
-    ) as { [key: string]: number };
-
-    return transformedValues;
-  }
-}

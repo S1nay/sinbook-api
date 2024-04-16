@@ -5,9 +5,11 @@ import {
   PickType,
 } from '@nestjs/swagger';
 
-import { UserOpenApi } from './user.openapi';
 import { Post } from '#utils/types';
+
 import { CommentOpenApi } from './comment.openapi';
+import { Pagination } from './pagination.openapi';
+import { UserOpenApi } from './user.openapi';
 
 export namespace PostOpenApi {
   // Count Fields of Post
@@ -105,6 +107,19 @@ export namespace PostOpenApi {
   //Update Post Response
   export class UpdatePostResponse extends OmitType(PostModel, ['comments']) {}
 
-  //Get Posts (All, User, My)
-  export class FindPosts extends OmitType(PostModel, ['comments']) {}
+  //Find Posts (All, User, My)
+  export class FindAllPosts {
+    @ApiProperty({
+      description: 'Посты',
+      type: PostModel,
+      isArray: true,
+    })
+    results: () => PostModel[];
+
+    @ApiProperty({
+      description: 'Мета пагинации',
+      type: Pagination.PaginationMeta,
+    })
+    meta: () => Pagination.PaginationMeta;
+  }
 }

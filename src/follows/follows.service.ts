@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '#prisma/prisma.service';
+import { UserNotFoundException } from '#user/exceptions/user.exceptions';
+import { UserService } from '#user/user.service';
 import {
   createObjectByKeys,
   getPaginationMeta,
@@ -23,7 +25,10 @@ import {
 
 @Injectable()
 export class FollowsService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly userService: UserService,
+  ) {}
 
   private getFollowerUserFields() {
     return createObjectByKeys<ShortUserInfo>([
@@ -40,9 +45,13 @@ export class FollowsService {
   ): Promise<PaginationResponse<ShortUserInfo>> {
     const { paginationParams, userId } = params;
 
-    const { skip, take } = getPaginationParams(paginationParams);
+    const user = this.userService.findUserById(userId);
 
-    console.log(paginationParams);
+    if (!user) {
+      throw new UserNotFoundException();
+    }
+
+    const { skip, take } = getPaginationParams(paginationParams);
 
     const searchFilter = {
       ...(paginationParams?.search && {
@@ -52,8 +61,6 @@ export class FollowsService {
         nickName: { contains: paginationParams?.search },
       }),
     };
-
-    console.log(searchFilter);
 
     const userWithFollowers = await this.prismaService.follows.findMany({
       where: { AND: [{ followerId: userId }, { follower: searchFilter }] },
@@ -80,6 +87,12 @@ export class FollowsService {
     params: GetFollowsParams,
   ): Promise<PaginationResponse<ShortUserInfo>> {
     const { paginationParams, userId } = params;
+
+    const user = this.userService.findUserById(userId);
+
+    if (!user) {
+      throw new UserNotFoundException();
+    }
 
     const { skip, take } = getPaginationParams(paginationParams);
 

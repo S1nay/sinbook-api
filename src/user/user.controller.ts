@@ -13,6 +13,7 @@ import {
   ApiBody,
   ApiOkResponse,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 
@@ -32,6 +33,21 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiException(() => UserNotAuthorizedException)
+  @ApiQuery({
+    type: String,
+    example: 'name',
+    name: 'search',
+    required: false,
+  })
+  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
+  @ApiQuery({
+    type: Number,
+    example: 15,
+    name: 'perPage',
+    required: false,
+  })
   @Get()
   findAll(
     @Pagination() params: PaginationParams,

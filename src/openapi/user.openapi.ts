@@ -4,11 +4,13 @@ import {
   OmitType,
   PickType,
 } from '@nestjs/swagger';
+import { $Enums, Gender } from '@prisma/client';
+
+import { User } from '#utils/types';
 
 import { CommentOpenApi } from './comment.openapi';
+import { Pagination } from './pagination.openapi';
 import { PostOpenApi } from './post.openapi';
-import { User } from '#utils/types';
-import { $Enums, Gender } from '@prisma/client';
 
 export namespace UserOpenApi {
   // Count Fields of User
@@ -187,6 +189,22 @@ export namespace UserOpenApi {
     'avatarPath',
   ]) {}
 
+  //Find all users
+  export class FindAllUsers {
+    @ApiProperty({
+      description: 'Пользователи',
+      type: ShortUser,
+      isArray: true,
+    })
+    results: () => ShortUser[];
+
+    @ApiProperty({
+      description: 'Мета пагинации',
+      type: Pagination.PaginationMeta,
+    })
+    meta: () => Pagination.PaginationMeta;
+  }
+
   //Delete User Response
   export class DeleteUserResponse extends OmitType(UserModel, [
     'passwordHash',
@@ -210,15 +228,6 @@ export namespace UserOpenApi {
   export class FindMeResponse extends OmitType(UserModel, [
     'passwordHash',
     'posts',
-  ]) {}
-
-  //Find User by Email Response
-  export class FindEmalUserResponse extends OmitType(UserModel, [
-    'posts',
-    'followers',
-    'followersOf',
-    'followersCount',
-    'followersOfCount',
   ]) {}
 
   //Update User Response
