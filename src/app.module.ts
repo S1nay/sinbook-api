@@ -5,10 +5,10 @@ import { CommentModule } from '#comment/comment.module';
 import { ConversationModule } from '#conversation/conversation.module';
 import { CoreModule } from '#core/core.module';
 import { FileModule } from '#file/file.module';
+import { FollowsModule } from '#follows/follows.module';
 import { MessageModule } from '#message/message.module';
 import { PostModule } from '#post/post.module';
 import { UserModule } from '#user/user.module';
-import { FollowsModule } from './follows/follows.module';
 
 @Module({
   imports: [

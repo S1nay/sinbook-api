@@ -19,8 +19,9 @@ import {
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { PostNotFoundException } from '#post/exceptions/post.exceptions';
-import { User } from '#utils/decorators';
+import { Pagination, User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
+import { PaginationParams } from '#utils/types';
 
 import { CommentOpenApi } from '../openapi/comment.openapi';
 
@@ -46,8 +47,14 @@ export class CommentController {
   })
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
   @Get()
-  findAllByPost(@Query('postId', ParamIdValidationPipe) postId: number) {
-    return this.commentService.findPostComments(postId);
+  findAllByPost(
+    @Query('postId', ParamIdValidationPipe) postId: number,
+    @Pagination() params: PaginationParams,
+  ) {
+    return this.commentService.findPostComments({
+      paginationParams: { ...params },
+      postId,
+    });
   }
 
   @ApiBody({ type: CommentOpenApi.CreateCommentDto })

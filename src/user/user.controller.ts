@@ -18,12 +18,9 @@ import {
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { UserOpenApi } from '#openapi/user.openapi';
-import { User } from '#utils/decorators';
-import {
-  ParamIdValidationPipe,
-  QueryNumericValidationPipe,
-  TransformGenderPipe,
-} from '#utils/pipes';
+import { Pagination, User } from '#utils/decorators';
+import { ParamIdValidationPipe, TransformGenderPipe } from '#utils/pipes';
+import { PaginationParams } from '#utils/types';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserNotFoundException } from './exceptions/user.exceptions';
@@ -37,19 +34,15 @@ export class UserController {
 
   @Get()
   findAll(
-    @Query(QueryNumericValidationPipe)
-    params: {
-      perPage: number;
-      page: number;
-      search: string;
-    },
+    @Pagination() params: PaginationParams,
+    @Query('search') search: string,
   ) {
-    return this.userService.findUsers(params);
+    return this.userService.findUsers({ ...params, search });
   }
 
   @ApiOkResponse({ type: UserOpenApi.FindMeResponse })
   @ApiException(() => UserNotAuthorizedException)
-  @Get('/me')
+  @Get('me')
   findMe(@User() id: number) {
     return this.userService.findMyProfile(id);
   }

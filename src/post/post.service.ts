@@ -7,10 +7,13 @@ import { UserService } from '#user/user.service';
 import {
   createObjectByKeys,
   exclude,
+  getPaginationMeta,
+  getPaginationParams,
   transformFieldCount,
 } from '#utils/helpers';
 import {
   CommentsCountFields,
+  PaginationResponse,
   Post,
   SelectPostCommentsCount,
   ShortUserInfo,
@@ -25,6 +28,7 @@ import {
   CreatePostParams,
   DeletePostParams,
   EditPostParams,
+  FindUserPostsParams,
 } from './types/post.types';
 
 @Injectable()
@@ -44,6 +48,15 @@ export class PostService {
     ]);
   }
 
+  private transformPost(post: SelectPostCommentsCount) {
+    const transformedPost = transformFieldCount<
+      SelectPostCommentsCount,
+      CommentsCountFields
+    >(post, ['commentsCount']);
+
+    return exclude(transformedPost, ['userId']);
+  }
+
   async createPost(params: CreatePostParams): Promise<Post> {
     const { content, userId, images } = params;
 
@@ -59,12 +72,7 @@ export class PostService {
       },
     });
 
-    const postWithCommentsCount = transformFieldCount<
-      SelectPostCommentsCount,
-      CommentsCountFields
-    >(post, ['commentsCount']);
-
-    return exclude(postWithCommentsCount, ['userId']);
+    return this.transformPost(post);
   }
 
   async findPostById(id: number): Promise<PostModel> {
@@ -107,12 +115,7 @@ export class PostService {
       },
     });
 
-    const postWithCommentsCount = transformFieldCount<
-      SelectPostCommentsCount,
-      CommentsCountFields
-    >(updatedPost, ['commentsCount']);
-
-    return exclude(postWithCommentsCount, ['userId']);
+    return this.transformPost(updatedPost);
   }
 
   async deletePost(params: DeletePostParams): Promise<void> {
@@ -133,25 +136,50 @@ export class PostService {
     });
   }
 
-  async findShortUserInfos(userId: number): Promise<Post[]> {
-    const user = await this.userService.findUserById(userId);
+  async findPosts(
+    params: FindUserPostsParams,
+  ): Promise<PaginationResponse<Post>> {
+    const { paginationParams, userId } = params;
 
-    if (!user) throw new UserNotFoundException();
+    const userFilter = {
+      ...(userId && { user: { id: userId } }),
+    };
+    const searchFilter = {
+      ...(paginationParams.search && {
+        content: { contains: paginationParams.search },
+      }),
+    };
+
+    if (userId) {
+      const user = await this.userService.findUserById(userId);
+
+      if (!user) throw new UserNotFoundException();
+    }
+
+    const { take, skip } = getPaginationParams(paginationParams);
 
     const posts = await this.prismaService.post.findMany({
-      where: { userId },
+      where: {
+        AND: [searchFilter, userFilter],
+      },
       include: {
         _count: { select: { comments: true } },
         user: { select: this.getPostUserFields() },
       },
+      orderBy: { createdAt: 'asc' },
+      take,
+      skip,
     });
 
-    const postsWithCommentsCount = posts.map((post) =>
-      transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(post, [
-        'commentsCount',
-      ]),
-    );
+    const totalPosts = await this.prismaService.post.count({
+      where: { AND: [userFilter, searchFilter] },
+    });
 
-    return postsWithCommentsCount.map((post) => exclude(post, ['userId']));
+    const transformedPosts = posts.map((post) => this.transformPost(post));
+
+    return {
+      results: transformedPosts,
+      meta: getPaginationMeta(paginationParams, totalPosts),
+    };
   }
 }

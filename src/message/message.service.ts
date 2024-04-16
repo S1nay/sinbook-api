@@ -3,8 +3,13 @@ import { Injectable } from '@nestjs/common';
 import { ConversationService } from '#conversation/conversation.service';
 import { ConversationNotFoundException } from '#conversation/exceptions/conversation.exceptions';
 import { PrismaService } from '#prisma/prisma.service';
-import { createObjectByKeys, exclude } from '#utils/helpers';
-import { Conversation, Message, ShortUserInfo } from '#utils/types';
+import {
+  createObjectByKeys,
+  exclude,
+  getPaginationMeta,
+  getPaginationParams,
+} from '#utils/helpers';
+import { Message, PaginationResponse, ShortUserInfo } from '#utils/types';
 
 import {
   HasNoAccessForEditMessageException,
@@ -14,10 +19,12 @@ import {
 import {
   CreateMessageParams,
   CreateMessageReponse,
+  DeleteLastMessageParams,
   DeleteLastMessageResponse,
   DeleteMessageParams,
   EditMessageParams,
   EditMessageResponse,
+  GetConversationMessages,
 } from './types/message.types';
 
 @Injectable()
@@ -36,20 +43,41 @@ export class MessageService {
     ]);
   }
 
-  async getConversationMessages(conversationId: number): Promise<Message[]> {
+  async getConversationMessages(
+    params: GetConversationMessages,
+  ): Promise<PaginationResponse<Message>> {
+    const { conversationId, paginationParams } = params;
+
+    const { skip, take } = getPaginationParams(paginationParams);
+
+    const searchFilter = {
+      ...(paginationParams?.search && {
+        content: { contains: paginationParams?.search || '' },
+      }),
+    };
+
     const conversation =
       await this.conversationService.getConversationById(conversationId);
 
     if (!conversation) throw new ConversationNotFoundException();
 
     const messages = await this.prismaService.message.findMany({
-      where: { conversationId },
+      where: { AND: [{ conversationId: conversationId }, searchFilter] },
       include: {
         author: { select: this.selectUserFields() },
       },
+      skip,
+      take,
     });
 
-    return messages.map((message) => exclude(message, ['authorId']));
+    const messagesCount = await this.prismaService.message.count({
+      where: { AND: [{ conversationId: conversationId }, searchFilter] },
+    });
+
+    return {
+      results: messages.map((message) => exclude(message, ['authorId'])),
+      meta: getPaginationMeta(paginationParams, messagesCount),
+    };
   }
 
   async createMessage(
@@ -176,13 +204,14 @@ export class MessageService {
       };
     }
 
-    return this.deleteLastMessage(conversation, messageId);
+    return this.deleteLastMessage({ conversation, messageId });
   }
 
   async deleteLastMessage(
-    conversation: Conversation,
-    messageId: number,
+    params: DeleteLastMessageParams,
   ): Promise<DeleteLastMessageResponse> {
+    const { conversation, messageId } = params;
+
     const size = conversation.messages.length;
 
     if (size <= 1) {

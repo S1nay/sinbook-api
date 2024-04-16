@@ -1,4 +1,4 @@
-import { Conversation, Message } from '#utils/types';
+import { Conversation, Message, PaginationParams } from '#utils/types';
 
 export type CreateMessageParams = {
   userId: number;
@@ -18,6 +18,16 @@ export type DeleteMessageParams = {
   conversationId: number;
   messageId: number;
   userId: number;
+};
+
+export type DeleteLastMessageParams = {
+  conversation: Conversation;
+  messageId: number;
+};
+
+export type GetConversationMessages = {
+  conversationId: number;
+  paginationParams: PaginationParams;
 };
 
 export type CreateMessageReponse = {

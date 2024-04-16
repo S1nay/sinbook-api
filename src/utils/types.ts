@@ -127,12 +127,12 @@ export type ConversationUnreadMessagesCount = {
 
 export type Conversation = Omit<
   ConversationModel,
-  'recipientId' | 'creatorId' | 'lastMessageId' | '_count'
+  'recipientId' | 'creatorId' | 'lastMessageId'
 > &
   ConversationUnreadMessagesCount & {
     recipient: ShortUserInfo;
     creator: ShortUserInfo;
-    lastMessage: LastMessage;
+    lastMessage?: LastMessage;
     messages?: Message[];
   };
 
@@ -145,7 +145,7 @@ export type Comment = Omit<CommentModel, 'postId' | 'userId'>;
 export type PaginationParams = {
   page: number;
   perPage: number;
-  search: string;
+  search?: string;
 };
 
 export type PaginationMeta = {

@@ -1,8 +1,12 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '#prisma/prisma.service';
-import { createObjectByKeys } from '#utils/helpers';
-import { ShortUserInfo } from '#utils/types';
+import {
+  createObjectByKeys,
+  getPaginationMeta,
+  getPaginationParams,
+} from '#utils/helpers';
+import { PaginationResponse, ShortUserInfo } from '#utils/types';
 
 import {
   FollowIsAlreadyExistException,
@@ -12,6 +16,8 @@ import {
   CheckFollowParams,
   CheckFollowsResponse,
   FollowUserParams,
+  GetFollowersParams,
+  GetFollowsParams,
   UnFollowUserParams,
 } from './types/follows.types';
 
@@ -29,46 +35,82 @@ export class FollowsService {
     ]);
   }
 
-  async getFollowers(userId: number): Promise<ShortUserInfo[]> {
-    const userWithFollowers = await this.prismaService.user.findUnique({
-      where: {
-        id: userId,
-      },
+  async getFollowers(
+    params: GetFollowersParams,
+  ): Promise<PaginationResponse<ShortUserInfo>> {
+    const { paginationParams, userId } = params;
+
+    const { skip, take } = getPaginationParams(paginationParams);
+
+    console.log(paginationParams);
+
+    const searchFilter = {
+      ...(paginationParams?.search && {
+        name: { contains: paginationParams?.search || '' },
+        secondName: { contains: paginationParams?.search },
+        middleName: { contains: paginationParams?.search },
+        nickName: { contains: paginationParams?.search },
+      }),
+    };
+
+    console.log(searchFilter);
+
+    const userWithFollowers = await this.prismaService.follows.findMany({
+      where: { AND: [{ followerId: userId }, { follower: searchFilter }] },
+      take,
+      skip,
       include: {
-        followers: {
-          select: {
-            follower: {
-              select: this.getFollowerUserFields(),
-            },
-          },
-        },
+        follower: { select: this.getFollowerUserFields() },
       },
     });
 
-    return userWithFollowers.followers.map((follower) => ({
-      ...follower.follower,
-    }));
+    const userFollowersCount = await this.prismaService.follows.count({
+      where: { followerId: userId },
+    });
+
+    return {
+      results: userWithFollowers.map((follower) => ({
+        ...follower.follower,
+      })),
+      meta: getPaginationMeta(paginationParams, userFollowersCount),
+    };
   }
 
-  async getFollows(userId: number): Promise<ShortUserInfo[]> {
-    const userWithFollows = await this.prismaService.user.findUnique({
-      where: {
-        id: userId,
-      },
+  async getFollows(
+    params: GetFollowsParams,
+  ): Promise<PaginationResponse<ShortUserInfo>> {
+    const { paginationParams, userId } = params;
+
+    const { skip, take } = getPaginationParams(paginationParams);
+
+    const searchFilter = {
+      ...(paginationParams?.search && {
+        name: { contains: paginationParams?.search || '' },
+        secondName: { contains: paginationParams?.search },
+        middleName: { contains: paginationParams?.search },
+        nickName: { contains: paginationParams?.search },
+      }),
+    };
+
+    const userWithFollows = await this.prismaService.follows.findMany({
+      where: { AND: [{ followingId: userId }, { following: searchFilter }] },
+      skip,
+      take,
       include: {
-        follows: {
-          select: {
-            following: {
-              select: this.getFollowerUserFields(),
-            },
-          },
-        },
+        following: { select: this.getFollowerUserFields() },
       },
     });
 
-    return userWithFollows.follows.map((following) => ({
-      ...following.following,
-    }));
+    const userFollowsCount = await this.prismaService.follows.count({
+      where: { followingId: userId },
+    });
+
+    return {
+      results: userWithFollows.map((following) => ({
+        ...following.following,
+      })),
+      meta: getPaginationMeta(paginationParams, userFollowsCount),
+    };
   }
 
   async followUser({
@@ -81,16 +123,8 @@ export class FollowsService {
 
     await this.prismaService.follows.create({
       data: {
-        follower: {
-          connect: {
-            id: userId,
-          },
-        },
-        following: {
-          connect: {
-            id: followingUserId,
-          },
-        },
+        follower: { connect: { id: userId } },
+        following: { connect: { id: followingUserId } },
       },
     });
   }

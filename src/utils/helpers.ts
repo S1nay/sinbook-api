@@ -1,3 +1,5 @@
+import { PaginationMeta, PaginationParams } from './types';
+
 export function exclude<Entity, Key extends keyof Entity>(
   entity: Entity,
   keys: Key[],
@@ -45,5 +47,33 @@ export function transformFieldCount<
   return {
     ...entity,
     ...modifiedValues,
+  };
+}
+
+export function getPaginationParams(params: PaginationParams): {
+  take: number;
+  skip: number;
+} {
+  const page = params.page || 1;
+  const limit = params.perPage || params.perPage === 0 ? params.perPage : 10;
+
+  const take = params.perPage === 0 ? undefined : params.perPage;
+  const skip = (page - 1) * limit ?? 0;
+
+  return {
+    skip,
+    take,
+  };
+}
+
+export function getPaginationMeta(
+  params: PaginationParams,
+  totalItems: number,
+): PaginationMeta {
+  return {
+    totalItems,
+    totalPages: Math.ceil(totalItems / params.perPage) || 1,
+    page: params?.page || 1,
+    perPage: params?.perPage || totalItems,
   };
 }

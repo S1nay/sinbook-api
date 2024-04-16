@@ -4,8 +4,13 @@ import { Comment as CommentModel } from '@prisma/client';
 import { PostNotFoundException } from '#post/exceptions/post.exceptions';
 import { PostService } from '#post/post.service';
 import { PrismaService } from '#prisma/prisma.service';
-import { createObjectByKeys, exclude } from '#utils/helpers';
-import { Comment, ShortUserInfo } from '#utils/types';
+import {
+  createObjectByKeys,
+  exclude,
+  getPaginationMeta,
+  getPaginationParams,
+} from '#utils/helpers';
+import { Comment, PaginationResponse, ShortUserInfo } from '#utils/types';
 
 import {
   CannotDeleteCommentException,
@@ -15,6 +20,7 @@ import {
   CreateCommentParams,
   DeleteCommentParams,
   EditCommentParams,
+  FindAllByPostParams,
 } from './types/comment.types';
 
 @Injectable()
@@ -35,20 +41,39 @@ export class CommentService {
   }
 
   async findPostComments(
-    postId: number,
-  ): Promise<Omit<Comment, 'postId' | 'userId'>[]> {
-    await this.postService.findPostById(postId);
+    params: FindAllByPostParams,
+  ): Promise<PaginationResponse<Comment>> {
+    const { paginationParams, postId } = params;
+
+    const post = await this.postService.findPostById(postId);
+
+    if (!post) {
+      throw new PostNotFoundException();
+    }
+
+    const { take, skip } = getPaginationParams(paginationParams);
 
     const comments = await this.prismaService.comment.findMany({
-      where: {
-        postId,
-      },
+      where: { postId },
       include: {
         user: { select: this.getCommentAuthor() },
       },
+      take,
+      skip,
     });
 
-    return comments.map((comment) => exclude(comment, ['postId', 'userId']));
+    const totalComments = await this.prismaService.comment.count({
+      where: { postId },
+    });
+
+    const transformedComments = comments.map((comment) =>
+      exclude(comment, ['postId', 'userId']),
+    );
+
+    return {
+      results: transformedComments,
+      meta: getPaginationMeta(paginationParams, totalComments),
+    };
   }
 
   async createComment(params: CreateCommentParams): Promise<Comment> {

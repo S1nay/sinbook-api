@@ -1,5 +1,5 @@
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import { Controller, Delete, Get, Param, Patch } from '@nestjs/common';
+import { Controller, Delete, Get, Param, Patch, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -9,8 +9,9 @@ import {
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { UserOpenApi } from '#openapi/user.openapi';
-import { User } from '#utils/decorators';
+import { Pagination, User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
+import { PaginationParams } from '#utils/types';
 
 import {
   FollowIsAlreadyExistException,
@@ -27,31 +28,57 @@ export class FollowsController {
   @ApiOkResponse({ type: UserOpenApi.ShortUser, isArray: true })
   @ApiException(() => [UserNotAuthorizedException])
   @Get('me/followers')
-  findMyFollowers(@User() userId: number) {
-    return this.followsService.getFollowers(userId);
+  findMyFollowers(
+    @User() userId: number,
+    @Pagination() params: PaginationParams,
+    @Query('search') search: string,
+  ) {
+    return this.followsService.getFollowers({
+      paginationParams: { ...params, search },
+      userId,
+    });
   }
 
   @ApiOkResponse({ type: UserOpenApi.ShortUser, isArray: true })
   @ApiException(() => [UserNotAuthorizedException])
   @Get('me/following')
-  findMyFollows(@User() userId: number) {
-    return this.followsService.getFollows(userId);
+  findMyFollows(
+    @User() userId: number,
+    @Pagination() params: PaginationParams,
+    @Query('search') search: string,
+  ) {
+    return this.followsService.getFollows({
+      paginationParams: { ...params, search },
+      userId,
+    });
   }
 
   @ApiOkResponse({ type: UserOpenApi.ShortUser, isArray: true })
   @ApiException(() => [UserNotAuthorizedException])
   @ApiParam({ type: Number, example: 1, name: 'userId' })
   @Get(':userId/followers')
-  findUserFollowers(@Param('userId', ParamIdValidationPipe) userId: number) {
-    return this.followsService.getFollowers(userId);
+  findUserFollowers(
+    @Param('userId', ParamIdValidationPipe) userId: number,
+    @Pagination() params: PaginationParams,
+  ) {
+    return this.followsService.getFollowers({
+      paginationParams: { ...params },
+      userId,
+    });
   }
 
   @ApiOkResponse({ type: UserOpenApi.ShortUser, isArray: true })
   @ApiException(() => [UserNotAuthorizedException])
   @ApiParam({ type: Number, example: 1, name: 'userId' })
   @Get(':userId/following')
-  findUserFollows(@Param('userId', ParamIdValidationPipe) userId: number) {
-    return this.followsService.getFollows(userId);
+  findUserFollows(
+    @Param('userId', ParamIdValidationPipe) userId: number,
+    @Pagination() params: PaginationParams,
+  ) {
+    return this.followsService.getFollows({
+      paginationParams: { ...params },
+      userId,
+    });
   }
 
   @ApiOkResponse()
