@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export namespace Pagination {
-  export class PaginationMeta {
+  export class PaginationMeta implements PaginationMeta {
     @ApiProperty({
       description: 'Кол-во найденых сущностей',
       example: 115,
