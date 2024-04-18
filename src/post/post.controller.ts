@@ -133,7 +133,7 @@ export class PostController {
   findMyPosts(
     @User() userId: number,
     @Pagination() params: PaginationParams,
-    @Query() search: string,
+    @Query('string') search: string,
   ) {
     return this.postService.findPosts({
       paginationParams: { ...params, search },

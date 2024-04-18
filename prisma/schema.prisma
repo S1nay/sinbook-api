@@ -32,6 +32,7 @@ model User {
   messages              Message[]      @relation("author")
   conversationCreator   Conversation[] @relation("conversation_creator")
   conversationRecipient Conversation[] @relation("conversation_recipient")
+  likes                 Like[]         @relation("user_like")
 }
 
 model Follows {
@@ -73,13 +74,24 @@ model Post {
   id        Int       @id @default(autoincrement())
   content   String
   views     Int       @default(0)
+  likes     Like[]    @relation("post_like")
   user      User      @relation("user_posts", fields: [userId], references: [id])
   userId    Int       @map("user_id")
   comments  Comment[] @relation("post_comments")
-  likes     Int       @default(0)
   images    String[]
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
+}
+
+model Like {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation("user_like",fields: [userId], references: [id])
+  userId    Int      @map("user_id")
+  post      Post     @relation("post_like", fields: [postId], references: [id])
+  postId    Int      @map("post_id")
+  likedAt   DateTime @default(now()) @map("liked_at")
+
+  @@unique([userId, postId])
 }
 
 model Comment {

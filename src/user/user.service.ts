@@ -53,7 +53,7 @@ export class UserService {
       },
     });
 
-    return this.transformUser(user) as UserWithFollowsCount;
+    return this.transformUser(user);
   }
 
   async createUser(params: CreateUserParams): Promise<User> {
@@ -104,7 +104,7 @@ export class UserService {
       },
     });
 
-    return this.transformUser(user) as UserWithFollowsCount;
+    return this.transformUser(user);
   }
 
   async softDeleteUser(id: number): Promise<User> {

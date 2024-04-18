@@ -54,7 +54,9 @@ export class PostService {
       CommentsCountFields
     >(post, ['commentsCount']);
 
-    return exclude(transformedPost, ['userId']);
+    const userLikes = transformedPost.likes.map((like) => like.user.id);
+
+    return exclude({ ...transformedPost, userLikes }, ['userId', 'likes']);
   }
 
   async createPost(params: CreatePostParams): Promise<Post> {
@@ -69,6 +71,7 @@ export class PostService {
       include: {
         user: { select: this.getPostUserFields() },
         _count: { select: { comments: true } },
+        likes: { select: { user: { select: { id: true } } } },
       },
     });
 
@@ -81,12 +84,15 @@ export class PostService {
       include: {
         user: { select: this.getPostUserFields() },
         _count: { select: { comments: true } },
+        likes: { select: { user: { select: { id: true } } } },
       },
     });
 
-    return transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(
-      post,
-      ['commentsCount'],
+    return (
+      post &&
+      transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(post, [
+        'commentsCount',
+      ])
     );
   }
 
@@ -112,6 +118,7 @@ export class PostService {
       include: {
         _count: { select: { comments: true } },
         user: { select: this.getPostUserFields() },
+        likes: { select: { user: { select: { id: true } } } },
       },
     });
 
@@ -130,10 +137,11 @@ export class PostService {
     if (post.userId !== userId) {
       throw new CannotDeletePostException();
     }
-
-    await this.prismaService.post.delete({
-      where: { id },
-    });
+    await this.prismaService.$transaction([
+      this.prismaService.comment.deleteMany({ where: { postId: id } }),
+      this.prismaService.like.deleteMany({ where: { postId: id } }),
+      this.prismaService.post.delete({ where: { id } }),
+    ]);
   }
 
   async findPosts(
@@ -142,7 +150,7 @@ export class PostService {
     const { paginationParams, userId } = params;
 
     const userFilter = {
-      ...(userId && { user: { id: userId } }),
+      ...(userId && { userId }),
     };
     const searchFilter = {
       ...(paginationParams.search && {
@@ -165,6 +173,7 @@ export class PostService {
       include: {
         _count: { select: { comments: true } },
         user: { select: this.getPostUserFields() },
+        likes: { select: { user: { select: { id: true } } } },
       },
       orderBy: { createdAt: 'asc' },
       take,
