@@ -213,7 +213,15 @@ export namespace UserOpenApi {
     'posts',
     'followersCount',
     'followersOfCount',
-  ]) {}
+  ]) {
+    @ApiProperty({
+      description: 'Статус удаленного аккаунта',
+      example: true,
+      type: Boolean,
+      default: false,
+    })
+    isDeleted: boolean;
+  }
 
   //Find User by Id Response
   export class FindUniqueUserResponse extends OmitType(UserModel, [

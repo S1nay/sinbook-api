@@ -1,14 +1,12 @@
 import { exclude, transformFieldCount } from '#utils/helpers';
 import {
     ConversationUnreadMessagesCount,
-    SelectConversationWithFields,
+    SelectConversation,
 } from '#utils/types';
 
-export function transformConversation(
-  conversation: SelectConversationWithFields,
-) {
+export function transformConversation(conversation: SelectConversation) {
   const transfornedConversation = transformFieldCount<
-    SelectConversationWithFields,
+    SelectConversation,
     ConversationUnreadMessagesCount
   >(conversation, ['unreadMessagesCount']);
 

@@ -4,8 +4,6 @@ import { Post as PostModel } from '@prisma/client';
 import { PrismaService } from '#prisma/prisma.service';
 import { UserService } from '#user/user.service';
 import {
-  createObjectByKeys,
-  exclude,
   getPaginationMeta,
   getPaginationParams,
   getShortUserFields,
@@ -15,7 +13,7 @@ import {
   CommentsCountFields,
   PaginationResponse,
   Post,
-  SelectPostCommentsCount,
+  SelectPost,
 } from '#utils/types';
 
 import {
@@ -38,25 +36,6 @@ export class PostService {
     private readonly userService: UserService,
   ) {}
 
-  private getPostUserFields() {
-    return createObjectByKeys<ShortUserInfo>([
-      'id',
-      'name',
-      'nickName',
-      'secondName',
-      'avatarPath',
-    ]);
-  }
-
-  private transformPost(post: SelectPostCommentsCount) {
-    const transformedPost = transformFieldCount<
-      SelectPostCommentsCount,
-      CommentsCountFields
-    >(post, ['commentsCount']);
-
-    return exclude(transformedPost, ['userId']);
-  }
-
   async createPost(params: CreatePostParams): Promise<Post> {
     const { content, userId, images } = params;
 
@@ -69,11 +48,16 @@ export class PostService {
       include: {
         user: { select: getShortUserFields() },
         _count: { select: { comments: true } },
-        likes: { select: { user: { select: { id: true } } } },
+        likes: true,
       },
     });
 
-    return transformPost(post);
+    const transformedPost = transformPost(post);
+
+    return {
+      ...transformedPost,
+      likes: transformedPost.likes.map((like) => like.userId),
+    };
   }
 
   async findPostById(id: number): Promise<PostModel> {
@@ -82,6 +66,7 @@ export class PostService {
       include: {
         user: { select: getShortUserFields() },
         _count: { select: { comments: true } },
+        likes: true,
       },
     });
 
@@ -91,7 +76,7 @@ export class PostService {
 
     return (
       post &&
-      transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(post, [
+      transformFieldCount<SelectPost, CommentsCountFields>(post, [
         'commentsCount',
       ])
     );
@@ -114,11 +99,17 @@ export class PostService {
       },
       include: {
         _count: { select: { comments: true } },
-        user: { select: this.getPostUserFields() },
+        user: { select: getShortUserFields() },
+        likes: true,
       },
     });
 
-    return transformPost(updatedPost);
+    const transformedPost = transformPost(updatedPost);
+
+    return {
+      ...transformedPost,
+      likes: updatedPost.likes.map((like) => like.userId),
+    };
   }
 
   async deletePost(params: DeletePostParams): Promise<void> {
@@ -160,7 +151,8 @@ export class PostService {
       },
       include: {
         _count: { select: { comments: true } },
-        user: { select: this.getPostUserFields() },
+        user: { select: getShortUserFields() },
+        likes: true,
       },
       orderBy: { createdAt: 'asc' },
       take,
@@ -174,7 +166,10 @@ export class PostService {
     const transformedPosts = posts.map((post) => transformPost(post));
 
     return {
-      results: transformedPosts,
+      results: transformedPosts.map((post) => ({
+        ...post,
+        likes: post.likes.map((like) => like.userId),
+      })),
       meta: getPaginationMeta(paginationParams, totalPosts),
     };
   }

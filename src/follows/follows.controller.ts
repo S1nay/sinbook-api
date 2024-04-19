@@ -9,7 +9,7 @@ import {
 } from '@nestjs/swagger';
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
-import { UserOpenApi } from '#openapi/user.openapi';
+import { FollowOpenApi } from '#openapi/follow.openapi';
 import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { Pagination, User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
@@ -24,7 +24,7 @@ import { FollowsService } from './follows.service';
 export class FollowsController {
   constructor(private readonly followsService: FollowsService) {}
 
-  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiOkResponse({ type: FollowOpenApi.FindFollowsUsers })
   @ApiQuery({
     type: String,
     example: 'name',
@@ -51,7 +51,7 @@ export class FollowsController {
     });
   }
 
-  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiOkResponse({ type: FollowOpenApi.FindFollowsUsers })
   @ApiQuery({ type: String, example: 'name', name: 'search' })
   @ApiQuery({ type: Number, example: 1, name: 'page' })
   @ApiQuery({ type: Number, example: 15, name: 'perPage' })
@@ -68,7 +68,7 @@ export class FollowsController {
     });
   }
 
-  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiOkResponse({ type: FollowOpenApi.FindFollowsUsers })
   @ApiQuery({ type: String, example: 'name', name: 'search' })
   @ApiQuery({ type: Number, example: 1, name: 'page' })
   @ApiQuery({ type: Number, example: 15, name: 'perPage' })
@@ -85,7 +85,7 @@ export class FollowsController {
     });
   }
 
-  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiOkResponse({ type: FollowOpenApi.FindFollowsUsers })
   @ApiQuery({ type: String, example: 'name', name: 'search' })
   @ApiQuery({ type: Number, example: 1, name: 'page' })
   @ApiQuery({ type: Number, example: 15, name: 'perPage' })
@@ -102,7 +102,7 @@ export class FollowsController {
     });
   }
 
-  @ApiOkResponse()
+  @ApiOkResponse({ type: FollowOpenApi.FollowingUser })
   @ApiException(() => [
     UserNotAuthorizedException,
     CouldNotFollowYorselfException,
