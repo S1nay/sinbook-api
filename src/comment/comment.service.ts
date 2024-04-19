@@ -1,16 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { Comment as CommentModel } from '@prisma/client';
 
-import { PostNotFoundException } from '#post/exceptions/post.exceptions';
 import { PostService } from '#post/post.service';
 import { PrismaService } from '#prisma/prisma.service';
 import {
-  createObjectByKeys,
   exclude,
   getPaginationMeta,
   getPaginationParams,
+  getShortUserFields,
 } from '#utils/helpers';
-import { Comment, PaginationResponse, ShortUserInfo } from '#utils/types';
+import { Comment, PaginationResponse } from '#utils/types';
 
 import {
   CannotDeleteCommentException,
@@ -30,33 +29,19 @@ export class CommentService {
     private readonly postService: PostService,
   ) {}
 
-  private getCommentAuthor() {
-    return createObjectByKeys<ShortUserInfo>([
-      'id',
-      'avatarPath',
-      'name',
-      'nickName',
-      'secondName',
-    ]);
-  }
-
   async findPostComments(
     params: FindAllByPostParams,
   ): Promise<PaginationResponse<Comment>> {
     const { paginationParams, postId } = params;
 
-    const post = await this.postService.findPostById(postId);
-
-    if (!post) {
-      throw new PostNotFoundException();
-    }
+    await this.postService.findPostById(postId);
 
     const { take, skip } = getPaginationParams(paginationParams);
 
     const comments = await this.prismaService.comment.findMany({
       where: { postId },
       include: {
-        user: { select: this.getCommentAuthor() },
+        user: { select: getShortUserFields() },
       },
       take,
       skip,
@@ -79,11 +64,7 @@ export class CommentService {
   async createComment(params: CreateCommentParams): Promise<Comment> {
     const { content, postId, userId } = params;
 
-    const post = await this.postService.findPostById(postId);
-
-    if (!post) {
-      throw new PostNotFoundException();
-    }
+    await this.postService.findPostById(postId);
 
     const comment = await this.prismaService.comment.create({
       data: {
@@ -92,7 +73,7 @@ export class CommentService {
         post: { connect: { id: postId } },
       },
       include: {
-        user: { select: this.getCommentAuthor() },
+        user: { select: getShortUserFields() },
       },
     });
 
@@ -104,6 +85,10 @@ export class CommentService {
       where: { id },
     });
 
+    if (!comment) {
+      throw new CommentNotFoundException();
+    }
+
     return comment;
   }
 
@@ -111,10 +96,6 @@ export class CommentService {
     const { content, id, userId } = params;
 
     const comment = await this.findCommentById(id);
-
-    if (!comment) {
-      throw new CommentNotFoundException();
-    }
 
     if (comment.userId !== userId) {
       throw new CannotDeleteCommentException();
@@ -124,7 +105,7 @@ export class CommentService {
       where: { id },
       data: { content },
       include: {
-        user: { select: this.getCommentAuthor() },
+        user: { select: getShortUserFields() },
       },
     });
 
@@ -135,10 +116,6 @@ export class CommentService {
     const { id, userId } = params;
 
     const comment = await this.findCommentById(id);
-
-    if (!comment) {
-      throw new CommentNotFoundException();
-    }
 
     if (comment.userId !== userId) {
       throw new CannotDeleteCommentException();

@@ -5,14 +5,13 @@ export type FollowUserParams = {
   followingUserId: number;
 };
 
-export type UnFollowUserParams = Partial<FollowUserParams>;
+export type CheckFollowParams = FollowUserParams;
 
-export type CheckFollowParams = Partial<FollowUserParams>;
+export type CreateFollowParams = FollowUserParams;
+export type CreateMutualFollowParams = FollowUserParams;
 
-export type CheckFollowsResponse = {
-  followerId: number;
-  followingId: number;
-} | null;
+export type DeleteFollowsParams = FollowUserParams;
+export type DeleteMutualFollowsParams = FollowUserParams;
 
 export type GetFollowsParams = {
   paginationParams: PaginationParams;

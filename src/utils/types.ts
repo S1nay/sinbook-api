@@ -159,3 +159,13 @@ export type PaginationResponse<T> = {
   results: T[];
   meta: PaginationMeta;
 };
+
+// -------------FOLLOWS-------------
+
+export type Follow = {
+  followerId: number;
+  followingId: number;
+  mutualFollow: boolean;
+};
+
+export type FollowingUser = ShortUserInfo & { mutualFollow: boolean };

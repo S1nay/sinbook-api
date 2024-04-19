@@ -1,4 +1,4 @@
-import { PaginationMeta, PaginationParams } from './types';
+import { PaginationMeta, PaginationParams, ShortUserInfo } from './types';
 
 export function exclude<Entity, Key extends keyof Entity>(
   entity: Entity,
@@ -76,4 +76,14 @@ export function getPaginationMeta(
     page: params?.page || 1,
     perPage: params?.perPage || totalItems,
   };
+}
+
+export function getShortUserFields() {
+  return createObjectByKeys<ShortUserInfo>([
+    'id',
+    'name',
+    'nickName',
+    'secondName',
+    'avatarPath',
+  ]);
 }
