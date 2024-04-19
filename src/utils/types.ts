@@ -28,6 +28,7 @@ export type SelectUserFollowsCount = Prisma.UserGetPayload<{
         | 'conversationRecipient'
         | 'conversationCreator'
         | 'messages'
+        | 'likes'
       >;
     };
   };
@@ -82,8 +83,9 @@ export type SelectPostCommentsCount = Prisma.PostGetPayload<{
       select: SelectShortUserInfo;
     };
     _count: {
-      select: Omit<Prisma.PostCountOutputTypeSelect, 'comments'>;
+      select: Omit<Prisma.PostCountOutputTypeSelect, 'comments' | 'likes'>;
     };
+    // likes: { select: { user: { select: { id: true } } } };
   };
 }>;
 

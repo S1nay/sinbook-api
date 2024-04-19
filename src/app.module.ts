@@ -10,6 +10,8 @@ import { MessageModule } from '#message/message.module';
 import { PostModule } from '#post/post.module';
 import { UserModule } from '#user/user.module';
 
+import { LikeModule } from './like/like.module';
+
 @Module({
   imports: [
     CoreModule,
@@ -21,6 +23,7 @@ import { UserModule } from '#user/user.module';
     MessageModule,
     ConversationModule,
     FollowsModule,
+    LikeModule,
   ],
 })
 export class AppModule {}

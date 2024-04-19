@@ -4,6 +4,8 @@ import { Post as PostModel } from '@prisma/client';
 import { PrismaService } from '#prisma/prisma.service';
 import { UserService } from '#user/user.service';
 import {
+  createObjectByKeys,
+  exclude,
   getPaginationMeta,
   getPaginationParams,
   getShortUserFields,
@@ -36,6 +38,25 @@ export class PostService {
     private readonly userService: UserService,
   ) {}
 
+  private getPostUserFields() {
+    return createObjectByKeys<ShortUserInfo>([
+      'id',
+      'name',
+      'nickName',
+      'secondName',
+      'avatarPath',
+    ]);
+  }
+
+  private transformPost(post: SelectPostCommentsCount) {
+    const transformedPost = transformFieldCount<
+      SelectPostCommentsCount,
+      CommentsCountFields
+    >(post, ['commentsCount']);
+
+    return exclude(transformedPost, ['userId']);
+  }
+
   async createPost(params: CreatePostParams): Promise<Post> {
     const { content, userId, images } = params;
 
@@ -48,6 +69,7 @@ export class PostService {
       include: {
         user: { select: getShortUserFields() },
         _count: { select: { comments: true } },
+        likes: { select: { user: { select: { id: true } } } },
       },
     });
 
@@ -67,9 +89,11 @@ export class PostService {
       throw new PostNotFoundException();
     }
 
-    return transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(
-      post,
-      ['commentsCount'],
+    return (
+      post &&
+      transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(post, [
+        'commentsCount',
+      ])
     );
   }
 
@@ -90,7 +114,7 @@ export class PostService {
       },
       include: {
         _count: { select: { comments: true } },
-        user: { select: getShortUserFields() },
+        user: { select: this.getPostUserFields() },
       },
     });
 
@@ -105,10 +129,11 @@ export class PostService {
     if (post.userId !== userId) {
       throw new CannotDeletePostException();
     }
-
-    await this.prismaService.post.delete({
-      where: { id },
-    });
+    await this.prismaService.$transaction([
+      this.prismaService.comment.deleteMany({ where: { postId: id } }),
+      this.prismaService.like.deleteMany({ where: { postId: id } }),
+      this.prismaService.post.delete({ where: { id } }),
+    ]);
   }
 
   async findPosts(
@@ -117,7 +142,7 @@ export class PostService {
     const { paginationParams, userId } = params;
 
     const userFilter = {
-      ...(userId && { user: { id: userId } }),
+      ...(userId && { userId }),
     };
     const searchFilter = {
       ...(paginationParams.search && {
@@ -135,7 +160,7 @@ export class PostService {
       },
       include: {
         _count: { select: { comments: true } },
-        user: { select: getShortUserFields() },
+        user: { select: this.getPostUserFields() },
       },
       orderBy: { createdAt: 'asc' },
       take,
