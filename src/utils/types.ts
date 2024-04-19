@@ -85,7 +85,7 @@ export type SelectPostCommentsCount = Prisma.PostGetPayload<{
     _count: {
       select: Omit<Prisma.PostCountOutputTypeSelect, 'comments' | 'likes'>;
     };
-    likes: { select: { user: { select: { id: true } } } };
+    // likes: { select: { user: { select: { id: true } } } };
   };
 }>;
 
@@ -161,3 +161,13 @@ export type PaginationResponse<T> = {
   results: T[];
   meta: PaginationMeta;
 };
+
+// -------------FOLLOWS-------------
+
+export type Follow = {
+  followerId: number;
+  followingId: number;
+  mutualFollow: boolean;
+};
+
+export type FollowingUser = ShortUserInfo & { mutualFollow: boolean };

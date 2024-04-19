@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '#prisma/prisma.service';
 import {
-  createObjectByKeys,
   exclude,
   getPaginationMeta,
   getPaginationParams,
+  getShortUserFields,
   transformFieldCount,
 } from '#utils/helpers';
 import {
@@ -20,30 +20,13 @@ import {
   UserWithPasswordHash,
 } from '#utils/types';
 
+import { UserNotFoundException } from './exceptions/user.exceptions';
 import { CreateUserParams, EditUserParams } from './types/user.type';
+import { transformUser } from './utils/user.utils';
 
 @Injectable()
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
-
-  private getShortUserInfo() {
-    return createObjectByKeys<ShortUserInfo>([
-      'id',
-      'name',
-      'nickName',
-      'secondName',
-      'avatarPath',
-    ]);
-  }
-
-  private transformUser(user: SelectUserFollowsCount) {
-    const transformedUser = transformFieldCount<
-      SelectUserFollowsCount,
-      FollowersCountFields
-    >(user, ['followersCount', 'followsCount']);
-
-    return exclude(transformedUser, ['passwordHash']);
-  }
 
   async findMyProfile(userId: number): Promise<UserWithFollowsCount> {
     const user = await this.prismaService.user.findUnique({
@@ -53,10 +36,10 @@ export class UserService {
       },
     });
 
-    return this.transformUser(user);
+    return transformUser(user) as UserWithFollowsCount;
   }
 
-  async createUser(params: CreateUserParams): Promise<User> {
+  async createUser(params: CreateUserParams): Promise<User | null> {
     const { userData } = params;
 
     const user = await this.prismaService.user.create({
@@ -66,13 +49,20 @@ export class UserService {
     return exclude(user, ['passwordHash']);
   }
 
-  async findUserById(id: number): Promise<UserWithoutEmailWithFollowCount> {
+  async findUserById(
+    id: number,
+    fromAuth: boolean = false,
+  ): Promise<UserWithoutEmailWithFollowCount> {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       include: {
         _count: { select: { followers: true, follows: true } },
       },
     });
+
+    if (fromAuth && !user) return null;
+
+    if (!user) throw new UserNotFoundException();
 
     const userWithFollowsCount = transformFieldCount<
       SelectUserFollowsCount,
@@ -104,7 +94,7 @@ export class UserService {
       },
     });
 
-    return this.transformUser(user);
+    return transformUser(user) as UserWithFollowsCount;
   }
 
   async softDeleteUser(id: number): Promise<User> {
@@ -131,7 +121,7 @@ export class UserService {
     };
 
     const users = await this.prismaService.user.findMany({
-      select: this.getShortUserInfo(),
+      select: getShortUserFields(),
       skip,
       take,
       where: searchFilter,

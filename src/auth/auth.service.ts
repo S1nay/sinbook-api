@@ -106,7 +106,7 @@ export class AuthService {
   async validateUserToken(token: string): Promise<TokenInfo> {
     const userData: TokenInfo = this.jwtService.decode(token);
 
-    const user = await this.userService.findUserById(userData.id);
+    const user = await this.userService.findUserById(userData.id, true);
 
     if (!user) {
       throw new UserNotAuthorizedException();

@@ -1,26 +1,24 @@
 import { Injectable } from '@nestjs/common';
 
 import { PrismaService } from '#prisma/prisma.service';
-import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { UserService } from '#user/user.service';
 import {
-  createObjectByKeys,
   getPaginationMeta,
   getPaginationParams,
+  getShortUserFields,
 } from '#utils/helpers';
-import { PaginationResponse, ShortUserInfo } from '#utils/types';
+import { Follow, FollowingUser, PaginationResponse } from '#utils/types';
 
-import {
-  FollowIsAlreadyExistException,
-  FollowIsNotExistException,
-} from './exceptions/follows.exceptions';
+import { CouldNotFollowYorselfException } from './exceptions/follows.exceptions';
 import {
   CheckFollowParams,
-  CheckFollowsResponse,
+  CreateFollowParams,
+  CreateMutualFollowParams,
+  DeleteFollowsParams,
+  DeleteMutualFollowsParams,
   FollowUserParams,
   GetFollowersParams,
   GetFollowsParams,
-  UnFollowUserParams,
 } from './types/follows.types';
 
 @Injectable()
@@ -30,26 +28,12 @@ export class FollowsService {
     private readonly userService: UserService,
   ) {}
 
-  private getFollowerUserFields() {
-    return createObjectByKeys<ShortUserInfo>([
-      'id',
-      'name',
-      'nickName',
-      'secondName',
-      'avatarPath',
-    ]);
-  }
-
   async getFollowers(
     params: GetFollowersParams,
-  ): Promise<PaginationResponse<ShortUserInfo>> {
+  ): Promise<PaginationResponse<FollowingUser>> {
     const { paginationParams, userId } = params;
 
-    const user = this.userService.findUserById(userId);
-
-    if (!user) {
-      throw new UserNotFoundException();
-    }
+    await this.userService.findUserById(userId);
 
     const { skip, take } = getPaginationParams(paginationParams);
 
@@ -62,37 +46,40 @@ export class FollowsService {
       }),
     };
 
-    const userWithFollowers = await this.prismaService.follows.findMany({
-      where: { AND: [{ followerId: userId }, { follower: searchFilter }] },
+    const followers = await this.prismaService.follows.findMany({
+      where: {
+        AND: [{ followingId: userId }, { following: searchFilter }],
+      },
       take,
       skip,
       include: {
-        follower: { select: this.getFollowerUserFields() },
+        follower: { select: getShortUserFields() },
       },
     });
 
-    const userFollowersCount = await this.prismaService.follows.count({
-      where: { followerId: userId },
+    const followersCount = await this.prismaService.follows.count({
+      where: {
+        AND: [{ followingId: userId }, { following: searchFilter }],
+      },
     });
 
     return {
-      results: userWithFollowers.map((follower) => ({
-        ...follower.follower,
-      })),
-      meta: getPaginationMeta(paginationParams, userFollowersCount),
+      results: followers.map((follower) => {
+        return {
+          ...follower.follower,
+          mutualFollow: follower.mutualFollow,
+        };
+      }),
+      meta: getPaginationMeta(paginationParams, followersCount),
     };
   }
 
   async getFollows(
     params: GetFollowsParams,
-  ): Promise<PaginationResponse<ShortUserInfo>> {
+  ): Promise<PaginationResponse<FollowingUser>> {
     const { paginationParams, userId } = params;
 
-    const user = this.userService.findUserById(userId);
-
-    if (!user) {
-      throw new UserNotFoundException();
-    }
+    await this.userService.findUserById(userId);
 
     const { skip, take } = getPaginationParams(paginationParams);
 
@@ -105,74 +92,157 @@ export class FollowsService {
       }),
     };
 
-    const userWithFollows = await this.prismaService.follows.findMany({
-      where: { AND: [{ followingId: userId }, { following: searchFilter }] },
+    const follows = await this.prismaService.follows.findMany({
+      where: {
+        AND: [{ followerId: userId }, { following: searchFilter }],
+      },
       skip,
       take,
       include: {
-        following: { select: this.getFollowerUserFields() },
+        following: { select: getShortUserFields() },
       },
     });
 
-    const userFollowsCount = await this.prismaService.follows.count({
-      where: { followingId: userId },
+    const followsCount = await this.prismaService.follows.count({
+      where: {
+        AND: [{ followerId: userId }, { follower: searchFilter }],
+      },
     });
 
     return {
-      results: userWithFollows.map((following) => ({
+      results: follows.map((following) => ({
         ...following.following,
+        mutualFollow: following.mutualFollow,
       })),
-      meta: getPaginationMeta(paginationParams, userFollowsCount),
+      meta: getPaginationMeta(paginationParams, followsCount),
     };
   }
 
-  async followUser({
-    userId,
-    followingUserId,
-  }: FollowUserParams): Promise<void> {
-    const follow = await this.checkFollow({ userId, followingUserId });
+  async createFollow(params: CreateFollowParams): Promise<FollowingUser> {
+    const { followingUserId, userId } = params;
 
-    if (follow) throw new FollowIsAlreadyExistException();
-
-    await this.prismaService.follows.create({
+    const follow = await this.prismaService.follows.create({
       data: {
         follower: { connect: { id: userId } },
         following: { connect: { id: followingUserId } },
+        mutualFollow: false,
       },
+      include: { following: { select: getShortUserFields() } },
     });
+
+    return { ...follow.following, mutualFollow: follow.mutualFollow };
   }
 
-  async unFollowUser({
-    userId,
-    followingUserId,
-  }: UnFollowUserParams): Promise<void> {
-    const follow = await this.checkFollow({ userId, followingUserId });
+  async createMutualFollow(
+    params: CreateMutualFollowParams,
+  ): Promise<FollowingUser> {
+    const { userId, followingUserId } = params;
+    const follow = await this.prismaService.follows.create({
+      data: {
+        follower: { connect: { id: userId } },
+        following: { connect: { id: followingUserId } },
+        mutualFollow: true,
+      },
+      include: { following: { select: getShortUserFields() } },
+    });
 
-    if (!follow) throw new FollowIsNotExistException();
+    await this.prismaService.follows.update({
+      where: {
+        followerId_followingId: {
+          followerId: followingUserId,
+          followingId: userId,
+        },
+      },
+      data: {
+        mutualFollow: true,
+      },
+    });
 
-    await this.prismaService.follows.delete({
+    return { ...follow.following, mutualFollow: follow.mutualFollow };
+  }
+  async deleteMutualFollow(
+    params: DeleteMutualFollowsParams,
+  ): Promise<FollowingUser> {
+    const { followingUserId, userId } = params;
+
+    const follow = await this.prismaService.follows.delete({
       where: {
         followerId_followingId: {
           followerId: userId,
           followingId: followingUserId,
         },
       },
+      include: { following: { select: getShortUserFields() } },
     });
-  }
 
-  async checkFollow({
-    userId,
-    followingUserId,
-  }: CheckFollowParams): Promise<CheckFollowsResponse> {
-    const follow = await this.prismaService.follows.findUnique({
+    await this.prismaService.follows.update({
+      where: {
+        followerId_followingId: {
+          followerId: followingUserId,
+          followingId: userId,
+        },
+      },
+      data: {
+        mutualFollow: false,
+      },
+    });
+
+    return { ...follow.following, mutualFollow: follow.mutualFollow };
+  }
+  async deleteFollow(params: DeleteFollowsParams): Promise<FollowingUser> {
+    const { followingUserId, userId } = params;
+
+    const follow = await this.prismaService.follows.delete({
       where: {
         followerId_followingId: {
           followerId: userId,
           followingId: followingUserId,
         },
       },
+      include: { following: { select: getShortUserFields() } },
     });
 
-    return follow;
+    return { ...follow.following, mutualFollow: follow.mutualFollow };
+  }
+
+  async followUser(params: FollowUserParams) {
+    const { userId, followingUserId } = params;
+
+    await this.userService.findUserById(followingUserId);
+
+    if (userId === followingUserId) throw new CouldNotFollowYorselfException();
+
+    const isExistingMutualFollow = await this.checkMutualFollow(params);
+    const isExistingFollow = await this.checkFollow(params);
+
+    if (!isExistingMutualFollow && !isExistingFollow) {
+      return this.createFollow(params);
+    }
+
+    if (isExistingMutualFollow && !isExistingFollow) {
+      return this.createMutualFollow(params);
+    }
+
+    if (isExistingFollow && isExistingMutualFollow) {
+      await this.deleteMutualFollow(params);
+    } else {
+      await this.deleteFollow(params);
+    }
+  }
+
+  async checkMutualFollow(params: CheckFollowParams): Promise<Follow> {
+    const { followingUserId, userId } = params;
+
+    return this.prismaService.follows.findFirst({
+      where: { followerId: followingUserId, followingId: userId },
+    });
+  }
+
+  async checkFollow(params: CheckFollowParams): Promise<Follow> {
+    const { followingUserId, userId } = params;
+
+    return this.prismaService.follows.findFirst({
+      where: { followerId: userId, followingId: followingUserId },
+    });
   }
 }

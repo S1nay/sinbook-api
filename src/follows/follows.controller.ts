@@ -1,5 +1,5 @@
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import { Controller, Delete, Get, Param, Patch, Query } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiOkResponse,
@@ -15,10 +15,7 @@ import { Pagination, User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
 import { PaginationParams } from '#utils/types';
 
-import {
-  FollowIsAlreadyExistException,
-  FollowIsNotExistException,
-} from './exceptions/follows.exceptions';
+import { CouldNotFollowYorselfException } from './exceptions/follows.exceptions';
 import { FollowsService } from './follows.service';
 
 @ApiBearerAuth()
@@ -108,7 +105,8 @@ export class FollowsController {
   @ApiOkResponse()
   @ApiException(() => [
     UserNotAuthorizedException,
-    FollowIsAlreadyExistException,
+    CouldNotFollowYorselfException,
+    UserNotFoundException,
   ])
   @ApiParam({ type: Number, example: 1, name: 'followingUserId' })
   @Patch(':followingUserId')
@@ -117,16 +115,5 @@ export class FollowsController {
     @Param('followingUserId', ParamIdValidationPipe) followingUserId: number,
   ) {
     return this.followsService.followUser({ userId, followingUserId });
-  }
-
-  @ApiOkResponse()
-  @ApiException(() => [UserNotAuthorizedException, FollowIsNotExistException])
-  @ApiParam({ type: Number, example: 1, name: 'followingUserId' })
-  @Delete(':followingUserId')
-  unFollowUser(
-    @User() userId: number,
-    @Param('followingUserId', ParamIdValidationPipe) followingUserId: number,
-  ) {
-    return this.followsService.unFollowUser({ userId, followingUserId });
   }
 }

@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { Post as PostModel } from '@prisma/client';
 
 import { PrismaService } from '#prisma/prisma.service';
-import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { UserService } from '#user/user.service';
 import {
   createObjectByKeys,
   exclude,
   getPaginationMeta,
   getPaginationParams,
+  getShortUserFields,
   transformFieldCount,
 } from '#utils/helpers';
 import {
@@ -16,7 +16,6 @@ import {
   PaginationResponse,
   Post,
   SelectPostCommentsCount,
-  ShortUserInfo,
 } from '#utils/types';
 
 import {
@@ -30,6 +29,7 @@ import {
   EditPostParams,
   FindUserPostsParams,
 } from './types/post.types';
+import { transformPost } from './utils/post.utils';
 
 @Injectable()
 export class PostService {
@@ -54,9 +54,7 @@ export class PostService {
       CommentsCountFields
     >(post, ['commentsCount']);
 
-    const userLikes = transformedPost.likes.map((like) => like.user.id);
-
-    return exclude({ ...transformedPost, userLikes }, ['userId', 'likes']);
+    return exclude(transformedPost, ['userId']);
   }
 
   async createPost(params: CreatePostParams): Promise<Post> {
@@ -69,24 +67,27 @@ export class PostService {
         user: { connect: { id: userId } },
       },
       include: {
-        user: { select: this.getPostUserFields() },
+        user: { select: getShortUserFields() },
         _count: { select: { comments: true } },
         likes: { select: { user: { select: { id: true } } } },
       },
     });
 
-    return this.transformPost(post);
+    return transformPost(post);
   }
 
   async findPostById(id: number): Promise<PostModel> {
     const post = await this.prismaService.post.findUnique({
       where: { id },
       include: {
-        user: { select: this.getPostUserFields() },
+        user: { select: getShortUserFields() },
         _count: { select: { comments: true } },
-        likes: { select: { user: { select: { id: true } } } },
       },
     });
+
+    if (!post) {
+      throw new PostNotFoundException();
+    }
 
     return (
       post &&
@@ -101,10 +102,6 @@ export class PostService {
 
     const post = await this.findPostById(id);
 
-    if (!post) {
-      throw new PostNotFoundException();
-    }
-
     if (post.userId !== userId) {
       throw new CannotModifyPostException();
     }
@@ -118,21 +115,16 @@ export class PostService {
       include: {
         _count: { select: { comments: true } },
         user: { select: this.getPostUserFields() },
-        likes: { select: { user: { select: { id: true } } } },
       },
     });
 
-    return this.transformPost(updatedPost);
+    return transformPost(updatedPost);
   }
 
   async deletePost(params: DeletePostParams): Promise<void> {
     const { id, userId } = params;
 
     const post = await this.findPostById(id);
-
-    if (!post) {
-      throw new PostNotFoundException();
-    }
 
     if (post.userId !== userId) {
       throw new CannotDeletePostException();
@@ -158,11 +150,7 @@ export class PostService {
       }),
     };
 
-    if (userId) {
-      const user = await this.userService.findUserById(userId);
-
-      if (!user) throw new UserNotFoundException();
-    }
+    userId && (await this.userService.findUserById(userId));
 
     const { take, skip } = getPaginationParams(paginationParams);
 
@@ -173,7 +161,6 @@ export class PostService {
       include: {
         _count: { select: { comments: true } },
         user: { select: this.getPostUserFields() },
-        likes: { select: { user: { select: { id: true } } } },
       },
       orderBy: { createdAt: 'asc' },
       take,
@@ -184,7 +171,7 @@ export class PostService {
       where: { AND: [userFilter, searchFilter] },
     });
 
-    const transformedPosts = posts.map((post) => this.transformPost(post));
+    const transformedPosts = posts.map((post) => transformPost(post));
 
     return {
       results: transformedPosts,
