@@ -8,6 +8,7 @@ import {
 } from '@nestjs/swagger';
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
+import { PostOpenApi } from '#openapi/post.openapi';
 import { PostNotFoundException } from '#post/exceptions/post.exceptions';
 import { User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
@@ -20,7 +21,7 @@ import { LikeService } from './like.service';
 export class LikeController {
   constructor(private readonly likeService: LikeService) {}
 
-  @ApiOkResponse()
+  @ApiOkResponse({ type: PostOpenApi.CreatePostResponse })
   @ApiParam({ name: 'postId', type: Number, example: 1 })
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
   @Patch(':postId')

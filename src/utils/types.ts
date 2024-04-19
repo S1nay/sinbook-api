@@ -77,7 +77,7 @@ export type AuthUser = {
 
 // -------------POST-------------
 
-export type SelectPostCommentsCount = Prisma.PostGetPayload<{
+export type SelectPost = Prisma.PostGetPayload<{
   include: {
     user: {
       select: SelectShortUserInfo;
@@ -85,7 +85,7 @@ export type SelectPostCommentsCount = Prisma.PostGetPayload<{
     _count: {
       select: Omit<Prisma.PostCountOutputTypeSelect, 'comments' | 'likes'>;
     };
-    // likes: { select: { user: { select: { id: true } } } };
+    likes: true;
   };
 }>;
 
@@ -94,7 +94,7 @@ export type CommentsCountFields = {
 };
 
 export type Post = Omit<PostModel, 'userId'> &
-  CommentsCountFields & { user: ShortUserInfo };
+  CommentsCountFields & { user: ShortUserInfo; likes: number[] };
 
 // -------------MESSAGE-------------
 
@@ -106,7 +106,7 @@ export type LastMessage = MessageModel;
 
 // -------------CONVERSATION-------------
 
-export type SelectConversationWithFields = Prisma.ConversationGetPayload<{
+export type SelectConversation = Prisma.ConversationGetPayload<{
   include: {
     creator: { select: SelectShortUserInfo };
     recipient: { select: SelectShortUserInfo };

@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 
-import { PostNotFoundException } from '#post/exceptions/post.exceptions';
 import { PostService } from '#post/post.service';
+import { transformPost } from '#post/utils/post.utils';
 import { PrismaService } from '#prisma/prisma.service';
+import { getShortUserFields } from '#utils/helpers';
+import { Post } from '#utils/types';
 
 import { CheckLikeParams, LikePostParams } from './types/like.types';
 
@@ -13,32 +15,78 @@ export class LikeService {
     private readonly postService: PostService,
   ) {}
 
-  async likePost({ userId, postId }: LikePostParams): Promise<void> {
-    const post = await this.postService.findPostById(postId);
+  async likePost(params: LikePostParams): Promise<Post> {
+    const { postId } = params;
 
-    if (!post) throw new PostNotFoundException();
+    await this.postService.findPostById(postId);
 
-    const like = await this.checkLike({ postId, userId });
+    const like = await this.checkLike(params);
 
     if (like) {
-      await this.prismaService.like.delete({
-        where: {
-          userId_postId: {
-            userId,
-            postId,
-          },
-        },
-      });
-
-      return;
+      return this.deleteLike(params);
+    } else {
+      return this.createLike(params);
     }
+  }
 
-    await this.prismaService.like.create({
+  async createLike(params: LikePostParams): Promise<Post> {
+    const { postId, userId } = params;
+
+    const like = await this.prismaService.like.create({
       data: {
         user: { connect: { id: userId } },
         post: { connect: { id: postId } },
       },
+      include: {
+        post: {
+          include: {
+            user: { select: getShortUserFields() },
+            _count: { select: { comments: true } },
+            likes: true,
+          },
+        },
+      },
     });
+
+    const transformedPost = transformPost(like.post);
+
+    return {
+      ...transformedPost,
+      likes: [...transformedPost.likes.map((like) => like.userId)],
+    };
+  }
+
+  async deleteLike(params: LikePostParams): Promise<Post> {
+    const { userId, postId } = params;
+
+    const like = await this.prismaService.like.delete({
+      where: {
+        userId_postId: {
+          userId,
+          postId,
+        },
+      },
+      include: {
+        post: {
+          include: {
+            user: { select: getShortUserFields() },
+            _count: { select: { comments: true } },
+            likes: true,
+          },
+        },
+      },
+    });
+
+    const transformedPost = transformPost(like.post);
+
+    return {
+      ...transformedPost,
+      likes: [
+        ...transformedPost.likes
+          .filter((like) => like.userId !== userId)
+          .map((like) => like.userId),
+      ],
+    };
   }
 
   async checkLike({ userId, postId }: CheckLikeParams): Promise<boolean> {

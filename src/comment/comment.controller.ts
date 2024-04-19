@@ -99,6 +99,7 @@ export class CommentController {
     });
   }
 
+  @ApiOkResponse()
   @ApiParam({ name: 'id', type: Number })
   @ApiException(() => [
     UserNotAuthorizedException,

@@ -22,7 +22,7 @@ model User {
   posts                 Post[]         @relation("user_posts")
   comments              Comment[]      @relation("user_comments")
   city                  String?        @default("")
-  birthDate             DateTime?
+  birthDate             DateTime?      @map("birth_date")
   gender                Gender
   isDeleted             Boolean        @default(false) @map("is_deleted")
   followers             Follows[]      @relation("following")
@@ -53,9 +53,9 @@ model Conversation {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
   recipient     User      @relation("conversation_recipient", fields: [recipientId], references: [id])
-  recipientId   Int
+  recipientId   Int       @map("recipient_id")
   creator       User      @relation("conversation_creator", fields: [creatorId], references: [id])
-  creatorId     Int
+  creatorId     Int       @map("creator_id")
 }
 
 model Message {

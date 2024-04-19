@@ -46,11 +46,11 @@ export namespace PostOpenApi {
     views: number;
 
     @ApiProperty({
-      description: 'Кол-во лайков у поста',
-      example: 12,
+      description: 'Массив с id юзеров которые поставили лайк',
+      example: [1, 2, 3],
       type: Number,
     })
-    likes: number;
+    likes: number[];
 
     @ApiProperty({
       description: 'Картинки к посту',
@@ -97,8 +97,6 @@ export namespace PostOpenApi {
   export class UpdatePostDto extends PickType(PostModel, [
     'content',
     'images',
-    'views',
-    'likes',
   ]) {}
 
   //Create Post Response
