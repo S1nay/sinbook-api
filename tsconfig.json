@@ -23,16 +23,16 @@
       "#adapters/*": ["adapters/*"],
       "#auth/*": ["auth/*"],
       "#comment/*": ["comment/*"],
+      "#conversation/*": ["conversation/*"],
       "#core/*": ["core/*"],
+      "#file/*": ["file/*"],
+      "#follows/*": ["follows/*"],
+      "#message/*": ["message/*"],
+      "#openapi/*": ["openapi/*"],
       "#post/*": ["post/*"],
       "#prisma/*": ["prisma/*"],
       "#user/*": ["user/*"],
       "#utils/*": ["utils/*"],
-      "#file/*": ["file/*"],
-      "#follows/*": ["follows/*"],
-      "#conversation/*": ["conversation/*"],
-      "#message/*": ["message/*"],
-      "#openapi/*": ["openapi/*"],
     }
   }
 }

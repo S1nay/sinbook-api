@@ -1,17 +1,27 @@
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
   ApiOkResponse,
   ApiParam,
+  ApiQuery,
   ApiTags,
 } from '@nestjs/swagger';
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { UserOpenApi } from '#openapi/user.openapi';
-import { User } from '#utils/decorators';
+import { Pagination, User } from '#utils/decorators';
 import { ParamIdValidationPipe, TransformGenderPipe } from '#utils/pipes';
+import { PaginationParams } from '#utils/types';
 
 import { UpdateUserDto } from './dto/update-user.dto';
 import { UserNotFoundException } from './exceptions/user.exceptions';
@@ -23,9 +33,32 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
+  @ApiOkResponse({ type: UserOpenApi.FindAllUsers })
+  @ApiException(() => UserNotAuthorizedException)
+  @ApiQuery({
+    type: String,
+    example: 'name',
+    name: 'search',
+    required: false,
+  })
+  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
+  @ApiQuery({
+    type: Number,
+    example: 15,
+    name: 'perPage',
+    required: false,
+  })
+  @Get()
+  findAll(
+    @Pagination() params: PaginationParams,
+    @Query('search') search: string,
+  ) {
+    return this.userService.findUsers({ ...params, search });
+  }
+
   @ApiOkResponse({ type: UserOpenApi.FindMeResponse })
   @ApiException(() => UserNotAuthorizedException)
-  @Get('/me')
+  @Get('me')
   findMe(@User() id: number) {
     return this.userService.findMyProfile(id);
   }

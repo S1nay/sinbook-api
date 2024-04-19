@@ -2,18 +2,18 @@ import { Injectable } from '@nestjs/common';
 import { Post as PostModel } from '@prisma/client';
 
 import { PrismaService } from '#prisma/prisma.service';
-import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { UserService } from '#user/user.service';
 import {
-  createObjectByKeys,
-  exclude,
+  getPaginationMeta,
+  getPaginationParams,
+  getShortUserFields,
   transformFieldCount,
 } from '#utils/helpers';
 import {
   CommentsCountFields,
+  PaginationResponse,
   Post,
   SelectPostCommentsCount,
-  ShortUserInfo,
 } from '#utils/types';
 
 import {
@@ -25,7 +25,9 @@ import {
   CreatePostParams,
   DeletePostParams,
   EditPostParams,
+  FindUserPostsParams,
 } from './types/post.types';
+import { transformPost } from './utils/post.utils';
 
 @Injectable()
 export class PostService {
@@ -33,16 +35,6 @@ export class PostService {
     private readonly prismaService: PrismaService,
     private readonly userService: UserService,
   ) {}
-
-  private getPostUserFields() {
-    return createObjectByKeys<ShortUserInfo>([
-      'id',
-      'name',
-      'nickName',
-      'secondName',
-      'avatarPath',
-    ]);
-  }
 
   async createPost(params: CreatePostParams): Promise<Post> {
     const { content, userId, images } = params;
@@ -54,27 +46,26 @@ export class PostService {
         user: { connect: { id: userId } },
       },
       include: {
-        user: { select: this.getPostUserFields() },
+        user: { select: getShortUserFields() },
         _count: { select: { comments: true } },
       },
     });
 
-    const postWithCommentsCount = transformFieldCount<
-      SelectPostCommentsCount,
-      CommentsCountFields
-    >(post, ['commentsCount']);
-
-    return exclude(postWithCommentsCount, ['userId']);
+    return transformPost(post);
   }
 
   async findPostById(id: number): Promise<PostModel> {
     const post = await this.prismaService.post.findUnique({
       where: { id },
       include: {
-        user: { select: this.getPostUserFields() },
+        user: { select: getShortUserFields() },
         _count: { select: { comments: true } },
       },
     });
+
+    if (!post) {
+      throw new PostNotFoundException();
+    }
 
     return transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(
       post,
@@ -86,10 +77,6 @@ export class PostService {
     const { content, id, userId, images } = params;
 
     const post = await this.findPostById(id);
-
-    if (!post) {
-      throw new PostNotFoundException();
-    }
 
     if (post.userId !== userId) {
       throw new CannotModifyPostException();
@@ -103,26 +90,17 @@ export class PostService {
       },
       include: {
         _count: { select: { comments: true } },
-        user: { select: this.getPostUserFields() },
+        user: { select: getShortUserFields() },
       },
     });
 
-    const postWithCommentsCount = transformFieldCount<
-      SelectPostCommentsCount,
-      CommentsCountFields
-    >(updatedPost, ['commentsCount']);
-
-    return exclude(postWithCommentsCount, ['userId']);
+    return transformPost(updatedPost);
   }
 
   async deletePost(params: DeletePostParams): Promise<void> {
     const { id, userId } = params;
 
     const post = await this.findPostById(id);
-
-    if (!post) {
-      throw new PostNotFoundException();
-    }
 
     if (post.userId !== userId) {
       throw new CannotDeletePostException();
@@ -133,25 +111,46 @@ export class PostService {
     });
   }
 
-  async findShortUserInfos(userId: number): Promise<Post[]> {
-    const user = await this.userService.findUserById(userId);
+  async findPosts(
+    params: FindUserPostsParams,
+  ): Promise<PaginationResponse<Post>> {
+    const { paginationParams, userId } = params;
 
-    if (!user) throw new UserNotFoundException();
+    const userFilter = {
+      ...(userId && { user: { id: userId } }),
+    };
+    const searchFilter = {
+      ...(paginationParams.search && {
+        content: { contains: paginationParams.search },
+      }),
+    };
+
+    userId && (await this.userService.findUserById(userId));
+
+    const { take, skip } = getPaginationParams(paginationParams);
 
     const posts = await this.prismaService.post.findMany({
-      where: { userId },
+      where: {
+        AND: [searchFilter, userFilter],
+      },
       include: {
         _count: { select: { comments: true } },
-        user: { select: this.getPostUserFields() },
+        user: { select: getShortUserFields() },
       },
+      orderBy: { createdAt: 'asc' },
+      take,
+      skip,
     });
 
-    const postsWithCommentsCount = posts.map((post) =>
-      transformFieldCount<SelectPostCommentsCount, CommentsCountFields>(post, [
-        'commentsCount',
-      ]),
-    );
+    const totalPosts = await this.prismaService.post.count({
+      where: { AND: [userFilter, searchFilter] },
+    });
 
-    return postsWithCommentsCount.map((post) => exclude(post, ['userId']));
+    const transformedPosts = posts.map((post) => transformPost(post));
+
+    return {
+      results: transformedPosts,
+      meta: getPaginationMeta(paginationParams, totalPosts),
+    };
   }
 }

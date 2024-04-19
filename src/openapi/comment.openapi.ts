@@ -6,6 +6,7 @@ import {
 } from '@nestjs/swagger';
 import { Comment } from '@prisma/client';
 
+import { Pagination } from './pagination.openapi';
 import { PostOpenApi } from './post.openapi';
 import { UserOpenApi } from './user.openapi';
 
@@ -56,10 +57,20 @@ export namespace CommentOpenApi {
     updatedAt: Date;
   }
   //Get All Post Comments Response
-  export class FindPostCommentsResponse extends OmitType(CommentModel, [
-    'postId',
-    'userId',
-  ]) {}
+  export class FindAllCommentsByPost {
+    @ApiProperty({
+      description: 'Комментарии',
+      type: CommentModel,
+      isArray: true,
+    })
+    results: () => CommentModel[];
+
+    @ApiProperty({
+      description: 'Мета пагинации',
+      type: Pagination.PaginationMeta,
+    })
+    meta: () => Pagination.PaginationMeta;
+  }
 
   //Create Comment Response
   export class CreateCommentResponse extends OmitType(CommentModel, [

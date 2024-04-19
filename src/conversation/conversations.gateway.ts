@@ -6,10 +6,8 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
-  WebSocketServer,
 } from '@nestjs/websockets';
 import { NAMESPACES } from 'adapters/socket.namespaces';
-import { Namespace } from 'socket.io';
 
 import { SocketSessionManager } from '#core/session.manager';
 import { WebsocketExceptionsFilter } from '#utils/filters';
@@ -17,6 +15,7 @@ import { AuthenticatedSocket } from '#utils/interfaces';
 import { WSValidationPipe } from '#utils/pipes';
 
 import { CreateConversationDto } from './dto/createConversation.dto';
+import { GetConversationsDto } from './dto/getConversation.dto';
 import { ConversationService } from './conversation.service';
 
 @UseFilters(WebsocketExceptionsFilter)
@@ -39,25 +38,10 @@ export class ConversationsGateway
     private readonly conversationService: ConversationService,
   ) {}
 
-  @WebSocketServer()
-  conversationServer: Namespace;
-
-  afterInit(namespace: Namespace) {
-    this.conversationServer = namespace.server.of(NAMESPACES.CONVERSATION);
-  }
-
   async handleConnection(socket: AuthenticatedSocket) {
     console.log(`User ${socket.user.nickName} is connected to conversations`);
 
-    const conversations = await this.conversationService.getConversations(
-      +socket.user.id,
-    );
-
     this.sessionManager.setUserSocket(socket.user.id, socket);
-
-    this.conversationServer
-      .to(socket.id)
-      .emit('get_conversations', conversations);
   }
 
   handleDisconnect(socket: AuthenticatedSocket) {
@@ -67,8 +51,21 @@ export class ConversationsGateway
     this.sessionManager.removeUserSocket(socket.user.id);
   }
 
+  @SubscribeMessage('get_conversations')
+  async handleGetConversations(
+    @MessageBody() body: GetConversationsDto,
+    @ConnectedSocket() socket: AuthenticatedSocket,
+  ) {
+    const conversations = await this.conversationService.getConversations({
+      paginationParams: { ...body },
+      userId: socket.user.id,
+    });
+
+    socket.emit('get_conversations', conversations);
+  }
+
   @SubscribeMessage('create_conversation')
-  async createNewConversation(
+  async handleCreateNewConversation(
     @MessageBody() body: CreateConversationDto,
     @ConnectedSocket() socket: AuthenticatedSocket,
   ) {

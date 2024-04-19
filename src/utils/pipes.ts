@@ -43,7 +43,7 @@ export class WSValidationPipe extends ValidationPipe {
 
 @Injectable()
 export class ParamIdValidationPipe implements PipeTransform {
-  async transform(value: number) {
+  async transform(value: string) {
     const transformedValue = +value;
 
     if (typeof transformedValue !== 'number') {

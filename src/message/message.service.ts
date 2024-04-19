@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 
 import { ConversationService } from '#conversation/conversation.service';
-import { ConversationNotFoundException } from '#conversation/exceptions/conversation.exceptions';
 import { PrismaService } from '#prisma/prisma.service';
-import { createObjectByKeys, exclude } from '#utils/helpers';
-import { Conversation, Message, ShortUserInfo } from '#utils/types';
+import {
+  exclude,
+  getPaginationMeta,
+  getPaginationParams,
+  getShortUserFields,
+} from '#utils/helpers';
+import { Message, PaginationResponse } from '#utils/types';
 
 import {
   HasNoAccessForEditMessageException,
@@ -14,10 +18,12 @@ import {
 import {
   CreateMessageParams,
   CreateMessageReponse,
+  DeleteLastMessageParams,
   DeleteLastMessageResponse,
   DeleteMessageParams,
   EditMessageParams,
   EditMessageResponse,
+  GetConversationMessages,
 } from './types/message.types';
 
 @Injectable()
@@ -27,29 +33,38 @@ export class MessageService {
     private readonly conversationService: ConversationService,
   ) {}
 
-  private selectUserFields() {
-    return createObjectByKeys<ShortUserInfo>([
-      'id',
-      'name',
-      'secondName',
-      'avatarPath',
-    ]);
-  }
+  async getConversationMessages(
+    params: GetConversationMessages,
+  ): Promise<PaginationResponse<Message>> {
+    const { conversationId, paginationParams } = params;
 
-  async getConversationMessages(conversationId: number): Promise<Message[]> {
-    const conversation =
-      await this.conversationService.getConversationById(conversationId);
+    const { skip, take } = getPaginationParams(paginationParams);
 
-    if (!conversation) throw new ConversationNotFoundException();
+    const searchFilter = {
+      ...(paginationParams?.search && {
+        content: { contains: paginationParams?.search || '' },
+      }),
+    };
+
+    await this.conversationService.getConversationById(conversationId);
 
     const messages = await this.prismaService.message.findMany({
-      where: { conversationId },
+      where: { AND: [{ conversationId: conversationId }, searchFilter] },
       include: {
-        author: { select: this.selectUserFields() },
+        author: { select: getShortUserFields() },
       },
+      skip,
+      take,
     });
 
-    return messages.map((message) => exclude(message, ['authorId']));
+    const messagesCount = await this.prismaService.message.count({
+      where: { AND: [{ conversationId: conversationId }, searchFilter] },
+    });
+
+    return {
+      results: messages.map((message) => exclude(message, ['authorId'])),
+      meta: getPaginationMeta(paginationParams, messagesCount),
+    };
   }
 
   async createMessage(
@@ -59,7 +74,6 @@ export class MessageService {
 
     const conversation =
       await this.conversationService.getConversationById(conversationId);
-    if (!conversation) throw new ConversationNotFoundException();
 
     const { creator, recipient } = conversation;
 
@@ -74,7 +88,7 @@ export class MessageService {
         author: { connect: { id: userId } },
       },
       include: {
-        author: { select: this.selectUserFields() },
+        author: { select: getShortUserFields() },
       },
     });
 
@@ -90,6 +104,18 @@ export class MessageService {
     };
   }
 
+  async findMessage(messageId: number) {
+    const message = await this.prismaService.message.findUnique({
+      where: {
+        id: messageId,
+      },
+    });
+
+    if (!message) throw new MessageNotFoundException();
+
+    return message;
+  }
+
   async editMessage(
     params: EditMessageParams,
   ): Promise<EditMessageResponse | Message> {
@@ -98,16 +124,7 @@ export class MessageService {
     const conversation =
       await this.conversationService.getConversationById(conversationId);
 
-    if (!conversation) throw new ConversationNotFoundException();
-
-    const message = await this.prismaService.message.findUnique({
-      where: {
-        id: messageId,
-        authorId: userId,
-      },
-    });
-
-    if (!message) throw new MessageNotFoundException();
+    const message = await this.findMessage(messageId);
 
     if (message.authorId !== userId)
       throw new HasNoAccessForEditMessageException();
@@ -116,7 +133,7 @@ export class MessageService {
       where: { id: messageId },
       data: { content, updatedAt: new Date() },
       include: {
-        author: { select: this.selectUserFields() },
+        author: { select: getShortUserFields() },
       },
     });
 
@@ -144,17 +161,7 @@ export class MessageService {
     const conversation =
       await this.conversationService.getConversationById(conversationId);
 
-    if (!conversation) throw new ConversationNotFoundException();
-
-    const message = await this.prismaService.message.findUnique({
-      where: {
-        id: messageId,
-        conversationId,
-        authorId: userId,
-      },
-    });
-
-    if (!message) throw new MessageNotFoundException();
+    const message = await this.findMessage(messageId);
 
     if (message.authorId !== userId)
       throw new HasNoAccessForEditMessageException();
@@ -163,7 +170,7 @@ export class MessageService {
       const deletedMessage = await this.prismaService.message.delete({
         where: { id: messageId },
         include: {
-          author: { select: this.selectUserFields() },
+          author: { select: getShortUserFields() },
         },
       });
 
@@ -176,20 +183,21 @@ export class MessageService {
       };
     }
 
-    return this.deleteLastMessage(conversation, messageId);
+    return this.deleteLastMessage({ conversation, messageId });
   }
 
   async deleteLastMessage(
-    conversation: Conversation,
-    messageId: number,
+    params: DeleteLastMessageParams,
   ): Promise<DeleteLastMessageResponse> {
+    const { conversation, messageId } = params;
+
     const size = conversation.messages.length;
 
     if (size <= 1) {
       const deletedMessage = await this.prismaService.message.delete({
         where: { id: messageId },
         include: {
-          author: { select: this.selectUserFields() },
+          author: { select: getShortUserFields() },
         },
       });
 
@@ -210,7 +218,7 @@ export class MessageService {
       const deletedMessage = await this.prismaService.message.delete({
         where: { id: messageId },
         include: {
-          author: { select: this.selectUserFields() },
+          author: { select: getShortUserFields() },
         },
       });
 

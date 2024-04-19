@@ -16,13 +16,13 @@ import { ConversationService } from '#conversation/conversation.service';
 import { SocketSessionManager } from '#core/session.manager';
 import { PrismaService } from '#prisma/prisma.service';
 import { WebsocketExceptionsFilter } from '#utils/filters';
-import { exclude } from '#utils/helpers';
 import { AuthenticatedSocket } from '#utils/interfaces';
 import { WSValidationPipe } from '#utils/pipes';
 
 import { CreateMessageDto } from './dto/createMessage.dto';
 import { DeleteMessageDto } from './dto/deleteMessage.dto';
 import { EditMessageDto } from './dto/editMessage.dto';
+import { GetMessagesDto } from './dto/getMessages.dto';
 import { MessageService } from './message.service';
 
 @UseFilters(WebsocketExceptionsFilter)
@@ -63,18 +63,15 @@ export class MessageGateway
 
     socket.join(`conversation-${conversationId}`);
 
-    const conversation =
-      await this.conversationService.getConversationById(conversationId);
+    const { isHaveUnreadedMessages, isLastMessageNotFromConnectedUser } =
+      await this.conversationService.checkUnreadMessages({
+        conversationId,
+        userId: socket.user.id,
+      });
 
-    const isHaveUnreadedMessage = conversation.messages.filter(
-      (message) => !message.isReaded,
-    ).length;
-
-    const isRecipient = conversation.recipient.id === socket.user.id;
-
-    if (isRecipient && isHaveUnreadedMessage) {
+    if (isHaveUnreadedMessages && isLastMessageNotFromConnectedUser) {
       const conversation =
-        await this.conversationService.checkUnreadMessages(conversationId);
+        await this.conversationService.readUnreadMessages(conversationId);
 
       const recipient = this.sessionManager.getUserSocket(
         conversation.recipient.id,
@@ -89,11 +86,6 @@ export class MessageGateway
         .emit('update_message_count', conversation);
     }
 
-    socket.emit(
-      'get_conversation_info',
-      exclude(conversation, ['lastMessage', 'unreadMessagesCount']),
-    );
-
     console.log(
       `User ${socket.user.nickName} is connected to conversation-${conversationId}`,
     );
@@ -105,6 +97,19 @@ export class MessageGateway
     console.log(
       `User ${socket.user.nickName} is disconnected to conversation-${socket.handshake.query.conversationId}`,
     );
+  }
+
+  @SubscribeMessage('get_messages')
+  async handleGetMessages(
+    @MessageBody() body: GetMessagesDto,
+    @ConnectedSocket() socket: AuthenticatedSocket,
+  ) {
+    const messages = await this.messageService.getConversationMessages({
+      paginationParams: { ...body },
+      conversationId: +socket.handshake.query.conversationId,
+    });
+
+    socket.emit('get_messages', messages);
   }
 
   @SubscribeMessage('create_message')
@@ -137,7 +142,7 @@ export class MessageGateway
 
     this.dialogServer
       .in(`conversation-${conversation.id}`)
-      .emit('send_message', message);
+      .emit('new_message', message);
 
     this.conversationServer
       .to(authorSocket.id)

@@ -20,8 +20,10 @@ import {
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { PostOpenApi } from '#openapi/post.openapi';
-import { User } from '#utils/decorators';
+import { UserNotFoundException } from '#user/exceptions/user.exceptions';
+import { Pagination, User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
+import { PaginationParams } from '#utils/types';
 
 import { CreatePostDto } from './dto/create-post.dto';
 import { UpdatePostDto } from './dto/update-post.dto';
@@ -84,18 +86,58 @@ export class PostController {
     return this.postService.deletePost({ id, userId });
   }
 
-  @ApiOkResponse({ type: PostOpenApi.FindPosts, isArray: true })
-  @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
-  @Get('me')
-  findMyPosts(@User() userId: number) {
-    return this.postService.findShortUserInfos(userId);
+  @ApiOkResponse({ type: PostOpenApi.FindAllPosts })
+  @ApiParam({ name: 'userId', type: Number })
+  @ApiQuery({
+    type: String,
+    example: 'name',
+    name: 'search',
+    required: false,
+  })
+  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
+  @ApiQuery({
+    type: Number,
+    example: 15,
+    name: 'perPage',
+    required: false,
+  })
+  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
+  @Get()
+  findPosts(
+    @Query('userId', ParamIdValidationPipe) userId: number,
+    @Pagination() params: PaginationParams,
+    @Query('search') search: string,
+  ) {
+    return this.postService.findPosts({
+      paginationParams: { ...params, search },
+      userId,
+    });
   }
 
-  @ApiOkResponse({ type: PostOpenApi.FindPosts, isArray: true })
-  @ApiQuery({ name: 'userId', type: Number })
-  @ApiException(() => [UserNotAuthorizedException])
-  @Get()
-  findPostsByUserId(@Query('userId', ParamIdValidationPipe) userId: number) {
-    return this.postService.findShortUserInfos(userId);
+  @ApiOkResponse({ type: PostOpenApi.FindAllPosts, isArray: true })
+  @ApiQuery({
+    type: String,
+    example: 'name',
+    name: 'search',
+    required: false,
+  })
+  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
+  @ApiQuery({
+    type: Number,
+    example: 15,
+    name: 'perPage',
+    required: false,
+  })
+  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
+  @Get('me')
+  findMyPosts(
+    @User() userId: number,
+    @Pagination() params: PaginationParams,
+    @Query() search: string,
+  ) {
+    return this.postService.findPosts({
+      paginationParams: { ...params, search },
+      userId,
+    });
   }
 }

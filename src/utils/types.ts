@@ -127,15 +127,45 @@ export type ConversationUnreadMessagesCount = {
 
 export type Conversation = Omit<
   ConversationModel,
-  'recipientId' | 'creatorId' | 'lastMessageId' | '_count'
+  'recipientId' | 'creatorId' | 'lastMessageId'
 > &
   ConversationUnreadMessagesCount & {
     recipient: ShortUserInfo;
     creator: ShortUserInfo;
-    lastMessage: LastMessage;
+    lastMessage?: LastMessage;
     messages?: Message[];
   };
 
 // -------------COMMENT-------------
 
 export type Comment = Omit<CommentModel, 'postId' | 'userId'>;
+
+// -------------PAGINATION-------------
+
+export type PaginationParams = {
+  page: number;
+  perPage: number;
+  search?: string;
+};
+
+export type PaginationMeta = {
+  totalItems: number;
+  totalPages: number;
+  page: number;
+  perPage: number;
+};
+
+export type PaginationResponse<T> = {
+  results: T[];
+  meta: PaginationMeta;
+};
+
+// -------------FOLLOWS-------------
+
+export type Follow = {
+  followerId: number;
+  followingId: number;
+  mutualFollow: boolean;
+};
+
+export type FollowingUser = ShortUserInfo & { mutualFollow: boolean };

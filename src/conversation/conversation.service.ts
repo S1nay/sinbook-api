@@ -1,20 +1,14 @@
 import { Injectable } from '@nestjs/common';
-import { Conversation as ConversationModel } from '@prisma/client';
+import { Conversation as ConversationModel } from 'prisma/prisma-client';
 
 import { PrismaService } from '#prisma/prisma.service';
-import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { UserService } from '#user/user.service';
 import {
-  createObjectByKeys,
-  exclude,
-  transformFieldCount,
+  getPaginationMeta,
+  getPaginationParams,
+  getShortUserFields,
 } from '#utils/helpers';
-import {
-  Conversation,
-  ConversationUnreadMessagesCount,
-  SelectConversationWithFields,
-  ShortUserInfo,
-} from '#utils/types';
+import { Conversation, PaginationResponse } from '#utils/types';
 
 import {
   CannotCreateConversationWithYourselfException,
@@ -24,9 +18,13 @@ import {
 import {
   AccessParams,
   CheckConversationIsCreatedParams,
+  CheckUnreadMessagesParams,
+  CheckUnreadMessagesResponse,
   CreateConversationParams,
+  GetConversationsParams,
   SetLastConversationMessageParams,
 } from './types/conversation.types';
+import { transformConversation } from './utils/conversation.utils';
 
 @Injectable()
 export class ConversationService {
@@ -35,24 +33,12 @@ export class ConversationService {
     private readonly userService: UserService,
   ) {}
 
-  private selectUserFields() {
-    return createObjectByKeys<ShortUserInfo>([
-      'id',
-      'name',
-      'nickName',
-      'secondName',
-      'avatarPath',
-    ]);
-  }
-
   async createConversation(
     params: CreateConversationParams,
   ): Promise<Conversation> {
     const { creatorId, message: content, recipientId } = params;
 
     const recipient = await this.userService.findUserById(recipientId);
-
-    if (!recipient) throw new UserNotFoundException();
 
     if (creatorId === recipient.id)
       throw new CannotCreateConversationWithYourselfException();
@@ -95,42 +81,21 @@ export class ConversationService {
         id: conversationId,
       },
       include: {
-        recipient: { select: this.selectUserFields() },
-        creator: { select: this.selectUserFields() },
-        messages: {
-          include: { author: { select: this.selectUserFields() } },
-        },
-        lastMessage: true,
-        _count: {
-          select: { messages: { where: { isReaded: false } } },
-        },
+        recipient: { select: getShortUserFields() },
+        creator: { select: getShortUserFields() },
+        messages: { include: { author: { select: getShortUserFields() } } },
       },
     });
 
     if (!conversation) throw new ConversationNotFoundException();
 
-    const transformedConversation = transformFieldCount<
-      SelectConversationWithFields,
-      ConversationUnreadMessagesCount
-    >(conversation, ['unreadMessagesCount']);
-
-    return {
-      ...exclude(transformedConversation, [
-        'lastMessageId',
-        'creatorId',
-        'recipientId',
-      ]),
-      messages:
-        conversation?.messages?.map((message) =>
-          exclude(message, ['authorId']),
-        ) || [],
-    };
+    return conversation;
   }
 
-  async checkConversationIsCreated({
-    userId,
-    recipientId,
-  }: CheckConversationIsCreatedParams): Promise<ConversationModel> {
+  async checkConversationIsCreated(
+    params: CheckConversationIsCreatedParams,
+  ): Promise<ConversationModel> {
+    const { userId, recipientId } = params;
     return this.prismaService.conversation.findFirst({
       where: {
         OR: [
@@ -147,14 +112,22 @@ export class ConversationService {
     });
   }
 
-  async getConversations(userId: number): Promise<Conversation[]> {
+  async getConversations(
+    params: GetConversationsParams,
+  ): Promise<PaginationResponse<Conversation>> {
+    const { paginationParams, userId } = params;
+
+    const { take, skip } = getPaginationParams(paginationParams);
+
     const conversations = await this.prismaService.conversation.findMany({
       where: {
-        OR: [{ creatorId: userId }, { recipientId: userId }],
+        AND: [{ creatorId: userId }, { recipientId: userId }],
       },
+      take,
+      skip,
       include: {
-        creator: { select: this.selectUserFields() },
-        recipient: { select: this.selectUserFields() },
+        creator: { select: getShortUserFields() },
+        recipient: { select: getShortUserFields() },
         lastMessage: true,
         _count: {
           select: { messages: { where: { isReaded: false } } },
@@ -162,26 +135,24 @@ export class ConversationService {
       },
     });
 
-    return conversations.map((conversation) => {
-      const transformedConversation = transformFieldCount<
-        SelectConversationWithFields,
-        ConversationUnreadMessagesCount
-      >(conversation, ['unreadMessagesCount']);
-
-      return {
-        ...exclude(transformedConversation, [
-          'creatorId',
-          'recipientId',
-          'lastMessageId',
-        ]),
-      };
+    const conversationsCount = await this.prismaService.conversation.count({
+      where: { AND: [{ creatorId: userId }, { recipientId: userId }] },
     });
+
+    const transformedConversations = conversations.map((conversation) =>
+      transformConversation(conversation),
+    );
+
+    return {
+      results: transformedConversations,
+      meta: getPaginationMeta(paginationParams, conversationsCount),
+    };
   }
 
-  async hasAccess({ conversationId, userId }: AccessParams): Promise<boolean> {
-    const conversation = await this.getConversationById(conversationId);
+  async hasAccess(params: AccessParams): Promise<boolean> {
+    const { conversationId, userId } = params;
 
-    if (!conversation) throw new ConversationNotFoundException();
+    const conversation = await this.getConversationById(conversationId);
 
     return (
       conversation?.creator?.id === userId ||
@@ -189,10 +160,11 @@ export class ConversationService {
     );
   }
 
-  async setLastConversationMessage({
-    conversationId,
-    messageId,
-  }: SetLastConversationMessageParams): Promise<Conversation> {
+  async setLastConversationMessage(
+    params: SetLastConversationMessageParams,
+  ): Promise<Conversation> {
+    const { conversationId, messageId } = params;
+
     const updateConversation = await this.prismaService.conversation.update({
       where: { id: conversationId },
       data: {
@@ -201,8 +173,8 @@ export class ConversationService {
           : { disconnect: true },
       },
       include: {
-        recipient: { select: this.selectUserFields() },
-        creator: { select: this.selectUserFields() },
+        recipient: { select: getShortUserFields() },
+        creator: { select: getShortUserFields() },
         lastMessage: true,
         _count: {
           select: { messages: { where: { isReaded: false } } },
@@ -210,19 +182,10 @@ export class ConversationService {
       },
     });
 
-    const transformedConversation = transformFieldCount<
-      SelectConversationWithFields,
-      ConversationUnreadMessagesCount
-    >(updateConversation, ['unreadMessagesCount']);
-
-    return exclude(transformedConversation, [
-      'lastMessageId',
-      'creatorId',
-      'recipientId',
-    ]);
+    return transformConversation(updateConversation);
   }
 
-  async checkUnreadMessages(conversationId: number): Promise<Conversation> {
+  async readUnreadMessages(conversationId: number): Promise<Conversation> {
     const updateConversation = await this.prismaService.conversation.update({
       where: { id: conversationId },
       data: {
@@ -234,8 +197,8 @@ export class ConversationService {
         },
       },
       include: {
-        recipient: { select: this.selectUserFields() },
-        creator: { select: this.selectUserFields() },
+        recipient: { select: getShortUserFields() },
+        creator: { select: getShortUserFields() },
         lastMessage: true,
         _count: {
           select: { messages: { where: { isReaded: false } } },
@@ -243,15 +206,24 @@ export class ConversationService {
       },
     });
 
-    const transformedConversation = transformFieldCount<
-      SelectConversationWithFields,
-      ConversationUnreadMessagesCount
-    >(updateConversation, ['unreadMessagesCount']);
+    return transformConversation(updateConversation);
+  }
 
-    return exclude(transformedConversation, [
-      'lastMessageId',
-      'creatorId',
-      'recipientId',
-    ]);
+  async checkUnreadMessages(
+    params: CheckUnreadMessagesParams,
+  ): Promise<CheckUnreadMessagesResponse> {
+    const { conversationId, userId } = params;
+
+    const conversation = await this.getConversationById(conversationId);
+
+    const isHaveUnreadedMessages = !!conversation.messages.filter(
+      (message) => !message.isReaded,
+    ).length;
+
+    const lastMessage = conversation.messages[conversation.messages.length - 1];
+
+    const isLastMessageNotFromConnectedUser = lastMessage.author.id !== userId;
+
+    return { isHaveUnreadedMessages, isLastMessageNotFromConnectedUser };
   }
 }
