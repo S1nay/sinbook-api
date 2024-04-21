@@ -22,6 +22,7 @@ export class WebsocketAdapter extends IoAdapter {
   private readonly namespaces: string[] = [
     NAMESPACES.CONVERSATION,
     NAMESPACES.DIALOG,
+    NAMESPACES.NOTIFICATIONS,
   ];
 
   constructor(private readonly app: INestApplicationContext) {

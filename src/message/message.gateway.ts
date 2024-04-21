@@ -19,10 +19,10 @@ import { WebsocketExceptionsFilter } from '#utils/filters';
 import { AuthenticatedSocket } from '#utils/interfaces';
 import { WSValidationPipe } from '#utils/pipes';
 
-import { CreateMessageDto } from './dto/createMessage.dto';
-import { DeleteMessageDto } from './dto/deleteMessage.dto';
-import { EditMessageDto } from './dto/editMessage.dto';
-import { GetMessagesDto } from './dto/getMessages.dto';
+import { CreateMessageDto } from './dto/create-message.dto';
+import { DeleteMessageDto } from './dto/delete-message.dto';
+import { EditMessageDto } from './dto/edit-message.dto';
+import { GetMessagesDto } from './dto/get-messages.dto';
 import { MessageService } from './message.service';
 
 @UseFilters(WebsocketExceptionsFilter)

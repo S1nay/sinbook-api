@@ -1,5 +1,5 @@
 import { OmitType } from '@nestjs/mapped-types';
 
-import { EditMessageDto } from './editMessage.dto';
+import { EditMessageDto } from './edit-message.dto';
 
 export class DeleteMessageDto extends OmitType(EditMessageDto, ['content']) {}

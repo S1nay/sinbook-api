@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Comment as CommentModel } from '@prisma/client';
 
 import { PostService } from '#post/post.service';
@@ -27,6 +28,7 @@ export class CommentService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly postService: PostService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async findPostComments(
@@ -74,10 +76,18 @@ export class CommentService {
       },
       include: {
         user: { select: getShortUserFields() },
+        post: { select: { id: true, userId: true } },
       },
     });
 
-    return exclude(comment, ['postId', 'userId']);
+    this.eventEmitter.emit('create_notification', {
+      authorId: userId,
+      recipientId: comment.post.userId,
+      typeEntityId: comment.post.id,
+      type: 'comment',
+    });
+
+    return exclude(comment, ['postId', 'userId', 'post']);
   }
 
   async findCommentById(id: number): Promise<CommentModel> {

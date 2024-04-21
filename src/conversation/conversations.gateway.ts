@@ -14,8 +14,8 @@ import { WebsocketExceptionsFilter } from '#utils/filters';
 import { AuthenticatedSocket } from '#utils/interfaces';
 import { WSValidationPipe } from '#utils/pipes';
 
-import { CreateConversationDto } from './dto/createConversation.dto';
-import { GetConversationsDto } from './dto/getConversation.dto';
+import { CreateConversationDto } from './dto/create-conversation.dto';
+import { GetConversationsDto } from './dto/get-conversation.dto';
 import { ConversationService } from './conversation.service';
 
 @UseFilters(WebsocketExceptionsFilter)

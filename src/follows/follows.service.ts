@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { PrismaService } from '#prisma/prisma.service';
 import { UserService } from '#user/user.service';
@@ -26,6 +27,7 @@ export class FollowsService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly userService: UserService,
+    private readonly eventEmitter: EventEmitter2,
   ) {}
 
   async getFollowers(
@@ -165,23 +167,23 @@ export class FollowsService {
   ): Promise<FollowingUser> {
     const { followingUserId, userId } = params;
 
-    const follow = await this.prismaService.follows.delete({
+    await this.prismaService.follows.delete({
       where: {
         followerId_followingId: {
           followerId: userId,
           followingId: followingUserId,
         },
       },
-      include: { following: { select: getShortUserFields() } },
     });
 
-    await this.prismaService.follows.update({
+    const follow = await this.prismaService.follows.update({
       where: {
         followerId_followingId: {
           followerId: followingUserId,
           followingId: userId,
         },
       },
+      include: { following: { select: getShortUserFields() } },
       data: {
         mutualFollow: false,
       },
@@ -205,7 +207,7 @@ export class FollowsService {
     return { ...follow.following, mutualFollow: follow.mutualFollow };
   }
 
-  async followUser(params: FollowUserParams) {
+  async followUser(params: FollowUserParams): Promise<FollowingUser> {
     const { userId, followingUserId } = params;
 
     await this.userService.findUserById(followingUserId);
@@ -216,17 +218,32 @@ export class FollowsService {
     const isExistingFollow = await this.checkFollow(params);
 
     if (!isExistingMutualFollow && !isExistingFollow) {
+      this.eventEmitter.emit('create_notification', {
+        authorId: userId,
+        recipientId: followingUserId,
+        type: 'follow',
+        triggeredId: userId,
+      });
+
       return this.createFollow(params);
     }
 
     if (isExistingMutualFollow && !isExistingFollow) {
+      this.eventEmitter.emit('create_notification', {
+        authorId: userId,
+        recipientId: followingUserId,
+        type: 'follow',
+        typeEntityId: userId,
+      });
+
       return this.createMutualFollow(params);
     }
 
     if (isExistingFollow && isExistingMutualFollow) {
-      await this.deleteMutualFollow(params);
+      console.log(1);
+      return this.deleteMutualFollow(params);
     } else {
-      await this.deleteFollow(params);
+      return this.deleteFollow(params);
     }
   }
 

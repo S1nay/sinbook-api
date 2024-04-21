@@ -1,7 +1,8 @@
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import { Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOkResponse,
   ApiParam,
   ApiQuery,
@@ -15,6 +16,7 @@ import { Pagination, User } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
 import { PaginationParams } from '#utils/types';
 
+import { CreateFollowDto } from './dto/create-follow.dto';
 import { CouldNotFollowYorselfException } from './exceptions/follows.exceptions';
 import { FollowsService } from './follows.service';
 
@@ -108,11 +110,11 @@ export class FollowsController {
     CouldNotFollowYorselfException,
     UserNotFoundException,
   ])
-  @ApiParam({ type: Number, example: 1, name: 'followingUserId' })
-  @Patch(':followingUserId')
+  @ApiBody({ type: CreateFollowDto })
+  @Post()
   followUser(
     @User() userId: number,
-    @Param('followingUserId', ParamIdValidationPipe) followingUserId: number,
+    @Body() { followingUserId }: CreateFollowDto,
   ) {
     return this.followsService.followUser({ userId, followingUserId });
   }
