@@ -17,3 +17,5 @@ export type FindUserPostsParams = {
   userId: number;
   paginationParams: PaginationParams;
 };
+
+export type FindUserPostsByFollowingsParams = FindUserPostsParams;

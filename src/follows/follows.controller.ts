@@ -110,7 +110,7 @@ export class FollowsController {
     CouldNotFollowYorselfException,
     UserNotFoundException,
   ])
-  @ApiBody({ type: CreateFollowDto })
+  @ApiBody({ type: FollowOpenApi.CreateFollowDto })
   @Post()
   followUser(
     @User() userId: number,

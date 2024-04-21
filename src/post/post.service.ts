@@ -25,6 +25,7 @@ import {
   CreatePostParams,
   DeletePostParams,
   EditPostParams,
+  FindUserPostsByFollowingsParams,
   FindUserPostsParams,
 } from './types/post.types';
 import { transformPost } from './utils/post.utils';
@@ -125,6 +126,42 @@ export class PostService {
       this.prismaService.like.deleteMany({ where: { postId: id } }),
       this.prismaService.post.delete({ where: { id } }),
     ]);
+  }
+
+  async findPostsByFollowings(params: FindUserPostsByFollowingsParams) {
+    const { paginationParams, userId } = params;
+
+    const { take, skip } = getPaginationParams(paginationParams);
+
+    const posts = await this.prismaService.post.findMany({
+      where: {
+        user: { followers: { some: { followerId: userId } } },
+      },
+      include: {
+        _count: { select: { comments: true } },
+        user: { select: getShortUserFields() },
+        likes: true,
+      },
+      orderBy: { createdAt: 'asc' },
+      take,
+      skip,
+    });
+
+    const totalPosts = await this.prismaService.post.count({
+      where: {
+        user: { followers: { some: { followerId: userId } } },
+      },
+    });
+
+    const transformedPosts = posts.map((post) => transformPost(post));
+
+    return {
+      results: transformedPosts.map((post) => ({
+        ...post,
+        likes: post.likes.map((like) => like.userId),
+      })),
+      meta: getPaginationMeta(paginationParams, totalPosts),
+    };
   }
 
   async findPosts(

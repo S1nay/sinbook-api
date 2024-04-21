@@ -140,4 +140,25 @@ export class PostController {
       userId,
     });
   }
+
+  @ApiOkResponse({ type: PostOpenApi.FindAllPosts })
+  @ApiParam({ name: 'userId', type: Number })
+  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
+  @ApiQuery({
+    type: Number,
+    example: 15,
+    name: 'perPage',
+    required: false,
+  })
+  @ApiException(() => [UserNotAuthorizedException])
+  @Get('by-follows')
+  findPostsByFollowings(
+    @User() userId: number,
+    @Pagination() params: PaginationParams,
+  ) {
+    return this.postService.findPostsByFollowings({
+      paginationParams: params,
+      userId,
+    });
+  }
 }

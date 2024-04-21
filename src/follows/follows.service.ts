@@ -167,7 +167,8 @@ export class FollowsService {
   ): Promise<FollowingUser> {
     const { followingUserId, userId } = params;
 
-    await this.prismaService.follows.delete({
+    const follow = await this.prismaService.follows.delete({
+      include: { following: { select: getShortUserFields() } },
       where: {
         followerId_followingId: {
           followerId: userId,
@@ -176,20 +177,19 @@ export class FollowsService {
       },
     });
 
-    const follow = await this.prismaService.follows.update({
+    await this.prismaService.follows.update({
       where: {
         followerId_followingId: {
           followerId: followingUserId,
           followingId: userId,
         },
       },
-      include: { following: { select: getShortUserFields() } },
       data: {
         mutualFollow: false,
       },
     });
 
-    return { ...follow.following, mutualFollow: follow.mutualFollow };
+    return { ...follow.following, mutualFollow: false };
   }
   async deleteFollow(params: DeleteFollowsParams): Promise<FollowingUser> {
     const { followingUserId, userId } = params;
@@ -222,7 +222,7 @@ export class FollowsService {
         authorId: userId,
         recipientId: followingUserId,
         type: 'follow',
-        triggeredId: userId,
+        typeEntityId: userId,
       });
 
       return this.createFollow(params);
@@ -240,7 +240,6 @@ export class FollowsService {
     }
 
     if (isExistingFollow && isExistingMutualFollow) {
-      console.log(1);
       return this.deleteMutualFollow(params);
     } else {
       return this.deleteFollow(params);
