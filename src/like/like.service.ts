@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { PostService } from '#post/post.service';
 import { transformPost } from '#post/utils/post.utils';
@@ -13,20 +14,32 @@ export class LikeService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly postService: PostService,
+    private eventEmitter: EventEmitter2,
   ) {}
 
   async likePost(params: LikePostParams): Promise<Post> {
-    const { postId } = params;
+    const { postId, userId } = params;
 
     await this.postService.findPostById(postId);
 
     const like = await this.checkLike(params);
 
+    let post = null;
+
     if (like) {
-      return this.deleteLike(params);
+      post = await this.deleteLike(params);
     } else {
-      return this.createLike(params);
+      post = await this.createLike(params);
     }
+
+    this.eventEmitter.emit('create_notification', {
+      authorId: userId,
+      recipientId: post.user.id,
+      type: 'like',
+      typeEntityId: post.id,
+    });
+
+    return post;
   }
 
   async createLike(params: LikePostParams): Promise<Post> {

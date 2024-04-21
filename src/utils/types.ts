@@ -3,6 +3,7 @@ import {
   Conversation as ConversationModel,
   Gender,
   Message as MessageModel,
+  Notification as NotificationModel,
   Post as PostModel,
   Prisma,
   User as UserModel,
@@ -29,6 +30,8 @@ export type SelectUserFollowsCount = Prisma.UserGetPayload<{
         | 'conversationCreator'
         | 'messages'
         | 'likes'
+        | 'notificationRecipient'
+        | 'notificationAuthor'
       >;
     };
   };
@@ -171,3 +174,7 @@ export type Follow = {
 };
 
 export type FollowingUser = ShortUserInfo & { mutualFollow: boolean };
+
+// -------------NOTIFICATION-------------
+
+export type Notification = Omit<NotificationModel, 'authorId'>;

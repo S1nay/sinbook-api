@@ -1,18 +1,19 @@
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import { Controller, Param, Patch } from '@nestjs/common';
+import { Body, Controller, Post } from '@nestjs/common';
 import {
   ApiBearerAuth,
+  ApiBody,
   ApiOkResponse,
-  ApiParam,
   ApiTags,
 } from '@nestjs/swagger';
 
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
+import { LikeOpenApi } from '#openapi/like.openapi';
 import { PostOpenApi } from '#openapi/post.openapi';
 import { PostNotFoundException } from '#post/exceptions/post.exceptions';
 import { User } from '#utils/decorators';
-import { ParamIdValidationPipe } from '#utils/pipes';
 
+import { CreateLikeDto } from './dto/create-like.dto';
 import { LikeService } from './like.service';
 
 @ApiTags('Лайки')
@@ -22,13 +23,10 @@ export class LikeController {
   constructor(private readonly likeService: LikeService) {}
 
   @ApiOkResponse({ type: PostOpenApi.CreatePostResponse })
-  @ApiParam({ name: 'postId', type: Number, example: 1 })
+  @ApiBody({ type: LikeOpenApi.CreateLikeDto })
   @ApiException(() => [UserNotAuthorizedException, PostNotFoundException])
-  @Patch(':postId')
-  create(
-    @Param('postId', ParamIdValidationPipe) postId: number,
-    @User() userId: number,
-  ) {
+  @Post()
+  async create(@Body() { postId }: CreateLikeDto, @User() userId: number) {
     return this.likeService.likePost({ postId, userId });
   }
 }

@@ -33,14 +33,16 @@ model User {
   conversationCreator   Conversation[] @relation("conversation_creator")
   conversationRecipient Conversation[] @relation("conversation_recipient")
   likes                 Like[]         @relation("user_like")
+  notificationRecipient Notification[] @relation("notification_recipient")
+  notificationAuthor    Notification[] @relation("notification_author")
 }
 
 model Follows {
-  follower      User      @relation("follower", fields: [followerId], references: [id])
-  followerId    Int       @map("follower_id")
-  following     User      @relation("following", fields: [followingId], references: [id])
-  followingId   Int       @map("following_id")
-  mutualFollow  Boolean   @map("mutual_follow")
+  follower     User    @relation("follower", fields: [followerId], references: [id])
+  followerId   Int     @map("follower_id")
+  following    User    @relation("following", fields: [followingId], references: [id])
+  followingId  Int     @map("following_id")
+  mutualFollow Boolean @map("mutual_follow")
 
   @@id([followerId, followingId])
 }
@@ -85,12 +87,12 @@ model Post {
 }
 
 model Like {
-  id        Int      @id @default(autoincrement())
-  user      User     @relation("user_like",fields: [userId], references: [id])
-  userId    Int      @map("user_id")
-  post      Post     @relation("post_like", fields: [postId], references: [id])
-  postId    Int      @map("post_id")
-  likedAt   DateTime @default(now()) @map("liked_at")
+  id      Int      @id @default(autoincrement())
+  user    User     @relation("user_like", fields: [userId], references: [id])
+  userId  Int      @map("user_id")
+  post    Post     @relation("post_like", fields: [postId], references: [id])
+  postId  Int      @map("post_id")
+  likedAt DateTime @default(now()) @map("liked_at")
 
   @@unique([userId, postId])
 }
@@ -104,6 +106,19 @@ model Comment {
   content   String
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
+}
+
+model Notification {
+  id           Int      @id @default(autoincrement())
+  recipient    User     @relation("notification_recipient", fields: [recipientId], references: [id])
+  recipientId  Int      @map("recipient_id")
+  author       User     @relation("notification_author", fields: [authorId], references: [id])
+  authorId     Int      @map("author_id")
+  content      String
+  type         String
+  typeEntityId Int      @map("type_entity_id")
+  isReaded     Boolean  @default(false) @map("is_readed")
+  createdAt    DateTime @default(now()) @map("created_at")
 }
 
 enum Gender {

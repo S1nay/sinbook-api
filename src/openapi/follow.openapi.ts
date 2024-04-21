@@ -27,4 +27,14 @@ export namespace FollowOpenApi {
     })
     meta: () => Pagination.PaginationMeta;
   }
+
+  //Create Follow Response
+  export class CreateFollowDto {
+    @ApiProperty({
+      description: 'id пользователя на которого идет подписка',
+      type: Number,
+      example: 1,
+    })
+    followingUserId: number;
+  }
 }

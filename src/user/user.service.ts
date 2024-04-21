@@ -121,10 +121,13 @@ export class UserService {
     };
 
     const users = await this.prismaService.user.findMany({
-      select: getShortUserFields(),
       skip,
       take,
       where: searchFilter,
+      select: {
+        follows: { select: { mutualFollow: true } },
+        ...getShortUserFields(),
+      },
       orderBy: {
         followers: {
           _count: 'desc',
@@ -136,8 +139,17 @@ export class UserService {
       where: searchFilter,
     });
 
+    const transformedUsers = users.map((user) => {
+      return !user.follows.length || !user.follows?.[0].mutualFollow
+        ? { ...exclude(user, ['follows']), mutualFollow: false }
+        : {
+            ...exclude(user, ['follows']),
+            mutualFollow: user.follows[0].mutualFollow,
+          };
+    });
+
     return {
-      results: users,
+      results: transformedUsers,
       meta: getPaginationMeta(params, totalUsers),
     };
   }
