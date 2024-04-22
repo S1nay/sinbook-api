@@ -26,7 +26,7 @@ export function transformUsersArray(users: UserWithFollows[]) {
   });
 }
 
-export function getFilters(params: FindUsersParams) {
+export function getUserFilters(params: FindUsersParams) {
   const { search, follows, followers, userId } = params;
 
   const searchFilters = search

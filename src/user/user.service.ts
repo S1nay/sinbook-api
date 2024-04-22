@@ -23,7 +23,7 @@ import {
   FindUsersParams,
 } from './types/user.type';
 import {
-  getFilters,
+  getUserFilters,
   transformUser,
   transformUsersArray,
 } from './utils/user.utils';
@@ -110,7 +110,7 @@ export class UserService {
   ): Promise<PaginationResponse<ShortUserInfo>> {
     const { skip, take } = getPaginationParams(params);
 
-    const filters = getFilters(params);
+    const filters = getUserFilters(params);
 
     const users = await this.prismaService.user.findMany({
       skip,

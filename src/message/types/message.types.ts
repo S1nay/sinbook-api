@@ -25,7 +25,7 @@ export type DeleteLastMessageParams = {
   messageId: number;
 };
 
-export type GetConversationMessages = {
+export type GetConversationMessagesParams = {
   conversationId: number;
   paginationParams: PaginationParams;
 };

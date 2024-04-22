@@ -148,9 +148,7 @@ export class PostService {
     });
 
     const totalPosts = await this.prismaService.post.count({
-      where: {
-        user: { followers: { some: { followerId: userId } } },
-      },
+      where: { user: { followers: { some: { followerId: userId } } } },
     });
 
     const transformedPosts = posts.map((post) => transformPost(post));

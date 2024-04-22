@@ -23,8 +23,9 @@ import {
   DeleteMessageParams,
   EditMessageParams,
   EditMessageResponse,
-  GetConversationMessages,
+  GetConversationMessagesParams,
 } from './types/message.types';
+import { getMessageFilters } from './utils/message.utils';
 
 @Injectable()
 export class MessageService {
@@ -34,31 +35,25 @@ export class MessageService {
   ) {}
 
   async getConversationMessages(
-    params: GetConversationMessages,
+    params: GetConversationMessagesParams,
   ): Promise<PaginationResponse<Message>> {
     const { conversationId, paginationParams } = params;
 
-    const { skip, take } = getPaginationParams(paginationParams);
-
-    const searchFilter = {
-      ...(paginationParams?.search && {
-        content: { contains: paginationParams?.search || '' },
-      }),
-    };
-
     await this.conversationService.getConversationById(conversationId);
 
+    const { skip, take } = getPaginationParams(paginationParams);
+
+    const filters = getMessageFilters(params);
+
     const messages = await this.prismaService.message.findMany({
-      where: { AND: [{ conversationId: conversationId }, searchFilter] },
-      include: {
-        author: { select: getShortUserFields() },
-      },
+      where: filters,
+      include: { author: { select: getShortUserFields() } },
       skip,
       take,
     });
 
     const messagesCount = await this.prismaService.message.count({
-      where: { AND: [{ conversationId: conversationId }, searchFilter] },
+      where: filters,
     });
 
     return {
