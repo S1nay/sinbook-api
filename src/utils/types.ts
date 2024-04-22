@@ -14,6 +14,12 @@ export type User = Omit<UserModel, 'passwordHash'>;
 export type UserWithPasswordHash = UserModel;
 export type UserWithoutEmail = Omit<User, 'email'>;
 
+export type UserWithFollows = ShortUserInfo & {
+  follows: {
+    mutualFollow: boolean;
+  }[];
+};
+
 export type FollowersCountFields = {
   followersCount: number;
   followersOfCount: number;
@@ -148,8 +154,8 @@ export type Comment = Omit<CommentModel, 'postId' | 'userId'>;
 // -------------PAGINATION-------------
 
 export type PaginationParams = {
-  page: number;
-  perPage: number;
+  page?: number;
+  perPage?: number;
   search?: string;
 };
 

@@ -1,11 +1,15 @@
-import { IsInt, IsOptional } from 'class-validator';
+import { IsInt, IsOptional, IsString } from 'class-validator';
 
 export class GetMessagesDto {
   @IsOptional()
   @IsInt({ message: 'Поле page должно быть числом' })
-  page: number;
+  page?: number;
 
   @IsOptional()
   @IsInt({ message: 'Поле perPage должно быть числом' })
-  perPage: number;
+  perPage?: number;
+
+  @IsOptional()
+  @IsString({ message: 'Поле search должно быть строкой' })
+  search?: string;
 }

@@ -57,7 +57,7 @@ export class ConversationsGateway
     @ConnectedSocket() socket: AuthenticatedSocket,
   ) {
     const conversations = await this.conversationService.getConversations({
-      paginationParams: { ...body },
+      paginationParams: body,
       userId: socket.user.id,
     });
 

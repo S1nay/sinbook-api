@@ -57,3 +57,18 @@ export class ParamIdValidationPipe implements PipeTransform {
     return transformedValue;
   }
 }
+
+@Injectable()
+export class ParamBoolValidationPipe implements PipeTransform {
+  async transform(value: string) {
+    const transformedValue = Boolean(value);
+
+    if (typeof transformedValue !== 'boolean') {
+      throw new BadRequestException(
+        `Параметр ${value} должен быть булевым значением `,
+      );
+    }
+
+    return transformedValue;
+  }
+}

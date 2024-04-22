@@ -105,7 +105,7 @@ export class MessageGateway
     @ConnectedSocket() socket: AuthenticatedSocket,
   ) {
     const messages = await this.messageService.getConversationMessages({
-      paginationParams: { ...body },
+      paginationParams: body,
       conversationId: +socket.handshake.query.conversationId,
     });
 
