@@ -25,11 +25,12 @@ export const Pagination = createParamDecorator(
 
     const page = parseInt(req.query.page as string);
     const perPage = parseInt(req.query.perPage as string);
+    const search = req.query.search as string;
 
     if (isNaN(page) || page < 0 || isNaN(perPage) || perPage < 0) {
       throw new BadRequestException('Неверные параметры для пагинации');
     }
 
-    return { page, perPage };
+    return { page, perPage, search };
   },
 );

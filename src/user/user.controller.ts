@@ -20,7 +20,11 @@ import {
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { UserOpenApi } from '#openapi/user.openapi';
 import { Pagination, User } from '#utils/decorators';
-import { ParamIdValidationPipe, TransformGenderPipe } from '#utils/pipes';
+import {
+  ParamBoolValidationPipe,
+  ParamIdValidationPipe,
+  TransformGenderPipe,
+} from '#utils/pipes';
 import { PaginationParams } from '#utils/types';
 
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -48,12 +52,32 @@ export class UserController {
     name: 'perPage',
     required: false,
   })
+  @ApiQuery({
+    type: Boolean,
+    example: true,
+    name: 'followers',
+    required: false,
+  })
+  @ApiQuery({
+    type: Boolean,
+    example: true,
+    name: 'follows',
+    required: false,
+  })
+  @ApiQuery({ type: Number, example: 1, name: 'userId', required: false })
   @Get()
   findAll(
     @Pagination() params: PaginationParams,
-    @Query('search') search: string,
+    @Query('userId', ParamIdValidationPipe) userId: string,
+    @Query('follows', ParamBoolValidationPipe) follows: string,
+    @Query('followers', ParamBoolValidationPipe) followers: string,
   ) {
-    return this.userService.findUsers({ ...params, search });
+    return this.userService.findUsers({
+      ...params,
+      userId: +userId,
+      follows: Boolean(follows),
+      followers: Boolean(followers),
+    });
   }
 
   @ApiOkResponse({ type: UserOpenApi.FindMeResponse })

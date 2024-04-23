@@ -3,12 +3,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 
 import { PrismaService } from '#prisma/prisma.service';
 import { UserService } from '#user/user.service';
-import {
-  getPaginationMeta,
-  getPaginationParams,
-  getShortUserFields,
-} from '#utils/helpers';
-import { Follow, FollowingUser, PaginationResponse } from '#utils/types';
+import { getShortUserFields } from '#utils/helpers';
+import { Follow, FollowingUser } from '#utils/types';
 
 import { CouldNotFollowYorselfException } from './exceptions/follows.exceptions';
 import {
@@ -18,8 +14,6 @@ import {
   DeleteFollowsParams,
   DeleteMutualFollowsParams,
   FollowUserParams,
-  GetFollowersParams,
-  GetFollowsParams,
 } from './types/follows.types';
 
 @Injectable()
@@ -29,96 +23,6 @@ export class FollowsService {
     private readonly userService: UserService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
-
-  async getFollowers(
-    params: GetFollowersParams,
-  ): Promise<PaginationResponse<FollowingUser>> {
-    const { paginationParams, userId } = params;
-
-    await this.userService.findUserById(userId);
-
-    const { skip, take } = getPaginationParams(paginationParams);
-
-    const searchFilter = {
-      ...(paginationParams?.search && {
-        name: { contains: paginationParams?.search || '' },
-        secondName: { contains: paginationParams?.search },
-        middleName: { contains: paginationParams?.search },
-        nickName: { contains: paginationParams?.search },
-      }),
-    };
-
-    const followers = await this.prismaService.follows.findMany({
-      where: {
-        AND: [{ followingId: userId }, { following: searchFilter }],
-      },
-      take,
-      skip,
-      include: {
-        follower: { select: getShortUserFields() },
-      },
-    });
-
-    const followersCount = await this.prismaService.follows.count({
-      where: {
-        AND: [{ followingId: userId }, { following: searchFilter }],
-      },
-    });
-
-    return {
-      results: followers.map((follower) => {
-        return {
-          ...follower.follower,
-          mutualFollow: follower.mutualFollow,
-        };
-      }),
-      meta: getPaginationMeta(paginationParams, followersCount),
-    };
-  }
-
-  async getFollows(
-    params: GetFollowsParams,
-  ): Promise<PaginationResponse<FollowingUser>> {
-    const { paginationParams, userId } = params;
-
-    await this.userService.findUserById(userId);
-
-    const { skip, take } = getPaginationParams(paginationParams);
-
-    const searchFilter = {
-      ...(paginationParams?.search && {
-        name: { contains: paginationParams?.search || '' },
-        secondName: { contains: paginationParams?.search },
-        middleName: { contains: paginationParams?.search },
-        nickName: { contains: paginationParams?.search },
-      }),
-    };
-
-    const follows = await this.prismaService.follows.findMany({
-      where: {
-        AND: [{ followerId: userId }, { following: searchFilter }],
-      },
-      skip,
-      take,
-      include: {
-        following: { select: getShortUserFields() },
-      },
-    });
-
-    const followsCount = await this.prismaService.follows.count({
-      where: {
-        AND: [{ followerId: userId }, { follower: searchFilter }],
-      },
-    });
-
-    return {
-      results: follows.map((following) => ({
-        ...following.following,
-        mutualFollow: following.mutualFollow,
-      })),
-      meta: getPaginationMeta(paginationParams, followsCount),
-    };
-  }
 
   async createFollow(params: CreateFollowParams): Promise<FollowingUser> {
     const { followingUserId, userId } = params;
@@ -207,6 +111,21 @@ export class FollowsService {
     return { ...follow.following, mutualFollow: follow.mutualFollow };
   }
 
+  async unFollowUser(params: FollowUserParams): Promise<FollowingUser> {
+    const { followingUserId } = params;
+
+    await this.userService.findUserById(followingUserId);
+
+    const isExistingMutualFollow = await this.checkMutualFollow(params);
+    const isExistingFollow = await this.checkFollow(params);
+
+    if (isExistingFollow && isExistingMutualFollow) {
+      return this.deleteMutualFollow(params);
+    } else {
+      return this.deleteFollow(params);
+    }
+  }
+
   async followUser(params: FollowUserParams): Promise<FollowingUser> {
     const { userId, followingUserId } = params;
 
@@ -237,12 +156,6 @@ export class FollowsService {
       });
 
       return this.createMutualFollow(params);
-    }
-
-    if (isExistingFollow && isExistingMutualFollow) {
-      return this.deleteMutualFollow(params);
-    } else {
-      return this.deleteFollow(params);
     }
   }
 

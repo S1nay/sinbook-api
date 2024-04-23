@@ -1,5 +1,7 @@
 import { User } from '@prisma/client';
 
+import { PaginationParams } from '#utils/types';
+
 type CreateUserData = Omit<
   User,
   'id' | 'isDeleted' | 'createdAt' | 'updatedAt'
@@ -17,4 +19,10 @@ export type EditUserParams = {
 
 export type CreateUserParams = {
   userData: CreateUserData;
+};
+
+export type FindUsersParams = PaginationParams & {
+  follows?: boolean;
+  followers?: boolean;
+  userId?: number;
 };

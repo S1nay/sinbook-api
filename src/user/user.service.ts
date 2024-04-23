@@ -6,13 +6,9 @@ import {
   getPaginationMeta,
   getPaginationParams,
   getShortUserFields,
-  transformFieldCount,
 } from '#utils/helpers';
 import {
-  FollowersCountFields,
-  PaginationParams,
   PaginationResponse,
-  SelectUserFollowsCount,
   ShortUserInfo,
   User,
   UserWithFollowsCount,
@@ -21,8 +17,16 @@ import {
 } from '#utils/types';
 
 import { UserNotFoundException } from './exceptions/user.exceptions';
-import { CreateUserParams, EditUserParams } from './types/user.type';
-import { transformUser } from './utils/user.utils';
+import {
+  CreateUserParams,
+  EditUserParams,
+  FindUsersParams,
+} from './types/user.type';
+import {
+  getUserFilters,
+  transformUser,
+  transformUsersArray,
+} from './utils/user.utils';
 
 @Injectable()
 export class UserService {
@@ -64,12 +68,7 @@ export class UserService {
 
     if (!user) throw new UserNotFoundException();
 
-    const userWithFollowsCount = transformFieldCount<
-      SelectUserFollowsCount,
-      FollowersCountFields
-    >(user, ['followersCount', 'followsCount']);
-
-    return exclude(userWithFollowsCount, ['passwordHash', 'email']);
+    return transformUser(user);
   }
 
   async findUserByEmail(email: string): Promise<UserWithPasswordHash> {
@@ -107,46 +106,25 @@ export class UserService {
   }
 
   async findUsers(
-    params: PaginationParams,
+    params: FindUsersParams,
   ): Promise<PaginationResponse<ShortUserInfo>> {
     const { skip, take } = getPaginationParams(params);
 
-    const searchFilter = {
-      ...(params?.search && {
-        name: { contains: params?.search || '' },
-        secondName: { contains: params?.search },
-        middleName: { contains: params?.search },
-        nickName: { contains: params?.search },
-      }),
-    };
+    const filters = getUserFilters(params);
 
     const users = await this.prismaService.user.findMany({
       skip,
       take,
-      where: searchFilter,
+      where: filters,
       select: {
         follows: { select: { mutualFollow: true } },
         ...getShortUserFields(),
       },
-      orderBy: {
-        followers: {
-          _count: 'desc',
-        },
-      },
     });
 
-    const totalUsers = await this.prismaService.user.count({
-      where: searchFilter,
-    });
+    const totalUsers = await this.prismaService.user.count({ where: filters });
 
-    const transformedUsers = users.map((user) => {
-      return !user.follows.length || !user.follows?.[0].mutualFollow
-        ? { ...exclude(user, ['follows']), mutualFollow: false }
-        : {
-            ...exclude(user, ['follows']),
-            mutualFollow: user.follows[0].mutualFollow,
-          };
-    });
+    const transformedUsers = transformUsersArray(users);
 
     return {
       results: transformedUsers,

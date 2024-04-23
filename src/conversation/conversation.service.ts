@@ -24,7 +24,10 @@ import {
   GetConversationsParams,
   SetLastConversationMessageParams,
 } from './types/conversation.types';
-import { transformConversation } from './utils/conversation.utils';
+import {
+  getConversationFilters,
+  transformConversation,
+} from './utils/conversation.utils';
 
 @Injectable()
 export class ConversationService {
@@ -115,14 +118,14 @@ export class ConversationService {
   async getConversations(
     params: GetConversationsParams,
   ): Promise<PaginationResponse<Conversation>> {
-    const { paginationParams, userId } = params;
+    const { paginationParams } = params;
 
     const { take, skip } = getPaginationParams(paginationParams);
 
+    const filters = getConversationFilters(params);
+
     const conversations = await this.prismaService.conversation.findMany({
-      where: {
-        AND: [{ creatorId: userId }, { recipientId: userId }],
-      },
+      where: filters,
       take,
       skip,
       include: {
@@ -136,12 +139,10 @@ export class ConversationService {
     });
 
     const conversationsCount = await this.prismaService.conversation.count({
-      where: { AND: [{ creatorId: userId }, { recipientId: userId }] },
+      where: filters,
     });
 
-    const transformedConversations = conversations.map((conversation) =>
-      transformConversation(conversation),
-    );
+    const transformedConversations = conversations.map(transformConversation);
 
     return {
       results: transformedConversations,
