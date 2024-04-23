@@ -61,7 +61,25 @@ export class ConversationsGateway
       userId: socket.user.id,
     });
 
-    socket.emit('get_conversations', conversations);
+    const transformedConversations = conversations.results.map(
+      (conversation) => ({
+        ...conversation,
+        creator: {
+          ...conversation.creator,
+          isOnline: this.sessionManager.getUserSocket(conversation.creator.id)
+            ? true
+            : false,
+        },
+        recipient: {
+          ...conversation.creator,
+          isOnline: this.sessionManager.getUserSocket(conversation.recipient.id)
+            ? true
+            : false,
+        },
+      }),
+    );
+
+    socket.emit('get_conversations', transformedConversations);
   }
 
   @SubscribeMessage('create_conversation')

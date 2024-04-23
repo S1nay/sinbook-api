@@ -78,12 +78,12 @@ export class PostService {
       throw new PostNotFoundException();
     }
 
-    return (
-      post &&
-      transformFieldCount<SelectPost, CommentsCountFields>(post, [
-        'commentsCount',
-      ])
-    );
+    const transformedPost = transformFieldCount<
+      SelectPost,
+      CommentsCountFields
+    >(post, ['commentsCount']);
+
+    return transformedPost;
   }
 
   async editPost(params: EditPostParams): Promise<Post> {
