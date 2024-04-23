@@ -7,6 +7,7 @@ import { PaginationParams } from './types';
 
 export const Host = createParamDecorator((_, ctx: ExecutionContext) => {
   const request = ctx.switchToHttp().getRequest();
+  console.log(request);
   return `${request.protocol}://${request.get('Host')}`;
 });
 

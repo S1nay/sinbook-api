@@ -3,6 +3,7 @@ import {
   Controller,
   HttpCode,
   Post,
+  Query,
   UploadedFile,
   UploadedFiles,
   UseInterceptors,
@@ -12,6 +13,7 @@ import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { ApiFile, FileOpenApi } from '#openapi/file.openapi';
 import { Host, SkipAuth } from '#utils/decorators';
+import { ParamIdValidationPipe } from '#utils/pipes';
 
 import {
   FileIsRequiredException,
@@ -43,6 +45,7 @@ export class FileController {
     file: Express.Multer.File,
     @Host() host: string,
   ) {
+    console.log(file);
     return this.fileService.uploadFile({
       host,
       dir: 'avatars',
@@ -50,10 +53,10 @@ export class FileController {
     });
   }
 
-  @Post('upload/post-images')
-  @UseInterceptors(FilesInterceptor('post-images'))
+  @Post('upload/post')
+  @UseInterceptors(FilesInterceptor('image'))
   @ApiConsumes('multipart/form-data')
-  @ApiFile({ fileName: 'post-images', isArray: true })
+  @ApiFile({ fileName: 'image', isArray: true })
   @ApiOkResponse({ type: FileOpenApi.FileResponse, isArray: true })
   @ApiException(() => [
     InvalidImageTypeException,
@@ -68,8 +71,33 @@ export class FileController {
   ) {
     return this.fileService.uploadFiles({
       host,
-      dir: 'post-images',
+      dir: 'post',
       files,
+    });
+  }
+
+  @Post('upload/dialog')
+  @UseInterceptors(FilesInterceptor('image'))
+  @ApiConsumes('multipart/form-data')
+  @ApiFile({ fileName: 'image', isArray: true })
+  @ApiOkResponse({ type: FileOpenApi.FileResponse, isArray: true })
+  @ApiException(() => [
+    InvalidImageTypeException,
+    MaxBufferSizeException,
+    FileIsRequiredException,
+  ])
+  @HttpCode(200)
+  uploadDialogImages(
+    @UploadedFiles(FileValidatorPipe)
+    files: Express.Multer.File[],
+    @Host() host: string,
+    @Query('conversationId', ParamIdValidationPipe) conversationId: number,
+  ) {
+    return this.fileService.uploadFiles({
+      host,
+      dir: 'dialog',
+      files,
+      dirId: conversationId,
     });
   }
 }

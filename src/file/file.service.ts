@@ -35,9 +35,10 @@ export class FileService {
     files,
     host,
     dir,
+    dirId,
   }: UploadFilesDto): Promise<CreatedFile[]> {
     if (Array.isArray(files)) {
-      const uploadFolder = `${this.pathUploads}/${dir}`;
+      const uploadFolder = `${this.pathUploads}/${dir}/${dir === 'dialog' ? dirId : ''}`;
 
       await ensureDir(uploadFolder);
 
@@ -47,7 +48,7 @@ export class FileService {
         await writeFile(`${uploadFolder}/${file.originalname}`, file.buffer);
 
         const result = {
-          url: `${host}/api/${dir}/${file.originalname}`,
+          url: `${host}/api/${dir}/${dir === 'dialog' ? dirId : ''}/${file.originalname}`,
           fileName: file.originalname,
         };
 
