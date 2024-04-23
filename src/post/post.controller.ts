@@ -22,7 +22,7 @@ import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { PostOpenApi } from '#openapi/post.openapi';
 import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { Pagination, User } from '#utils/decorators';
-import { ParamIdValidationPipe } from '#utils/pipes';
+import { ParamBoolValidationPipe, ParamIdValidationPipe } from '#utils/pipes';
 import { PaginationParams } from '#utils/types';
 
 import { CreatePostDto } from './dto/create-post.dto';
@@ -104,61 +104,14 @@ export class PostController {
   @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @Get()
   findPosts(
+    @Pagination() params: PaginationParams,
     @Query('userId', ParamIdValidationPipe) userId: number,
-    @Pagination() params: PaginationParams,
-    @Query('search') search: string,
+    @Query('followingBy', ParamBoolValidationPipe) followingBy: boolean,
   ) {
     return this.postService.findPosts({
-      paginationParams: { ...params, search },
-      userId,
-    });
-  }
-
-  @ApiOkResponse({ type: PostOpenApi.FindAllPosts, isArray: true })
-  @ApiQuery({
-    type: String,
-    example: 'name',
-    name: 'search',
-    required: false,
-  })
-  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
-  @ApiQuery({
-    type: Number,
-    example: 15,
-    name: 'perPage',
-    required: false,
-  })
-  @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
-  @Get('me')
-  findMyPosts(
-    @User() userId: number,
-    @Pagination() params: PaginationParams,
-    @Query('string') search: string,
-  ) {
-    return this.postService.findPosts({
-      paginationParams: { ...params, search },
-      userId,
-    });
-  }
-
-  @ApiOkResponse({ type: PostOpenApi.FindAllPosts })
-  @ApiParam({ name: 'userId', type: Number })
-  @ApiQuery({ type: Number, example: 1, name: 'page', required: false })
-  @ApiQuery({
-    type: Number,
-    example: 15,
-    name: 'perPage',
-    required: false,
-  })
-  @ApiException(() => [UserNotAuthorizedException])
-  @Get('by-follows')
-  findPostsByFollowings(
-    @User() userId: number,
-    @Pagination() params: PaginationParams,
-  ) {
-    return this.postService.findPostsByFollowings({
       paginationParams: params,
       userId,
+      followingBy,
     });
   }
 }

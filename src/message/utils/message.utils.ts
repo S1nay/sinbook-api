@@ -10,6 +10,6 @@ export function getMessageFilters(params: GetConversationMessagesParams) {
   };
 
   return {
-    AND: [searchFilters, { conversationId }],
+    AND: [{ OR: [searchFilters] }, { OR: [{ conversationId }] }],
   };
 }

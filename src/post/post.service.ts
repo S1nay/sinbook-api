@@ -25,10 +25,13 @@ import {
   CreatePostParams,
   DeletePostParams,
   EditPostParams,
-  FindUserPostsByFollowingsParams,
   FindUserPostsParams,
 } from './types/post.types';
-import { transformPost } from './utils/post.utils';
+import {
+  getPostFilters,
+  transformArrayPosts,
+  transformPost,
+} from './utils/post.utils';
 
 @Injectable()
 export class PostService {
@@ -128,62 +131,19 @@ export class PostService {
     ]);
   }
 
-  async findPostsByFollowings(params: FindUserPostsByFollowingsParams) {
-    const { paginationParams, userId } = params;
-
-    const { take, skip } = getPaginationParams(paginationParams);
-
-    const posts = await this.prismaService.post.findMany({
-      where: {
-        user: { followers: { some: { followerId: userId } } },
-      },
-      include: {
-        _count: { select: { comments: true } },
-        user: { select: getShortUserFields() },
-        likes: true,
-      },
-      orderBy: { createdAt: 'asc' },
-      take,
-      skip,
-    });
-
-    const totalPosts = await this.prismaService.post.count({
-      where: { user: { followers: { some: { followerId: userId } } } },
-    });
-
-    const transformedPosts = posts.map((post) => transformPost(post));
-
-    return {
-      results: transformedPosts.map((post) => ({
-        ...post,
-        likes: post.likes.map((like) => like.userId),
-      })),
-      meta: getPaginationMeta(paginationParams, totalPosts),
-    };
-  }
-
   async findPosts(
     params: FindUserPostsParams,
   ): Promise<PaginationResponse<Post>> {
     const { paginationParams, userId } = params;
 
-    const userFilter = {
-      ...(userId && { userId }),
-    };
-    const searchFilter = {
-      ...(paginationParams.search && {
-        content: { contains: paginationParams.search },
-      }),
-    };
-
     userId && (await this.userService.findUserById(userId));
+
+    const filters = getPostFilters(params);
 
     const { take, skip } = getPaginationParams(paginationParams);
 
     const posts = await this.prismaService.post.findMany({
-      where: {
-        AND: [searchFilter, userFilter],
-      },
+      where: filters,
       include: {
         _count: { select: { comments: true } },
         user: { select: getShortUserFields() },
@@ -195,16 +155,13 @@ export class PostService {
     });
 
     const totalPosts = await this.prismaService.post.count({
-      where: { AND: [userFilter, searchFilter] },
+      where: filters,
     });
 
-    const transformedPosts = posts.map((post) => transformPost(post));
+    const transformedPosts = transformArrayPosts(posts);
 
     return {
-      results: transformedPosts.map((post) => ({
-        ...post,
-        likes: post.likes.map((like) => like.userId),
-      })),
+      results: transformedPosts,
       meta: getPaginationMeta(paginationParams, totalPosts),
     };
   }

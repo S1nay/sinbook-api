@@ -16,6 +16,5 @@ export type DeletePostParams = {
 export type FindUserPostsParams = {
   userId: number;
   paginationParams: PaginationParams;
+  followingBy: boolean;
 };
-
-export type FindUserPostsByFollowingsParams = FindUserPostsParams;

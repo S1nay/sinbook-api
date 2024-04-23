@@ -48,6 +48,6 @@ export function getUserFilters(params: FindUsersParams) {
   }
 
   return {
-    AND: [...(search ? [{ OR: searchFilters }] : []), ...relationalFilters],
+    AND: [{ OR: searchFilters }, ...relationalFilters],
   };
 }
