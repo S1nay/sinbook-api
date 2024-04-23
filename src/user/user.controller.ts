@@ -68,15 +68,15 @@ export class UserController {
   @Get()
   findAll(
     @Pagination() params: PaginationParams,
-    @Query('userId', ParamIdValidationPipe) userId: string,
-    @Query('follows', ParamBoolValidationPipe) follows: string,
-    @Query('followers', ParamBoolValidationPipe) followers: string,
+    @Query('userId', ParamIdValidationPipe) userId: number,
+    @Query('follows', ParamBoolValidationPipe) follows: boolean,
+    @Query('followers', ParamBoolValidationPipe) followers: boolean,
   ) {
     return this.userService.findUsers({
       ...params,
-      userId: +userId,
-      follows: Boolean(follows),
-      followers: Boolean(followers),
+      userId: userId,
+      follows: follows,
+      followers: followers,
     });
   }
 

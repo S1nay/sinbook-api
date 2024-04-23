@@ -87,7 +87,7 @@ export class PostController {
   }
 
   @ApiOkResponse({ type: PostOpenApi.FindAllPosts })
-  @ApiParam({ name: 'userId', type: Number })
+  @ApiParam({ name: 'userId', type: Number, required: true })
   @ApiQuery({
     type: String,
     example: 'name',
@@ -99,6 +99,12 @@ export class PostController {
     type: Number,
     example: 15,
     name: 'perPage',
+    required: false,
+  })
+  @ApiQuery({
+    type: Boolean,
+    example: true,
+    name: 'followingBy',
     required: false,
   })
   @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
