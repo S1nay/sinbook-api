@@ -1,5 +1,6 @@
-import { TokenInfo, UserWithPasswordHash } from '#utils/types';
 import { User } from '@prisma/client';
+
+import { TokenInfo, UserWithPasswordHash } from '#utils/types';
 
 export type LoginParams = {
   email: string;
