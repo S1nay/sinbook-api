@@ -6,7 +6,7 @@ import { ServeStaticModule } from '@nestjs/serve-static';
 import { path } from 'app-root-path';
 
 import { PrismaModule } from '#prisma/prisma.module';
-import { getJWTConfig } from '#utils/config';
+import { getJWTConfig, getNodeEnv } from '#utils/config';
 
 import { SocketSessionManager } from './session.manager';
 
@@ -16,10 +16,7 @@ import { SocketSessionManager } from './session.manager';
     PrismaModule,
     ConfigModule.forRoot({
       isGlobal: true,
-      envFilePath:
-        process.env.NODE_ENV === 'development'
-          ? '.env.development'
-          : '.env.production',
+      envFilePath: getNodeEnv(),
     }),
     ServeStaticModule.forRoot({
       rootPath: `${path}/uploads`,
