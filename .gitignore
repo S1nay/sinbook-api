@@ -41,3 +41,7 @@ lerna-debug.log*
 ToDo.txt
 todo.txt
 Todo.txt
+
+# envs
+.env.staging
+.env.production
