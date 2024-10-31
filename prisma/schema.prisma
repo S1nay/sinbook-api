@@ -13,15 +13,13 @@ datasource db {
 model User {
   id                    Int            @id @default(autoincrement())
   nickName              String         @map("nick_name")
+  hobby                 String
   avatarPath            String?        @map("avatar_path")
   name                  String
-  secondName            String         @map("second_name")
-  middleName            String         @map("middle_name")
   email                 String         @unique
   passwordHash          String         @map("password_hash")
   posts                 Post[]         @relation("user_posts")
   comments              Comment[]      @relation("user_comments")
-  city                  String?        @default("")
   birthDate             DateTime?      @map("birth_date")
   gender                Gender
   isDeleted             Boolean        @default(false) @map("is_deleted")

@@ -30,7 +30,7 @@ export namespace AuthOpenApi {
   }
 
   //Register Dto
-  export class RegisterDto extends PartialType(UserOpenApi.CreateUserResponse) {
+  export class RegisterDto extends PartialType(UserOpenApi.CreateUserDto) {
     @ApiProperty({
       description: 'Поле пароля юзера',
       nullable: false,

@@ -134,13 +134,13 @@ export class PostService {
   async findPosts(
     params: FindUserPostsParams,
   ): Promise<PaginationResponse<Post>> {
-    const { paginationParams, userId } = params;
+    const { userId } = params;
 
     userId && (await this.userService.findUserById(userId));
 
     const filters = getPostFilters(params);
 
-    const { take, skip } = getPaginationParams(paginationParams);
+    const { take, skip } = getPaginationParams(params);
 
     const posts = await this.prismaService.post.findMany({
       where: filters,
@@ -162,7 +162,7 @@ export class PostService {
 
     return {
       results: transformedPosts,
-      meta: getPaginationMeta(paginationParams, totalPosts),
+      meta: getPaginationMeta(params, totalPosts),
     };
   }
 }

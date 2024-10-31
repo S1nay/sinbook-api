@@ -14,15 +14,15 @@ export function transformPost(post: SelectPost) {
 }
 
 export function getPostFilters(params: FindUserPostsParams) {
-  const { userId, paginationParams, followingBy } = params;
+  const { userId, search, followingBy } = params;
 
   const userFilter = {
     ...(userId && { userId }),
   };
 
   const searchFilter = {
-    ...(paginationParams.search && {
-      content: { contains: paginationParams.search },
+    ...(search && {
+      content: { contains: search },
     }),
   };
 

@@ -12,9 +12,4 @@ export type RegisterParams = Omit<
   'id' | 'isDeleted' | 'createdAt' | 'updatedAt'
 > & { password: string };
 
-export type ValidateUserParams = {
-  authParams: LoginParams | RegisterParams;
-  isRegister: boolean;
-};
-
 export type GenerateTokensParam = UserWithPasswordHash | User | TokenInfo;

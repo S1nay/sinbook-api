@@ -115,7 +115,7 @@ export class PostController {
     @Query('followingBy', ParamBoolValidationPipe) followingBy: boolean,
   ) {
     return this.postService.findPosts({
-      paginationParams: params,
+      ...params,
       userId,
       followingBy,
     });

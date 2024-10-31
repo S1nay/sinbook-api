@@ -27,8 +27,6 @@ export function getConversationFilters(params: GetConversationsParams) {
   const searchFilter = {
     OR: [
       { name: { contains: paginationParams.search } },
-      { secondName: { contains: paginationParams.search } },
-      { middleName: { contains: paginationParams.search } },
       { nickName: { contains: paginationParams.search } },
     ],
   };

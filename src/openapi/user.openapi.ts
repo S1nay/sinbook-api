@@ -27,7 +27,14 @@ export namespace UserOpenApi {
       example: 1,
       type: Number,
     })
-    followersOfCount?: number;
+    followsCount?: number;
+
+    @ApiProperty({
+      description: 'Кол-во постов',
+      example: 1,
+      type: Number,
+    })
+    postsCount?: number;
   }
 
   // User Model
@@ -38,6 +45,13 @@ export namespace UserOpenApi {
       type: Number,
     })
     id: number;
+
+    @ApiProperty({
+      description: 'Хобби пользователя',
+      example: 'Дизайнер',
+      type: String,
+    })
+    hobby: string;
 
     @ApiProperty({
       description: 'Никнейм пользователя',
@@ -52,20 +66,6 @@ export namespace UserOpenApi {
       type: String,
     })
     name: string;
-
-    @ApiProperty({
-      description: 'Фамилия пользователя',
-      example: 'Тестов',
-      type: String,
-    })
-    secondName: string;
-
-    @ApiProperty({
-      description: 'Отчество пользователя',
-      example: 'Тестович',
-      type: String,
-    })
-    middleName: string;
 
     passwordHash: string;
 
@@ -92,14 +92,6 @@ export namespace UserOpenApi {
       default: null,
     })
     birthDate: Date;
-
-    @ApiProperty({
-      description: 'Город пользователя',
-      example: 'Санкт-Петербург',
-      type: String,
-      default: '',
-    })
-    city: string;
 
     @ApiProperty({
       description: 'Гендер пользователя',
@@ -150,7 +142,6 @@ export namespace UserOpenApi {
   export class ShortUser extends PickType(UserModel, [
     'id',
     'name',
-    'secondName',
     'nickName',
     'avatarPath',
   ]) {}
@@ -163,13 +154,13 @@ export namespace UserOpenApi {
     'id',
     'isDeleted',
     'followersCount',
-    'followersOfCount',
+    'followsCount',
   ]) {}
 
   //Update User Fields
   export class UpdateUserDto extends OmitType(UserModel, [
     'followersCount',
-    'followersOfCount',
+    'followsCount',
     'createdAt',
     'updatedAt',
   ]) {}
@@ -181,12 +172,11 @@ export namespace UserOpenApi {
     'followersOf',
     'posts',
     'followersCount',
-    'followersOfCount',
+    'followsCount',
     'id',
     'createdAt',
     'updatedAt',
     'isDeleted',
-    'avatarPath',
   ]) {}
 
   //Find all users
@@ -212,7 +202,7 @@ export namespace UserOpenApi {
     'followersOf',
     'posts',
     'followersCount',
-    'followersOfCount',
+    'followsCount',
   ]) {
     @ApiProperty({
       description: 'Статус удаленного аккаунта',
