@@ -80,13 +80,6 @@ export class UserController {
     });
   }
 
-  @ApiOkResponse({ type: UserOpenApi.FindMeResponse })
-  @ApiException(() => UserNotAuthorizedException)
-  @Get('me')
-  findMe(@User() id: number) {
-    return this.userService.findMyProfile(id);
-  }
-
   @ApiOkResponse({ type: UserOpenApi.FindUniqueUserResponse })
   @ApiException(() => [UserNotAuthorizedException, UserNotFoundException])
   @ApiParam({ type: Number, example: 1, name: 'id' })

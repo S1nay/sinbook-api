@@ -32,17 +32,6 @@ import {
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findMyProfile(userId: number): Promise<UserWithCountFields> {
-    const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
-      include: {
-        _count: { select: { followers: true, follows: true, posts: true } },
-      },
-    });
-
-    return transformUser(user);
-  }
-
   async createUser(params: CreateUserParams): Promise<User | null> {
     const { userData } = params;
 
@@ -60,7 +49,7 @@ export class UserService {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       include: {
-        _count: { select: { followers: true, follows: true } },
+        _count: { select: { followers: true, follows: true, posts: true } },
       },
     });
 
@@ -92,10 +81,7 @@ export class UserService {
 
     const user = await this.prismaService.user.update({
       where: { id: userId },
-      data: {
-        ...userData,
-        birthDate: new Date(userData.birthDate),
-      },
+      data: userData,
       include: {
         _count: { select: { followers: true, follows: true } },
       },

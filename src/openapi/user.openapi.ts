@@ -50,6 +50,7 @@ export namespace UserOpenApi {
       description: 'Хобби пользователя',
       example: 'Дизайнер',
       type: String,
+      required: true,
     })
     hobby: string;
 
@@ -57,6 +58,7 @@ export namespace UserOpenApi {
       description: 'Никнейм пользователя',
       example: '@Nickname',
       type: String,
+      required: true,
     })
     nickName: string;
 
@@ -64,6 +66,7 @@ export namespace UserOpenApi {
       description: 'Имя пользователя',
       example: 'Тест',
       type: String,
+      required: true,
     })
     name: string;
 
@@ -82,6 +85,7 @@ export namespace UserOpenApi {
       example: 'http://localhost:5555/avatars/1/image.png',
       type: String,
       default: null,
+      required: false,
     })
     avatarPath: string | null;
 
@@ -90,6 +94,7 @@ export namespace UserOpenApi {
       example: '2024-02-13T14:50:43.867Z',
       type: String,
       default: null,
+      required: true,
     })
     birthDate: Date;
 
@@ -150,7 +155,7 @@ export namespace UserOpenApi {
   export class CreateUserDto extends OmitType(UserModel, [
     'createdAt',
     'updatedAt',
-    'avatarPath',
+    'postsCount',
     'id',
     'isDeleted',
     'followersCount',
@@ -159,6 +164,8 @@ export namespace UserOpenApi {
 
   //Update User Fields
   export class UpdateUserDto extends OmitType(UserModel, [
+    'postsCount',
+    'isDeleted',
     'followersCount',
     'followsCount',
     'createdAt',
@@ -173,10 +180,7 @@ export namespace UserOpenApi {
     'posts',
     'followersCount',
     'followsCount',
-    'id',
-    'createdAt',
-    'updatedAt',
-    'isDeleted',
+    'postsCount',
   ]) {}
 
   //Find all users
@@ -203,15 +207,7 @@ export namespace UserOpenApi {
     'posts',
     'followersCount',
     'followsCount',
-  ]) {
-    @ApiProperty({
-      description: 'Статус удаленного аккаунта',
-      example: true,
-      type: Boolean,
-      default: false,
-    })
-    isDeleted: boolean;
-  }
+  ]) {}
 
   //Find User by Id Response
   export class FindUniqueUserResponse extends OmitType(UserModel, [
@@ -220,12 +216,6 @@ export namespace UserOpenApi {
     'followersOf',
     'passwordHash',
     'email',
-  ]) {}
-
-  //Find Me Response
-  export class FindMeResponse extends OmitType(UserModel, [
-    'passwordHash',
-    'posts',
   ]) {}
 
   //Update User Response
