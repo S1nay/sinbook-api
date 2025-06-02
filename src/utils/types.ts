@@ -1,7 +1,6 @@
 import {
   Comment as CommentModel,
   Conversation as ConversationModel,
-  Gender,
   Message as MessageModel,
   Notification as NotificationModel,
   Post as PostModel,
@@ -74,7 +73,6 @@ export type TokenInfo = {
   id: number;
   nickName: string;
   name: string;
-  gender: Gender;
   email: string;
 };
 
