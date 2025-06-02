@@ -7,13 +7,13 @@ import {
 import { GetConversationsParams } from '../types/conversation.types';
 
 export function transformConversation(conversation: SelectConversation) {
-  const transfornedConversation = transformFieldCount<
+  const transformedConversation = transformFieldCount<
     SelectConversation,
     ConversationUnreadMessagesCount
   >(conversation, ['unreadMessagesCount']);
 
   return {
-    ...exclude(transfornedConversation, [
+    ...exclude(transformedConversation, [
       'creatorId',
       'recipientId',
       'lastMessageId',
