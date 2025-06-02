@@ -3,7 +3,6 @@ import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { SkipAuth } from '#utils/decorators';
-import { TransformGenderPipe } from '#utils/pipes';
 
 import { AuthOpenApi } from '../openapi/auth.openapi';
 
@@ -46,7 +45,7 @@ export class AuthController {
   @SkipAuth()
   @Post('sign-up')
   @HttpCode(200)
-  signUp(@Body(TransformGenderPipe) registerDto: RegisterDto) {
+  signUp(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 
