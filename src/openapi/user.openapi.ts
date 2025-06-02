@@ -4,7 +4,6 @@ import {
   OmitType,
   PickType,
 } from '@nestjs/swagger';
-import { $Enums, Gender } from '@prisma/client';
 
 import { User } from '#utils/types';
 
@@ -47,12 +46,12 @@ export namespace UserOpenApi {
     id: number;
 
     @ApiProperty({
-      description: 'Хобби пользователя',
-      example: 'Дизайнер',
+      description: 'Биография пользователя',
+      example: 'Дизайнер, Айтишник',
       type: String,
       required: true,
     })
-    hobby: string;
+    biography: string;
 
     @ApiProperty({
       description: 'Никнейм пользователя',
@@ -88,24 +87,6 @@ export namespace UserOpenApi {
       required: false,
     })
     avatarPath: string | null;
-
-    @ApiProperty({
-      description: 'Дата рождения пользователя',
-      example: '2024-02-13T14:50:43.867Z',
-      type: String,
-      default: null,
-      required: true,
-    })
-    birthDate: Date;
-
-    @ApiProperty({
-      description: 'Гендер пользователя',
-      enum: Gender,
-      enumName: 'Gender',
-      nullable: false,
-      required: true,
-    })
-    gender: $Enums.Gender;
 
     @ApiProperty({
       description: 'Статус удаленного аккаунта',
