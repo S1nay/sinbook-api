@@ -1,14 +1,6 @@
 import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator';
-import {
-  Body,
-  Controller,
-  Get,
-  HttpCode,
-  Param,
-  Post,
-  UseGuards,
-} from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
+import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { SkipAuth } from '#utils/decorators';
 import { TransformGenderPipe } from '#utils/pipes';
@@ -32,7 +24,10 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @ApiException(() => [IncorrectAuthDataException])
+  @ApiException(() => [
+    IncorrectAuthDataException,
+    UserWithEmailNotExistException,
+  ])
   @ApiOkResponse({ type: AuthOpenApi.AuthResponse })
   @ApiBody({ type: AuthOpenApi.LoginDto })
   @SkipAuth()
@@ -44,38 +39,15 @@ export class AuthController {
 
   @ApiOkResponse({ type: AuthOpenApi.AuthResponse })
   @ApiBody({ type: AuthOpenApi.RegisterDto })
+  @ApiException(() => [
+    UserWithEmailExistException,
+    UserWithNicknameExistException,
+  ])
   @SkipAuth()
   @Post('sign-up')
   @HttpCode(200)
   signUp(@Body(TransformGenderPipe) registerDto: RegisterDto) {
     return this.authService.register(registerDto);
-  }
-
-  @ApiException(() => [UserWithEmailNotExistException])
-  @ApiParam({ name: 'email' })
-  @SkipAuth()
-  @Get('validate-login-email/:email')
-  @HttpCode(200)
-  validateLoginEmail(@Param('email') email: string) {
-    return this.authService.validateLoginEmail(email);
-  }
-
-  @ApiException(() => [UserWithEmailExistException])
-  @ApiParam({ name: 'email' })
-  @SkipAuth()
-  @Get('validate-register-email/:email')
-  @HttpCode(200)
-  validateRegisterEmail(@Param('email') email: string) {
-    return this.authService.validateRegisterEmail(email);
-  }
-
-  @ApiException(() => [UserWithNicknameExistException])
-  @ApiParam({ name: 'nickname' })
-  @SkipAuth()
-  @Get('validate-register-nickname/:nickname')
-  @HttpCode(200)
-  validateRegisterNickname(@Param('nickname') nickName: string) {
-    return this.authService.validateRegisterNickname(nickName);
   }
 
   @SkipAuth()

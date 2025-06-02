@@ -2,7 +2,7 @@ export const USER_WITH_EMAIL_EXIST =
   'Пользователь с таким email уже существует';
 
 export const USER_WITH_NICKNAME_EXIST =
-  'Пользователя с таким nicname уже существует';
+  'Пользователя с таким nickname уже существует';
 
 export const USER_WITH_EMAIL_NOT_EXIST =
   'Пользователя с таким email не существует';

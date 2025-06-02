@@ -29,7 +29,9 @@ export class AuthService {
   ) {}
 
   async login(loginParams: LoginParams): Promise<AuthUser> {
-    const user = await this.validatePassword(loginParams);
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    const user = await this.validateLoginUser(loginParams);
 
     const tokens = await this.generateTokens(user);
 
@@ -46,12 +48,13 @@ export class AuthService {
 
     delete registerParams.password;
 
+    this.validateRegisterUser(email);
+
     const newUser = await this.userService.createUser({
       userData: {
         ...registerParams,
         email,
         passwordHash: await hash(password, salt),
-        birthDate: new Date(registerParams.birthDate),
         nickName: `@${registerParams.nickName}`,
       },
     });
@@ -64,39 +67,14 @@ export class AuthService {
     };
   }
 
-  async validateLoginEmail(email: string): Promise<boolean> {
+  async validateLoginUser(loginParams: LoginParams): Promise<User> {
+    const { email, password } = loginParams;
+
     const candidate = await this.userService.findUserByEmail(email);
 
     if (!candidate) {
       throw new UserWithEmailNotExistException();
     }
-    return true;
-  }
-
-  async validateRegisterEmail(email: string): Promise<boolean> {
-    const candidate = await this.userService.findUserByEmail(email);
-
-    if (candidate) {
-      throw new UserWithEmailExistException();
-    }
-
-    return true;
-  }
-
-  async validateRegisterNickname(nickName: string): Promise<boolean> {
-    const candidate = await this.userService.findUserByNickName(nickName);
-
-    if (candidate) {
-      throw new UserWithNicknameExistException();
-    }
-
-    return true;
-  }
-
-  async validatePassword(params: LoginParams): Promise<User> {
-    const { email, password } = params;
-
-    const candidate = await this.userService.findUserByEmail(email);
 
     const isCorrectPassword = await compare(password, candidate.passwordHash);
 
@@ -107,6 +85,18 @@ export class AuthService {
     delete candidate.passwordHash;
 
     return candidate;
+  }
+
+  async validateRegisterUser(email: string): Promise<void> {
+    const candidate = await this.userService.findUserByEmail(email);
+
+    if (candidate) {
+      throw new UserWithEmailExistException();
+    }
+
+    if (candidate) {
+      throw new UserWithNicknameExistException();
+    }
   }
 
   async validateUserToken(token: string): Promise<TokenInfo> {
@@ -136,7 +126,6 @@ export class AuthService {
           id: userData.id,
           nickName: userData.nickName,
           name: userData.name,
-          gender: userData.gender,
           email: userData.email,
         },
         {
@@ -148,7 +137,6 @@ export class AuthService {
           id: userData.id,
           nickName: userData.nickName,
           name: userData.name,
-          gender: userData.gender,
           email: userData.email,
         },
         {
