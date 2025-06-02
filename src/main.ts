@@ -1,6 +1,7 @@
 import { ValidationPipe } from '@nestjs/common';
 import { HttpAdapterHost, NestFactory, Reflector } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as fs from 'fs';
 
 import { WebsocketAdapter } from '#adapters/socket.adapter';
 import { JwtAuthGuard } from '#auth/guards/jwt.guard';
@@ -33,6 +34,8 @@ async function bootstrap() {
     .build();
   const document = SwaggerModule.createDocument(app, config);
 
+  fs.writeFileSync('./uploads/swagger-spec.json', JSON.stringify(document));
+
   SwaggerModule.setup('api', app, document);
 
   app.useWebSocketAdapter(new WebsocketAdapter(app));
@@ -40,7 +43,7 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter(httpAdapter));
   app.useGlobalGuards(new JwtAuthGuard(reflector));
 
-  await app.listen(5555);
+  await app.listen(4000);
 }
 
 bootstrap();

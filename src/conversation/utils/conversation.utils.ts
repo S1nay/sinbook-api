@@ -7,13 +7,13 @@ import {
 import { GetConversationsParams } from '../types/conversation.types';
 
 export function transformConversation(conversation: SelectConversation) {
-  const transfornedConversation = transformFieldCount<
+  const transformedConversation = transformFieldCount<
     SelectConversation,
     ConversationUnreadMessagesCount
   >(conversation, ['unreadMessagesCount']);
 
   return {
-    ...exclude(transfornedConversation, [
+    ...exclude(transformedConversation, [
       'creatorId',
       'recipientId',
       'lastMessageId',
@@ -27,8 +27,6 @@ export function getConversationFilters(params: GetConversationsParams) {
   const searchFilter = {
     OR: [
       { name: { contains: paginationParams.search } },
-      { secondName: { contains: paginationParams.search } },
-      { middleName: { contains: paginationParams.search } },
       { nickName: { contains: paginationParams.search } },
     ],
   };

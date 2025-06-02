@@ -4,7 +4,6 @@ import {
   OmitType,
   PickType,
 } from '@nestjs/swagger';
-import { $Enums, Gender } from '@prisma/client';
 
 import { User } from '#utils/types';
 
@@ -27,7 +26,14 @@ export namespace UserOpenApi {
       example: 1,
       type: Number,
     })
-    followersOfCount?: number;
+    followsCount?: number;
+
+    @ApiProperty({
+      description: 'Кол-во постов',
+      example: 1,
+      type: Number,
+    })
+    postsCount?: number;
   }
 
   // User Model
@@ -40,9 +46,18 @@ export namespace UserOpenApi {
     id: number;
 
     @ApiProperty({
+      description: 'Биография пользователя',
+      example: 'Дизайнер, Айтишник',
+      type: String,
+      required: true,
+    })
+    biography: string;
+
+    @ApiProperty({
       description: 'Никнейм пользователя',
       example: '@Nickname',
       type: String,
+      required: true,
     })
     nickName: string;
 
@@ -50,22 +65,9 @@ export namespace UserOpenApi {
       description: 'Имя пользователя',
       example: 'Тест',
       type: String,
+      required: true,
     })
     name: string;
-
-    @ApiProperty({
-      description: 'Фамилия пользователя',
-      example: 'Тестов',
-      type: String,
-    })
-    secondName: string;
-
-    @ApiProperty({
-      description: 'Отчество пользователя',
-      example: 'Тестович',
-      type: String,
-    })
-    middleName: string;
 
     passwordHash: string;
 
@@ -82,33 +84,9 @@ export namespace UserOpenApi {
       example: 'http://localhost:5555/avatars/1/image.png',
       type: String,
       default: null,
+      required: false,
     })
     avatarPath: string | null;
-
-    @ApiProperty({
-      description: 'Дата рождения пользователя',
-      example: '2024-02-13T14:50:43.867Z',
-      type: String,
-      default: null,
-    })
-    birthDate: Date;
-
-    @ApiProperty({
-      description: 'Город пользователя',
-      example: 'Санкт-Петербург',
-      type: String,
-      default: '',
-    })
-    city: string;
-
-    @ApiProperty({
-      description: 'Гендер пользователя',
-      enum: Gender,
-      enumName: 'Gender',
-      nullable: false,
-      required: true,
-    })
-    gender: $Enums.Gender;
 
     @ApiProperty({
       description: 'Статус удаленного аккаунта',
@@ -150,7 +128,6 @@ export namespace UserOpenApi {
   export class ShortUser extends PickType(UserModel, [
     'id',
     'name',
-    'secondName',
     'nickName',
     'avatarPath',
   ]) {}
@@ -159,17 +136,19 @@ export namespace UserOpenApi {
   export class CreateUserDto extends OmitType(UserModel, [
     'createdAt',
     'updatedAt',
-    'avatarPath',
+    'postsCount',
     'id',
     'isDeleted',
     'followersCount',
-    'followersOfCount',
+    'followsCount',
   ]) {}
 
   //Update User Fields
   export class UpdateUserDto extends OmitType(UserModel, [
+    'postsCount',
+    'isDeleted',
     'followersCount',
-    'followersOfCount',
+    'followsCount',
     'createdAt',
     'updatedAt',
   ]) {}
@@ -181,12 +160,8 @@ export namespace UserOpenApi {
     'followersOf',
     'posts',
     'followersCount',
-    'followersOfCount',
-    'id',
-    'createdAt',
-    'updatedAt',
-    'isDeleted',
-    'avatarPath',
+    'followsCount',
+    'postsCount',
   ]) {}
 
   //Find all users
@@ -212,16 +187,8 @@ export namespace UserOpenApi {
     'followersOf',
     'posts',
     'followersCount',
-    'followersOfCount',
-  ]) {
-    @ApiProperty({
-      description: 'Статус удаленного аккаунта',
-      example: true,
-      type: Boolean,
-      default: false,
-    })
-    isDeleted: boolean;
-  }
+    'followsCount',
+  ]) {}
 
   //Find User by Id Response
   export class FindUniqueUserResponse extends OmitType(UserModel, [
@@ -230,12 +197,6 @@ export namespace UserOpenApi {
     'followersOf',
     'passwordHash',
     'email',
-  ]) {}
-
-  //Find Me Response
-  export class FindMeResponse extends OmitType(UserModel, [
-    'passwordHash',
-    'posts',
   ]) {}
 
   //Update User Response

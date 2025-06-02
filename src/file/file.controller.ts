@@ -45,7 +45,6 @@ export class FileController {
     file: Express.Multer.File,
     @Host() host: string,
   ) {
-    console.log(file);
     return this.fileService.uploadFile({
       host,
       dir: 'avatars',

@@ -13,15 +13,15 @@ export function getNotificationData(
 
   switch (type) {
     case 'like':
-      notificationData.content = `${user.name} ${user.secondName} поставил лайк на ваш пост`;
+      notificationData.content = `${user.name}  поставил лайк на ваш пост`;
       notificationData.type = 'post';
       break;
     case 'follow':
-      notificationData.content = `${user.name} ${user.secondName} подписался на вас`;
+      notificationData.content = `${user.name}  подписался на вас`;
       notificationData.type = 'user';
       break;
     case 'comment':
-      notificationData.content = `${user.name} ${user.secondName} оставил комментарий на вашем посте`;
+      notificationData.content = `${user.name} оставил комментарий на вашем посте`;
       notificationData.type = 'user';
   }
 

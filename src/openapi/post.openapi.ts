@@ -39,16 +39,9 @@ export namespace PostOpenApi {
     content: string;
 
     @ApiProperty({
-      description: 'Кол-во просмотров у поста',
-      example: 12,
-      type: Number,
-    })
-    views: number;
-
-    @ApiProperty({
       description: 'Массив с id юзеров которые поставили лайк',
       example: [1, 2, 3],
-      type: Number,
+      type: [Number],
     })
     likes: number[];
 

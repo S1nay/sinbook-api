@@ -83,7 +83,6 @@ export function getShortUserFields() {
     'id',
     'name',
     'nickName',
-    'secondName',
     'avatarPath',
   ]);
 }

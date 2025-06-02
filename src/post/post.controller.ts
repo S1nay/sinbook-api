@@ -87,7 +87,12 @@ export class PostController {
   }
 
   @ApiOkResponse({ type: PostOpenApi.FindAllPosts })
-  @ApiParam({ name: 'userId', type: Number, required: true })
+  @ApiQuery({
+    name: 'userId',
+    type: Number,
+    required: false,
+    example: 1,
+  })
   @ApiQuery({
     type: String,
     example: 'name',
@@ -115,7 +120,7 @@ export class PostController {
     @Query('followingBy', ParamBoolValidationPipe) followingBy: boolean,
   ) {
     return this.postService.findPosts({
-      paginationParams: params,
+      ...params,
       userId,
       followingBy,
     });

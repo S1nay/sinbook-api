@@ -1,7 +1,6 @@
 import {
   Comment as CommentModel,
   Conversation as ConversationModel,
-  Gender,
   Message as MessageModel,
   Notification as NotificationModel,
   Post as PostModel,
@@ -20,9 +19,10 @@ export type UserWithFollows = ShortUserInfo & {
   }[];
 };
 
-export type FollowersCountFields = {
+export type ProfileCountFields = {
   followersCount: number;
-  followersOfCount: number;
+  followsCount: number;
+  postsCount: number;
 };
 
 export type SelectUserFollowsCount = Prisma.UserGetPayload<{
@@ -43,15 +43,14 @@ export type SelectUserFollowsCount = Prisma.UserGetPayload<{
   };
 }>;
 
-export type UserWithFollowsCount = User & FollowersCountFields;
+export type UserWithCountFields = User & ProfileCountFields;
 
 export type UserWithoutEmailWithFollowCount = UserWithoutEmail &
-  FollowersCountFields;
+  ProfileCountFields;
 
 export type SelectShortUserInfo = {
   id: true;
   name: true;
-  secondName: true;
   nickName: true;
   avatarPath: true;
 };
@@ -59,7 +58,6 @@ export type SelectShortUserInfo = {
 export type ShortUserInfo = {
   id: number;
   name: string;
-  secondName: string;
   nickName: string;
   avatarPath: string;
 };
@@ -75,8 +73,6 @@ export type TokenInfo = {
   id: number;
   nickName: string;
   name: string;
-  secondName: string;
-  gender: Gender;
   email: string;
 };
 

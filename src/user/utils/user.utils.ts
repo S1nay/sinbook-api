@@ -1,7 +1,7 @@
 import { FindUsersParams } from '#user/types/user.type';
 import { exclude, transformFieldCount } from '#utils/helpers';
 import {
-  FollowersCountFields,
+  ProfileCountFields,
   SelectUserFollowsCount,
   UserWithFollows,
 } from '#utils/types';
@@ -9,8 +9,8 @@ import {
 export function transformUser(user: SelectUserFollowsCount) {
   const transformedUser = transformFieldCount<
     SelectUserFollowsCount,
-    FollowersCountFields
-  >(user, ['followersCount', 'followsCount']);
+    ProfileCountFields
+  >(user, ['followersCount', 'followsCount', 'postsCount']);
 
   return exclude(transformedUser, ['passwordHash']);
 }
@@ -32,8 +32,6 @@ export function getUserFilters(params: FindUsersParams) {
   const searchFilters = search
     ? [
         { name: { contains: search, mode: 'insensitive' } },
-        { secondName: { contains: search, mode: 'insensitive' } },
-        { middleName: { contains: search, mode: 'insensitive' } },
         { nickName: { contains: search, mode: 'insensitive' } },
       ]
     : [];

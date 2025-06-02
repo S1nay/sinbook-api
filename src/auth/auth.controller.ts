@@ -2,9 +2,7 @@ import { ApiException } from '@nanogiants/nestjs-swagger-api-exception-decorator
 import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
-import { JwtRefreshGuard } from '#auth/guards/jwt-refresh.guard';
 import { SkipAuth } from '#utils/decorators';
-import { TransformGenderPipe } from '#utils/pipes';
 
 import { AuthOpenApi } from '../openapi/auth.openapi';
 
@@ -15,7 +13,9 @@ import {
   InvalidTokenException,
   UserWithEmailExistException,
   UserWithEmailNotExistException,
+  UserWithNicknameExistException,
 } from './exceptions/auth.exceptions';
+import { JwtRefreshGuard } from './guards/jwt-refresh.guard';
 import { AuthService } from './auth.service';
 
 @ApiTags('Авторизация')
@@ -23,11 +23,11 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @ApiOkResponse({ type: AuthOpenApi.AuthResponse })
   @ApiException(() => [
-    UserWithEmailNotExistException,
     IncorrectAuthDataException,
+    UserWithEmailNotExistException,
   ])
+  @ApiOkResponse({ type: AuthOpenApi.AuthResponse })
   @ApiBody({ type: AuthOpenApi.LoginDto })
   @SkipAuth()
   @Post('sign-in')
@@ -37,12 +37,15 @@ export class AuthController {
   }
 
   @ApiOkResponse({ type: AuthOpenApi.AuthResponse })
-  @ApiException(() => [UserWithEmailExistException])
   @ApiBody({ type: AuthOpenApi.RegisterDto })
+  @ApiException(() => [
+    UserWithEmailExistException,
+    UserWithNicknameExistException,
+  ])
   @SkipAuth()
   @Post('sign-up')
   @HttpCode(200)
-  signUp(@Body(TransformGenderPipe) registerDto: RegisterDto) {
+  signUp(@Body() registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 

@@ -11,7 +11,7 @@ import {
   PaginationResponse,
   ShortUserInfo,
   User,
-  UserWithFollowsCount,
+  UserWithCountFields,
   UserWithoutEmailWithFollowCount,
   UserWithPasswordHash,
 } from '#utils/types';
@@ -32,17 +32,6 @@ import {
 export class UserService {
   constructor(private readonly prismaService: PrismaService) {}
 
-  async findMyProfile(userId: number): Promise<UserWithFollowsCount> {
-    const user = await this.prismaService.user.findUnique({
-      where: { id: userId },
-      include: {
-        _count: { select: { followers: true, follows: true } },
-      },
-    });
-
-    return transformUser(user);
-  }
-
   async createUser(params: CreateUserParams): Promise<User | null> {
     const { userData } = params;
 
@@ -60,7 +49,7 @@ export class UserService {
     const user = await this.prismaService.user.findUnique({
       where: { id },
       include: {
-        _count: { select: { followers: true, follows: true } },
+        _count: { select: { followers: true, follows: true, posts: true } },
       },
     });
 
@@ -79,15 +68,20 @@ export class UserService {
     return user;
   }
 
-  async editUser(params: EditUserParams): Promise<UserWithFollowsCount> {
+  async findUserByNickName(nickName: string): Promise<UserWithPasswordHash> {
+    const user = await this.prismaService.user.findFirst({
+      where: { nickName: `@${nickName}` },
+    });
+
+    return user;
+  }
+
+  async editUser(params: EditUserParams): Promise<UserWithCountFields> {
     const { userData, userId } = params;
 
     const user = await this.prismaService.user.update({
       where: { id: userId },
-      data: {
-        ...userData,
-        birthDate: new Date(userData.birthDate),
-      },
+      data: userData,
       include: {
         _count: { select: { followers: true, follows: true } },
       },

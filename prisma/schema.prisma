@@ -13,17 +13,13 @@ datasource db {
 model User {
   id                    Int            @id @default(autoincrement())
   nickName              String         @map("nick_name")
+  biography             String
   avatarPath            String?        @map("avatar_path")
   name                  String
-  secondName            String         @map("second_name")
-  middleName            String         @map("middle_name")
   email                 String         @unique
   passwordHash          String         @map("password_hash")
   posts                 Post[]         @relation("user_posts")
   comments              Comment[]      @relation("user_comments")
-  city                  String?        @default("")
-  birthDate             DateTime?      @map("birth_date")
-  gender                Gender
   isDeleted             Boolean        @default(false) @map("is_deleted")
   followers             Follows[]      @relation("following")
   follows               Follows[]      @relation("follower")
@@ -76,7 +72,6 @@ model Message {
 model Post {
   id        Int       @id @default(autoincrement())
   content   String
-  views     Int       @default(0)
   likes     Like[]    @relation("post_like")
   user      User      @relation("user_posts", fields: [userId], references: [id])
   userId    Int       @map("user_id")
@@ -119,9 +114,4 @@ model Notification {
   typeEntityId Int      @map("type_entity_id")
   isReaded     Boolean  @default(false) @map("is_readed")
   createdAt    DateTime @default(now()) @map("created_at")
-}
-
-enum Gender {
-  FEMALE
-  MALE
 }
