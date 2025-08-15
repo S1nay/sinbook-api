@@ -66,15 +66,15 @@ export class ConversationsGateway
         ...conversation,
         creator: {
           ...conversation.creator,
-          isOnline: this.sessionManager.getUserSocket(conversation.creator.id)
-            ? true
-            : false,
+          isOnline: !!this.sessionManager.getUserSocket(
+            conversation.creator.id,
+          ),
         },
         recipient: {
           ...conversation.creator,
-          isOnline: this.sessionManager.getUserSocket(conversation.recipient.id)
-            ? true
-            : false,
+          isOnline: !!this.sessionManager.getUserSocket(
+            conversation.recipient.id,
+          ),
         },
       }),
     );

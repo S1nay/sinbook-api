@@ -20,11 +20,7 @@ import {
 import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { UserOpenApi } from '#openapi/user.openapi';
 import { Pagination, User } from '#utils/decorators';
-import {
-  ParamBoolValidationPipe,
-  ParamIdValidationPipe,
-  TransformGenderPipe,
-} from '#utils/pipes';
+import { ParamBoolValidationPipe, ParamIdValidationPipe } from '#utils/pipes';
 import { PaginationParams } from '#utils/types';
 
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -92,10 +88,7 @@ export class UserController {
   @ApiException(() => [UserNotAuthorizedException])
   @ApiBody({ type: UserOpenApi.UpdateUserDto })
   @Patch()
-  update(
-    @User() userId: number,
-    @Body(TransformGenderPipe) updateUserDto: UpdateUserDto,
-  ) {
+  update(@User() userId: number, @Body() updateUserDto: UpdateUserDto) {
     return this.userService.editUser({ userData: updateUserDto, userId });
   }
 
