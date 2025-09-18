@@ -2,6 +2,8 @@ import { Prisma } from '@prisma/client';
 import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateUserDto implements Prisma.UserCreateInput {
+  @IsString({ message: 'Поле email должно быть строкой' })
+  @IsNotEmpty({ message: 'Поле email не должно быть пустым' })
   @IsEmail({}, { message: 'Неверный формат email. Пример: test@test.com' })
   email: string;
 
@@ -23,4 +25,3 @@ export class CreateUserDto implements Prisma.UserCreateInput {
   @IsNotEmpty({ message: 'Поле name не должно быть пустым' })
   name: string;
 }
-

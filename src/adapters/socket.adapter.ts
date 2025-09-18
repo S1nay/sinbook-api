@@ -57,11 +57,8 @@ export class WebsocketAdapter extends IoAdapter {
                 socket.handshake.auth?.token ??
                 socket.handshake.headers?.authorization;
 
-              const [type, token] = authToken?.split(' ') ?? [];
-              const bearerToken = type === 'Bearer' ? token : undefined;
-
               const userData =
-                await this.authService.validateUserToken(bearerToken);
+                await this.authService.validateUserToken(authToken);
 
               socket.user = userData;
 

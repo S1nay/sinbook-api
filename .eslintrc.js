@@ -40,7 +40,9 @@ module.exports = {
     'simple-import-sort/exports': 'error',
     'prettier/prettier': [
       'error',
-      {},
+      {
+         endOfLine: "auto",
+      },
       {
         usePrettierrc: true,
       },

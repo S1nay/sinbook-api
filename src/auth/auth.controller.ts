@@ -3,6 +3,7 @@ import { Body, Controller, HttpCode, Post, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { SkipAuth } from '#utils/decorators';
+import { FieldsValidationPipe } from '#utils/pipes';
 
 import { AuthOpenApi } from '../openapi/auth.openapi';
 
@@ -32,7 +33,7 @@ export class AuthController {
   @SkipAuth()
   @Post('sign-in')
   @HttpCode(200)
-  signIn(@Body() loginDto: LoginDto) {
+  signIn(@Body(FieldsValidationPipe) loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
@@ -45,7 +46,7 @@ export class AuthController {
   @SkipAuth()
   @Post('sign-up')
   @HttpCode(200)
-  signUp(@Body() registerDto: RegisterDto) {
+  signUp(@Body(FieldsValidationPipe) registerDto: RegisterDto) {
     return this.authService.register(registerDto);
   }
 

@@ -11,4 +11,16 @@
   "[prisma]": {
     "editor.defaultFormatter": "Prisma.prisma"
   },
+  "sqltools.connections": [
+      {
+          "previewLimit": 50,
+          "server": "localhost",
+          "port": 5432,
+          "askForPassword": true,
+          "driver": "PostgreSQL",
+          "database": "sinbook-dev",
+          "username": "postgres",
+          "name": "dev"
+      }
+  ]
 }

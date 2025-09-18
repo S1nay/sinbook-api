@@ -45,3 +45,17 @@ export class ParamBoolValidationPipe implements PipeTransform {
     return transformedValue;
   }
 }
+
+@Injectable()
+export class FieldsValidationPipe extends ValidationPipe {
+  createExceptionFactory() {
+    return function (validationErrors: ValidationError[] = []) {
+      return new BadRequestException(
+        validationErrors.map((error) => ({
+          field: error.property,
+          error: Object.values(error.constraints).join(', '),
+        })),
+      );
+    };
+  }
+}
