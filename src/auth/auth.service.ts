@@ -44,7 +44,7 @@ export class AuthService {
   async register(registerParams: RegisterParams): Promise<AuthUser> {
     const { email, password } = registerParams;
 
-    const salt = await genSalt(15);
+    const salt = await genSalt();
 
     delete registerParams.password;
 
