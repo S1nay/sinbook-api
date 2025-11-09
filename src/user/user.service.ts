@@ -81,7 +81,10 @@ export class UserService {
 
     const user = await this.prismaService.user.update({
       where: { id: userId },
-      data: userData,
+      data: {
+        ...userData,
+        nickName: `@${userData.nickName}`,
+      },
       include: {
         _count: { select: { followers: true, follows: true } },
       },
