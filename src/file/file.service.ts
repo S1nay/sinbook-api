@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { path } from 'app-root-path';
+import { randomUUID } from 'crypto';
 import { ensureDir, writeFile } from 'fs-extra';
+import * as nodePath from 'path';
 
 import { UploadFileDto } from './dto/upload-file.dto';
 import { UploadFilesDto } from './dto/upload-files.dto';
@@ -16,15 +18,19 @@ export class FileService {
 
   async uploadFile({ file, dir, host }: UploadFileDto): Promise<CreatedFile> {
     if (!Array.isArray(file)) {
-      const uploadFolder = `${this.pathUploads}/${dir}`;
+      const uploadFolder = nodePath.join(this.pathUploads, dir);
 
       await ensureDir(uploadFolder);
 
-      await writeFile(`${uploadFolder}/${file.originalname}`, file.buffer);
+      const originalName = nodePath.basename(file.originalname || 'file');
+      const ext = nodePath.extname(originalName) || '';
+      const fileName = `${randomUUID()}${ext}`;
+      const data = file.buffer as unknown as Uint8Array;
+      await writeFile(nodePath.join(uploadFolder, fileName), data);
 
       const result = {
-        url: `${host}/api/${dir}/${file.originalname}`,
-        fileName: file.originalname,
+        url: `${host}/api/${dir}/${fileName}`,
+        fileName,
       };
 
       return result;
@@ -38,18 +44,26 @@ export class FileService {
     dirId,
   }: UploadFilesDto): Promise<CreatedFile[]> {
     if (Array.isArray(files)) {
-      const uploadFolder = `${this.pathUploads}/${dir}/${dir === 'dialog' ? dirId : ''}`;
+      const uploadFolder = nodePath.join(
+        this.pathUploads,
+        dir,
+        dir === 'dialog' ? String(dirId) : '',
+      );
 
       await ensureDir(uploadFolder);
 
       const uploadedFiles = [];
 
       for (const file of files) {
-        await writeFile(`${uploadFolder}/${file.originalname}`, file.buffer);
+        const originalName = nodePath.basename(file.originalname || 'file');
+        const ext = nodePath.extname(originalName) || '';
+        const fileName = `${randomUUID()}${ext}`;
+        const data = file.buffer as unknown as Uint8Array;
+        await writeFile(nodePath.join(uploadFolder, fileName), data);
 
         const result = {
-          url: `${host}/api/${dir}/${dir === 'dialog' ? dirId : ''}/${file.originalname}`,
-          fileName: file.originalname,
+          url: `${host}/api/${dir}/${dir === 'dialog' ? dirId : ''}/${fileName}`,
+          fileName,
         };
 
         uploadedFiles.push(result);
