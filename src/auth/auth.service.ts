@@ -9,6 +9,7 @@ import { AuthUser, JwtTokens, TokenInfo } from '#utils/types';
 
 import {
   IncorrectAuthDataException,
+  InvalidTokenException,
   UserNotAuthorizedException,
   UserWithEmailExistException,
   UserWithEmailNotExistException,
@@ -100,15 +101,20 @@ export class AuthService {
   }
 
   async validateUserToken(token: string): Promise<TokenInfo> {
-    const userData: TokenInfo = this.jwtService.decode(token);
+    try {
+      const userData: TokenInfo =
+        await this.jwtService.verifyAsync<TokenInfo>(token);
 
-    const user = await this.userService.findUserById(userData.id, true);
+      const user = await this.userService.findUserById(userData.id, true);
 
-    if (!user) {
-      throw new UserNotAuthorizedException();
+      if (!user) {
+        throw new UserNotAuthorizedException();
+      }
+
+      return userData;
+    } catch (e) {
+      throw new InvalidTokenException();
     }
-
-    return userData;
   }
 
   async refreshToken(refresh: string): Promise<{ access: string }> {

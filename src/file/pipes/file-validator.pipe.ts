@@ -11,7 +11,6 @@ export class FileValidatorPipe implements PipeTransform {
   async transform(
     value: Express.Multer.File | Express.Multer.File[],
   ): Promise<Express.Multer.File | Express.Multer.File[]> {
-    console.log(value);
     if (!value || (value as Express.Multer.File[]).length === 0) {
       throw new FileIsRequiredException();
     }
