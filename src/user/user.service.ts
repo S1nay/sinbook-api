@@ -86,7 +86,7 @@ export class UserService {
         nickName: `@${userData.nickName}`,
       },
       include: {
-        _count: { select: { followers: true, follows: true } },
+        _count: { select: { followers: true, follows: true, posts: true } },
       },
     });
 
