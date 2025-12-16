@@ -62,7 +62,7 @@ export class FileService {
         await writeFile(nodePath.join(uploadFolder, fileName), data);
 
         const result = {
-          url: `${host}/api/${dir}/${dir === 'dialog' ? dirId : ''}/${fileName}`,
+          url: `${host}/api/${dir}${dir === 'dialog' ? dirId : ''}/${fileName}`,
           fileName,
         };
 
