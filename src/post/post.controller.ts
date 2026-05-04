@@ -22,7 +22,11 @@ import { UserNotAuthorizedException } from '#auth/exceptions/auth.exceptions';
 import { PostOpenApi } from '#openapi/post.openapi';
 import { UserNotFoundException } from '#user/exceptions/user.exceptions';
 import { Pagination, User } from '#utils/decorators';
-import { ParamBoolValidationPipe, ParamIdValidationPipe } from '#utils/pipes';
+import {
+  ParamBoolValidationPipe,
+  ParamIdValidationPipe,
+  ParamSortedByValidationPipe,
+} from '#utils/pipes';
 import { PaginationParams } from '#utils/types';
 
 import { CreatePostDto } from './dto/create-post.dto';
@@ -118,11 +122,13 @@ export class PostController {
     @Pagination() params: PaginationParams,
     @Query('userId', ParamIdValidationPipe) userId: number,
     @Query('followingBy', ParamBoolValidationPipe) followingBy: boolean,
+    @Query('sortedBy', ParamSortedByValidationPipe) sortedBy: 'asc' | 'desc',
   ) {
     return this.postService.findPosts({
       ...params,
       userId,
       followingBy,
+      sortedBy,
     });
   }
 }

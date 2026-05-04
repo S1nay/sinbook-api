@@ -58,7 +58,7 @@ export function getPaginationParams(params: PaginationParams): {
   const limit = params.perPage || params.perPage === 0 ? params.perPage : 10;
 
   const take = params.perPage === 0 ? undefined : params.perPage;
-  const skip = (page - 1) * limit ?? 0;
+  const skip = (page - 1) * limit || 0;
 
   return {
     skip,

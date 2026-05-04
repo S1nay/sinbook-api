@@ -32,6 +32,19 @@ export class ParamIdValidationPipe implements PipeTransform {
 }
 
 @Injectable()
+export class ParamSortedByValidationPipe implements PipeTransform {
+  async transform(value: string) {
+    if (value && value !== 'asc' && value !== 'desc') {
+      throw new BadRequestException(
+        'sortedBy должен быть значением "asc" или "desc"',
+      );
+    }
+
+    return value as 'asc' | 'desc';
+  }
+}
+
+@Injectable()
 export class ParamBoolValidationPipe implements PipeTransform {
   async transform(value: string) {
     const transformedValue = Boolean(value);

@@ -134,7 +134,7 @@ export class PostService {
   async findPosts(
     params: FindUserPostsParams,
   ): Promise<PaginationResponse<Post>> {
-    const { userId } = params;
+    const { userId, sortedBy } = params;
 
     userId && (await this.userService.findUserById(userId));
 
@@ -149,7 +149,7 @@ export class PostService {
         user: { select: getShortUserFields() },
         likes: true,
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { createdAt: sortedBy },
       take,
       skip,
     });

@@ -16,4 +16,5 @@ export type DeletePostParams = {
 export type FindUserPostsParams = {
   userId: number;
   followingBy: boolean;
+  sortedBy: 'asc' | 'desc';
 } & PaginationParams;
