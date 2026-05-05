@@ -30,8 +30,6 @@ export class AuthService {
   ) {}
 
   async login(loginParams: LoginParams): Promise<AuthUser> {
-    await new Promise((resolve) => setTimeout(resolve, 3000));
-
     const user = await this.validateLoginUser(loginParams);
 
     const tokens = await this.generateTokens(user);
@@ -43,20 +41,20 @@ export class AuthService {
   }
 
   async register(registerParams: RegisterParams): Promise<AuthUser> {
-    const { email, password } = registerParams;
+    const { email, nickName, password } = registerParams;
 
     const salt = await genSalt();
 
     delete registerParams.password;
 
-    this.validateRegisterUser(email);
+    await this.validateRegisterUser(email, nickName);
 
     const newUser = await this.userService.createUser({
       userData: {
         ...registerParams,
         email,
         passwordHash: await hash(password, salt),
-        nickName: `@${registerParams.nickName}`,
+        nickName: `@${nickName}`,
       },
     });
 
@@ -88,14 +86,17 @@ export class AuthService {
     return candidate;
   }
 
-  async validateRegisterUser(email: string): Promise<void> {
-    const candidate = await this.userService.findUserByEmail(email);
+  async validateRegisterUser(email: string, nickName: string): Promise<void> {
+    const candidateEmail = await this.userService.findUserByEmail(email);
 
-    if (candidate) {
+    if (candidateEmail) {
       throw new UserWithEmailExistException();
     }
 
-    if (candidate) {
+    const candidateNickname =
+      await this.userService.findUserByNickName(nickName);
+
+    if (candidateNickname) {
       throw new UserWithNicknameExistException();
     }
   }
