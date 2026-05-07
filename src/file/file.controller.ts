@@ -12,7 +12,7 @@ import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiConsumes, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { ApiFile, FileOpenApi } from '#openapi/file.openapi';
-import { Host, SkipAuth } from '#utils/decorators';
+import { SkipAuth } from '#utils/decorators';
 import { ParamIdValidationPipe } from '#utils/pipes';
 
 import {
