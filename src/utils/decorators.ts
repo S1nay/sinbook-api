@@ -5,12 +5,6 @@ import { Request } from 'express';
 
 import { PaginationParams } from './types';
 
-export const Host = createParamDecorator((_, ctx: ExecutionContext) => {
-  const request = ctx.switchToHttp().getRequest();
-  console.log(request);
-  return `${request.protocol}://${request.get('Host')}`;
-});
-
 export const SkipAuth = (...metadata: string[]) =>
   SetMetadata('skip-auth', metadata);
 

@@ -43,10 +43,8 @@ export class FileController {
   uploadAvatar(
     @UploadedFile(FileValidatorPipe)
     file: Express.Multer.File,
-    @Host() host: string,
   ) {
     return this.fileService.uploadFile({
-      host,
       dir: 'avatars',
       file,
     });
@@ -66,10 +64,8 @@ export class FileController {
   uploadPostImages(
     @UploadedFiles(FileValidatorPipe)
     files: Express.Multer.File[],
-    @Host() host: string,
   ) {
     return this.fileService.uploadFiles({
-      host,
       dir: 'post',
       files,
     });
@@ -89,11 +85,9 @@ export class FileController {
   uploadDialogImages(
     @UploadedFiles(FileValidatorPipe)
     files: Express.Multer.File[],
-    @Host() host: string,
     @Query('conversationId', ParamIdValidationPipe) conversationId: number,
   ) {
     return this.fileService.uploadFiles({
-      host,
       dir: 'dialog',
       files,
       dirId: conversationId,

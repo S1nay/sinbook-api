@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { path } from 'app-root-path';
 import { randomUUID } from 'crypto';
 import { ensureDir, writeFile } from 'fs-extra';
@@ -11,12 +12,14 @@ import { CreatedFile } from './types/file.types';
 @Injectable()
 export class FileService {
   private readonly pathUploads: string;
+  private readonly host: string;
 
-  constructor() {
+  constructor(private readonly configService: ConfigService) {
     this.pathUploads = `${path}/uploads`;
+    this.host = configService.get('APP_URL');
   }
 
-  async uploadFile({ file, dir, host }: UploadFileDto): Promise<CreatedFile> {
+  async uploadFile({ file, dir }: UploadFileDto): Promise<CreatedFile> {
     if (!Array.isArray(file)) {
       const uploadFolder = nodePath.join(this.pathUploads, dir);
 
@@ -29,7 +32,7 @@ export class FileService {
       await writeFile(nodePath.join(uploadFolder, fileName), data);
 
       const result = {
-        url: `${host}/api/${dir}/${fileName}`,
+        url: `${this.host}/api/${dir}/${fileName}`,
         fileName,
       };
 
@@ -39,7 +42,6 @@ export class FileService {
 
   async uploadFiles({
     files,
-    host,
     dir,
     dirId,
   }: UploadFilesDto): Promise<CreatedFile[]> {
@@ -62,7 +64,7 @@ export class FileService {
         await writeFile(nodePath.join(uploadFolder, fileName), data);
 
         const result = {
-          url: `${host}/api/${dir}${dir === 'dialog' ? dirId : ''}/${fileName}`,
+          url: `${this.host}/api/${dir}${dir === 'dialog' ? dirId : ''}/${fileName}`,
           fileName,
         };
 
