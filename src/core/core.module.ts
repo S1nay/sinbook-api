@@ -30,6 +30,12 @@ import { SocketSessionManager } from './session.manager';
     EventEmitterModule.forRoot(),
   ],
   providers: [SocketSessionManager, CloudinaryProvider],
-  exports: [JwtModule, ConfigModule, PrismaModule, SocketSessionManager],
+  exports: [
+    JwtModule,
+    ConfigModule,
+    PrismaModule,
+    SocketSessionManager,
+    CloudinaryProvider,
+  ],
 })
 export class CoreModule {}
