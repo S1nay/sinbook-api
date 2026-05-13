@@ -8,8 +8,8 @@ import {
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
-import { NAMESPACES } from 'adapters/socket.namespaces';
 
+import { NAMESPACES } from '#adapters/socket.namespaces';
 import { SocketSessionManager } from '#core/session.manager';
 import { UserService } from '#user/user.service';
 import { WebsocketExceptionsFilter } from '#utils/filters';

@@ -9,9 +9,9 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { NAMESPACES } from 'adapters/socket.namespaces';
 import { Namespace } from 'socket.io';
 
+import { NAMESPACES } from '#adapters/socket.namespaces';
 import { ConversationService } from '#conversation/conversation.service';
 import { SocketSessionManager } from '#core/session.manager';
 import { PrismaService } from '#prisma/prisma.service';

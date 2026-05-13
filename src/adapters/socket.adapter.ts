@@ -1,9 +1,9 @@
 import { INestApplicationContext } from '@nestjs/common';
 import { IoAdapter } from '@nestjs/platform-socket.io';
 import { WsException } from '@nestjs/websockets';
-import { NAMESPACES } from 'adapters/socket.namespaces';
-import { Server } from 'socket.io';
+import { Server, ServerOptions } from 'socket.io';
 
+import { NAMESPACES } from '#adapters/socket.namespaces';
 import { AuthService } from '#auth/auth.service';
 import { NO_AUTH } from '#auth/constants/auth.constants';
 import {
@@ -44,7 +44,7 @@ export class WebsocketAdapter extends IoAdapter {
       });
   }
 
-  createIOServer(port: number, options?: unknown) {
+  createIOServer(port: number, options?: Partial<ServerOptions>): Server {
     const server: Server = super.createIOServer(port, options);
 
     this.namespaces.forEach((namespace) => {
