@@ -1,43 +1,47 @@
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { path } from 'app-root-path';
-import { randomUUID } from 'crypto';
-import { ensureDir, writeFile } from 'fs-extra';
-import * as nodePath from 'path';
+import { Inject, Injectable } from '@nestjs/common';
+import { UploadApiResponse, v2 as cloudinary } from 'cloudinary';
+import { Readable } from 'stream';
+
+import { CLOUDINARY } from '#core/cloudinary.provider';
 
 import { UploadFileDto } from './dto/upload-file.dto';
 import { UploadFilesDto } from './dto/upload-files.dto';
 import { CreatedFile } from './types/file.types';
+
+type CloudinaryInstance = typeof cloudinary;
 
 @Injectable()
 export class FileService {
   private readonly pathUploads: string;
   private readonly host: string;
 
-  constructor(private readonly configService: ConfigService) {
-    this.pathUploads = `${path}/uploads`;
-    this.host = configService.get('APP_URL');
+  constructor(
+    @Inject(CLOUDINARY) private readonly cloudinary: CloudinaryInstance,
+  ) {}
+
+  private uploadToCloudinary(
+    file: Express.Multer.File,
+    folder: string,
+  ): Promise<UploadApiResponse> {
+    return new Promise((resolve, reject) => {
+      const uploadStream = this.cloudinary.uploader.upload_stream(
+        { folder },
+        (error, result) => {
+          if (error) return reject(error);
+          resolve(result);
+        },
+      );
+      Readable.from(file.buffer).pipe(uploadStream);
+    });
   }
 
   async uploadFile({ file, dir }: UploadFileDto): Promise<CreatedFile> {
-    if (!Array.isArray(file)) {
-      const uploadFolder = nodePath.join(this.pathUploads, dir);
+    const result = await this.uploadToCloudinary(file, dir);
 
-      await ensureDir(uploadFolder);
-
-      const originalName = nodePath.basename(file.originalname || 'file');
-      const ext = nodePath.extname(originalName) || '';
-      const fileName = `${randomUUID()}${ext}`;
-      const data = file.buffer as unknown as Uint8Array;
-      await writeFile(nodePath.join(uploadFolder, fileName), data);
-
-      const result = {
-        url: `${this.host}/api/${dir}/${fileName}`,
-        fileName,
-      };
-
-      return result;
-    }
+    return {
+      url: result.secure_url,
+      fileName: result.public_id.split('/').pop(),
+    };
   }
 
   async uploadFiles({
@@ -45,32 +49,15 @@ export class FileService {
     dir,
     dirId,
   }: UploadFilesDto): Promise<CreatedFile[]> {
-    if (Array.isArray(files)) {
-      const uploadFolder = nodePath.join(
-        this.pathUploads,
-        dir,
-        dir === 'dialog' ? String(dirId) : '',
-      );
+    const folder = dir === 'dialog' && dirId ? `${dir}/${dirId}` : dir;
 
-      await ensureDir(uploadFolder);
+    const results = await Promise.all(
+      files.map((file) => this.uploadToCloudinary(file, folder)),
+    );
 
-      const uploadedFiles = [];
-
-      for (const file of files) {
-        const originalName = nodePath.basename(file.originalname || 'file');
-        const ext = nodePath.extname(originalName) || '';
-        const fileName = `${randomUUID()}${ext}`;
-        const data = file.buffer as unknown as Uint8Array;
-        await writeFile(nodePath.join(uploadFolder, fileName), data);
-
-        const result = {
-          url: `${this.host}/api/${dir}${dir === 'dialog' ? dirId : ''}/${fileName}`,
-          fileName,
-        };
-
-        uploadedFiles.push(result);
-      }
-      return uploadedFiles;
-    }
+    return results.map((result) => ({
+      url: result.secure_url,
+      fileName: result.public_id.split('/').pop(),
+    }));
   }
 }
